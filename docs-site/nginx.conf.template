@@ -7,6 +7,14 @@ server {
         try_files $uri $uri/ /oxidizedRAG/index.html;
     }
 
+    location = /oxidizedrag {
+        return 301 /oxidizedRAG/;
+    }
+
+    location = /oxidizedrag/ {
+        return 301 /oxidizedRAG/;
+    }
+
     location / {
         return 301 /oxidizedRAG/;
     }
