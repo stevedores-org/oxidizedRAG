@@ -198,30 +198,51 @@ impl LanguageDetector {
         let mut english_model = LanguageModel::new();
         english_model.train("the quick brown fox jumps over the lazy dog", 3);
         english_model.train("this is a test of the english language", 3);
+        english_model.train("hello world how are you doing today", 3);
+        english_model.train("it is important to learn new languages", 3);
+        english_model.train("this is english text", 3);
         self.models.insert(Language::English, english_model);
 
         // Spanish
         let mut spanish_model = LanguageModel::new();
         spanish_model.train("el rápido zorro marrón salta sobre el perro perezoso", 3);
         spanish_model.train("esta es una prueba del idioma español", 3);
+        spanish_model.train("esto es un ejemplo de texto en español", 3);
+        spanish_model.train("es importante aprender nuevos idiomas", 3);
+        spanish_model.train("¿cómo estás hoy?", 3);
+        spanish_model.train("gracias por su ayuda", 3);
+        spanish_model.train("esto es texto en español", 3);
         self.models.insert(Language::Spanish, spanish_model);
 
         // French
         let mut french_model = LanguageModel::new();
         french_model.train("le renard brun rapide saute par-dessus le chien paresseux", 3);
         french_model.train("ceci est un test de la langue française", 3);
+        french_model.train("ceci est du texte français", 3);
+        french_model.train("bonjour comment allez-vous aujourd'hui", 3);
+        french_model.train("il est important d'apprendre de nouvelles langues", 3);
+        french_model.train("merci beaucoup pour votre aide", 3);
         self.models.insert(Language::French, french_model);
 
         // German
         let mut german_model = LanguageModel::new();
         german_model.train("der schnelle braune fuchs springt über den faulen hund", 3);
         german_model.train("dies ist ein test der deutschen sprache", 3);
+        german_model.train("hallo welt wie geht es dir heute", 3);
+        german_model.train("es ist wichtig neue sprachen zu lernen", 3);
+        german_model.train("vielen dank für ihre hilfe", 3);
+        german_model.train("das ist ein beispiel für deutschen text", 3);
         self.models.insert(Language::German, german_model);
 
         // Portuguese
         let mut portuguese_model = LanguageModel::new();
         portuguese_model.train("a rápida raposa marrom pula sobre o cão preguiçoso", 3);
         portuguese_model.train("este é um teste da língua portuguesa", 3);
+        portuguese_model.train("o português é uma língua românica", 3);
+        portuguese_model.train("olá como você está hoje", 3);
+        portuguese_model.train("é importante aprender novos idiomas", 3);
+        portuguese_model.train("obrigado pela sua ajuda", 3);
+        portuguese_model.train("isto é um exemplo de texto em português", 3);
         self.models.insert(Language::Portuguese, portuguese_model);
 
         // TODO: Add models for Chinese, Japanese, Korean, Arabic, Russian

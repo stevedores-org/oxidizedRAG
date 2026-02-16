@@ -392,10 +392,10 @@ impl LLMEntityExtractor {
     /// Normalize entity name for ID generation
     fn normalize_name(&self, name: &str) -> String {
         name.to_lowercase()
+            .replace(' ', "_")
             .chars()
             .filter(|c| c.is_alphanumeric() || *c == '_')
             .collect::<String>()
-            .replace(' ', "_")
     }
 }
 

@@ -474,13 +474,25 @@ mod tests {
                 "Socrates".to_string(),
                 "PERSON".to_string(),
                 0.9,
-            ),
+            )
+            .with_mentions(vec![crate::core::EntityMention {
+                chunk_id: chunk.id.clone(),
+                start_offset: 0,
+                end_offset: 8,
+                confidence: 0.9,
+            }]),
             Entity::new(
                 EntityId::new("person_phaedrus".to_string()),
                 "Phaedrus".to_string(),
                 "PERSON".to_string(),
                 0.9,
-            ),
+            )
+            .with_mentions(vec![crate::core::EntityMention {
+                chunk_id: chunk.id.clone(),
+                start_offset: 29,
+                end_offset: 37,
+                confidence: 0.9,
+            }]),
         ];
 
         let relationships = extractor.extract_relationships_fallback(&entities, &chunk);
