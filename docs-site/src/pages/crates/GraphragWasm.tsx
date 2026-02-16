@@ -11,6 +11,11 @@ export default function GraphragWasm() {
       <p className="text-lg text-zinc-400 mb-10">
         WASM bindings for 100% client-side GraphRAG. GPU-accelerated embeddings via ONNX Runtime Web and LLM synthesis via WebLLM.
       </p>
+      <p className="text-sm text-zinc-400 mb-8">
+        crates.io: pending publish
+        {" · "}
+        <a className="text-emerald-400 hover:text-emerald-300" href="https://github.com/stevedores-org/oxidizedRAG" target="_blank" rel="noreferrer">source</a>
+      </p>
 
       <h2 className="text-xl font-bold tracking-tight mt-10 mb-3 pb-2 border-b border-zinc-800/60">Browser Stack</h2>
       <div className="border border-zinc-800 rounded-xl overflow-hidden text-[13px]">

@@ -12,6 +12,11 @@ export default function GraphragServer() {
       <p className="text-lg text-zinc-400 mb-10">
         Production REST API with Actix-web 4.9, Apistos (OpenAPI 3.0.3), Qdrant, and Ollama.
       </p>
+      <p className="text-sm text-zinc-400 mb-8">
+        <a className="text-emerald-400 hover:text-emerald-300" href="https://crates.io/crates/graphrag-server" target="_blank" rel="noreferrer">crates.io</a>
+        {" · "}
+        <a className="text-emerald-400 hover:text-emerald-300" href="https://github.com/stevedores-org/oxidizedRAG" target="_blank" rel="noreferrer">source</a>
+      </p>
 
       <h2 className="text-xl font-bold tracking-tight mt-10 mb-3 pb-2 border-b border-zinc-800/60">Endpoints</h2>
       <div className="border border-zinc-800 rounded-xl overflow-hidden text-[13px] mb-6">
