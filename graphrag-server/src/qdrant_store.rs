@@ -12,11 +12,31 @@
 //!
 //! ## Usage
 //!
-//! ```rust
+//! ```rust,no_run
+//! use graphrag_server::qdrant_store::{QdrantStore, DocumentMetadata};
+//! use std::collections::HashMap;
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let store = QdrantStore::new("http://localhost:6334", "graphrag").await?;
 //! store.create_collection(384).await?;
-//! store.add_document("doc1", embedding, metadata).await?;
-//! let results = store.search(query_embedding, 10, None).await?;
+//!
+//! let embedding = vec![0.1; 384];
+//! let metadata = DocumentMetadata {
+//!     id: "doc1".to_string(),
+//!     title: "Test".to_string(),
+//!     text: "Content".to_string(),
+//!     chunk_index: 0,
+//!     entities: vec![],
+//!     relationships: vec![],
+//!     timestamp: "now".to_string(),
+//!     custom: HashMap::new(),
+//! };
+//!
+//! store.add_document("doc1", embedding.clone(), metadata).await?;
+//! let results = store.search(embedding, 10, None).await?;
+//! # Ok(())
+//! # }
 //! ```
 
 use qdrant_client::{
