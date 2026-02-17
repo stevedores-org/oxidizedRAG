@@ -441,6 +441,10 @@ impl GleaningEntityExtractor {
             .chars()
             .filter(|c| c.is_alphanumeric() || *c == '_')
             .collect::<String>()
+            .split('_')
+            .filter(|segment| !segment.is_empty())
+            .collect::<Vec<_>>()
+            .join("_")
     }
 
     /// Get extraction statistics
@@ -572,7 +576,7 @@ mod tests {
 
         assert_eq!(extractor.normalize_name("New York City"), "new_york_city");
         assert_eq!(extractor.normalize_name("A B C"), "a_b_c");
-        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple___spaces");
+        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple_spaces");
     }
 
     #[test]

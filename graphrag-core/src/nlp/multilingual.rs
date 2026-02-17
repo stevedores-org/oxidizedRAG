@@ -201,6 +201,8 @@ impl LanguageDetector {
         english_model.train("hello world how are you doing today", 3);
         english_model.train("it is important to learn new languages", 3);
         english_model.train("this is english text", 3);
+        english_model.train("thank you for your help", 3);
+        english_model.train("this is an example of english text", 3);
         self.models.insert(Language::English, english_model);
 
         // Spanish
@@ -222,6 +224,7 @@ impl LanguageDetector {
         french_model.train("bonjour comment allez-vous aujourd'hui", 3);
         french_model.train("il est important d'apprendre de nouvelles langues", 3);
         french_model.train("merci beaucoup pour votre aide", 3);
+        french_model.train("voici un exemple de texte français", 3);
         self.models.insert(Language::French, french_model);
 
         // German
@@ -232,6 +235,7 @@ impl LanguageDetector {
         german_model.train("es ist wichtig neue sprachen zu lernen", 3);
         german_model.train("vielen dank für ihre hilfe", 3);
         german_model.train("das ist ein beispiel für deutschen text", 3);
+        german_model.train("dies ist deutscher text", 3);
         self.models.insert(Language::German, german_model);
 
         // Portuguese

@@ -396,6 +396,10 @@ impl LLMEntityExtractor {
             .chars()
             .filter(|c| c.is_alphanumeric() || *c == '_')
             .collect::<String>()
+            .split('_')
+            .filter(|segment| !segment.is_empty())
+            .collect::<Vec<_>>()
+            .join("_")
     }
 }
 
@@ -528,6 +532,6 @@ Here's the extraction:
 
         assert_eq!(extractor.normalize_name("San Francisco"), "san_francisco");
         assert_eq!(extractor.normalize_name("A B C"), "a_b_c");
-        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple___spaces");
+        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple_spaces");
     }
 }
