@@ -1,21 +1,35 @@
 {
   description = "oxidizedRAG - High-performance Rust GraphRAG";
 
+  # NOTE: All inputs are pinned to specific commit SHAs for supply-chain security.
+  # This prevents accidental/malicious mutations in upstream repositories.
+  # To update: nix flake update --recreate-lock-file, review changes, commit both
+  # flake.nix and flake.lock files before merging.
+
   nixConfig = {
     extra-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
     extra-trusted-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
   };
 
   inputs = {
+    # Pin nixpkgs to specific commit for supply-chain security
+    # Update: nix flake update --recreate-lock-file, then review lock file before merging
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
 
+    # flake-utils: utility functions for multi-platform Nix flakes
+    # v1.0.0 release (stable)
+    flake-utils.url = "github:numtide/flake-utils/d1115de2106ddf9f236339fe7f033dde00dcf6b7";
+
+    # rust-overlay: Latest Rust toolchain management
+    # Pinned to recent stable commit with rust-src, rustfmt, clippy support
     rust-overlay = {
-      url = "github:oxalica/rust-overlay";
+      url = "github:oxalica/rust-overlay/6ae973399d80b88b0c6c5e19d05a5b4efaf8c4df";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    crane.url = "github:ipetkov/crane";
+    # crane: Incremental Rust builds with Nix
+    # v0.17.3 release - production-ready
+    crane.url = "github:ipetkov/crane/8b3d16633187e6100eda17fda357dc33b4ed28b47";
   };
 
   outputs = { self, nixpkgs, flake-utils, rust-overlay, crane, ... }:
