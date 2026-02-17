@@ -114,7 +114,7 @@ pub struct ValidationResult {
     /// Recommended actions to improve quality.
     pub recommendations: Vec<String>,
     /// Detailed quality metrics for the validated content.
-    pub quality_metrics: QualityMetrics,
+    pub quality_metrics: ResponseValidationMetrics,
 }
 
 /// A specific validation issue found during checking.
@@ -182,7 +182,7 @@ pub enum IssueSeverity {
 /// for detailed assessment of response quality.
 #[cfg(feature = "rograg")]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct QualityMetrics {
+pub struct ResponseValidationMetrics {
     /// Logical flow and coherence score (range: 0.0-1.0).
     pub coherence_score: f32,
     /// Query-response relevance score (range: 0.0-1.0).
@@ -299,7 +299,7 @@ impl QueryValidator {
                 validation_score: 1.0,
                 issues: vec![],
                 recommendations: vec![],
-                quality_metrics: QualityMetrics::default(),
+                quality_metrics: ResponseValidationMetrics::default(),
             });
         }
 
@@ -361,7 +361,7 @@ impl QueryValidator {
             validation_score,
             issues,
             recommendations: vec![],
-            quality_metrics: QualityMetrics::default(),
+            quality_metrics: ResponseValidationMetrics::default(),
         })
     }
 
@@ -372,7 +372,7 @@ impl QueryValidator {
         }
 
         let mut issues = Vec::new();
-        let mut quality_metrics = QualityMetrics::default();
+        let mut quality_metrics = ResponseValidationMetrics::default();
 
         // Run quality checks
         for check in &self.quality_checks {
@@ -434,8 +434,19 @@ impl QueryValidator {
         quality_metrics.readability_score = self.calculate_readability_score(response);
         quality_metrics.source_credibility_score = self.calculate_source_credibility_score(response);
 
+        // Create validation result
+        let validation_score = 1.0 - (issues.len() as f32 * 0.1).min(0.8);
+        let validation_result = ValidationResult {
+            is_valid: !issues.iter().any(|i| matches!(i.severity, IssueSeverity::Critical)),
+            validation_score,
+            issues: issues.clone(),
+            recommendations: vec![],
+            quality_metrics,
+        };
+
         // Create validated response
         let mut validated_response = response.clone();
+        validated_response.validation_result = Some(validation_result);
 
         // Apply any necessary modifications based on validation results
         if issues.iter().any(|i| matches!(i.severity, IssueSeverity::Critical)) {
@@ -917,6 +928,7 @@ mod tests {
             processing_stats: ProcessingStats::default(),
             is_streaming: false,
             is_refusal: false,
+            validation_result: None,
         }
     }
 

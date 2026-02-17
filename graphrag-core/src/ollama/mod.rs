@@ -149,35 +149,45 @@ impl OllamaClient {
     }
 }
 
+/// Async generator for Ollama LLM
 #[cfg(feature = "async-traits")]
-#[async_trait]
-impl AsyncLanguageModel for OllamaClient {
+pub struct AsyncOllamaGenerator {
+    client: OllamaClient,
+}
+
+#[cfg(feature = "async-traits")]
+impl AsyncOllamaGenerator {
+    /// Create a new async Ollama generator
+    pub async fn new(config: OllamaConfig) -> Result<Self> {
+        Ok(Self {
+            client: OllamaClient::new(config),
+        })
+    }
+}
+
+#[cfg(feature = "async-traits")]
+#[async_trait::async_trait]
+impl crate::core::traits::AsyncLanguageModel for AsyncOllamaGenerator {
     type Error = GraphRAGError;
 
     async fn complete(&self, prompt: &str) -> Result<String> {
-        self.generate(prompt).await
+        self.client.generate(prompt).await
     }
 
-    async fn complete_with_params(&self, prompt: &str, _params: GenerationParams) -> Result<String> {
-        // TODO: Support custom parameters overrides
-        self.generate(prompt).await
+    async fn complete_with_params(&self, prompt: &str, _params: crate::core::traits::GenerationParams) -> Result<String> {
+        self.client.generate(prompt).await
     }
 
     async fn is_available(&self) -> bool {
-        // Simple availability check
-        true
+        self.client.config.enabled
     }
 
-    async fn model_info(&self) -> ModelInfo {
-        ModelInfo {
-            name: self.config.chat_model.clone(),
+    async fn model_info(&self) -> crate::core::traits::ModelInfo {
+        crate::core::traits::ModelInfo {
+            name: self.client.config.chat_model.clone(),
             version: None,
-            max_context_length: self.config.max_tokens.map(|t| t as usize),
+            max_context_length: Some(4096),
             supports_streaming: false,
         }
-    }
-
-    async fn get_usage_stats(&self) -> Result<ModelUsageStats> {
-        Ok(ModelUsageStats::default())
     }
 }

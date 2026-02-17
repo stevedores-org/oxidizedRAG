@@ -148,6 +148,7 @@ impl LanguageModel {
 
     /// Add training text
     fn train(&mut self, text: &str, n: usize) {
+        let text = text.to_lowercase();
         let chars: Vec<char> = text.chars().collect();
         for window in chars.windows(n) {
             let ngram: String = window.iter().collect();
@@ -158,6 +159,7 @@ impl LanguageModel {
 
     /// Calculate probability of text
     fn score(&self, text: &str, n: usize) -> f32 {
+        let text = text.to_lowercase();
         let chars: Vec<char> = text.chars().collect();
         let mut score = 0.0;
         let mut count = 0;

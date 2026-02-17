@@ -8,6 +8,7 @@ use crate::{
     text::{HierarchicalChunker, SemanticChunker},
 };
 
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Global counter for generating unique chunk IDs
@@ -78,7 +79,7 @@ impl ChunkingStrategy for HierarchicalChunkingStrategy {
 /// Wraps the existing SemanticChunker to implement ChunkingStrategy trait.
 /// This strategy uses embedding similarity to determine natural breakpoints.
 pub struct SemanticChunkingStrategy {
-    inner: SemanticChunker,
+    inner: Mutex<SemanticChunker>,
     document_id: DocumentId,
 }
 
@@ -86,7 +87,7 @@ impl SemanticChunkingStrategy {
     /// Create a new semantic chunking strategy
     pub fn new(chunker: SemanticChunker, document_id: DocumentId) -> Self {
         Self {
-            inner: chunker,
+            inner: Mutex::new(chunker),
             document_id,
         }
     }
@@ -94,24 +95,22 @@ impl SemanticChunkingStrategy {
 
 impl ChunkingStrategy for SemanticChunkingStrategy {
     fn chunk(&self, text: &str) -> Vec<TextChunk> {
-        // Note: This is a simplified implementation
-        // In a real scenario, you would need to handle the async nature of semantic chunking
-        // or use a synchronous embedding generator
-
-        // For now, fall back to a simple sentence-based approach
-        let sentences: Vec<&str> = text.split(&['.', '!', '?'][..])
-            .filter(|s| !s.trim().is_empty())
-            .collect();
+        let mut inner = self.inner.lock().unwrap();
+        let semantic_chunks = match inner.chunk(text) {
+            Ok(chunks) => chunks,
+            Err(_) => return Vec::new(),
+        };
 
         let mut chunks = Vec::new();
         let mut current_pos = 0;
 
-        // Group sentences into chunks of reasonable size
-        let chunk_size = 5; // sentences per chunk
-        for chunk_sentences in sentences.chunks(chunk_size) {
-            let chunk_content = chunk_sentences.join(". ") + ".";
+        for semantic_chunk in semantic_chunks {
             let chunk_id = ChunkId::new(format!("{}_{}", self.document_id,
                 CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)));
+
+            // Note: SemanticChunk doesn't provide byte offsets, so we estimate
+            // In a production environment, we'd track offsets during splitting
+            let chunk_content = semantic_chunk.content;
             let chunk_start = current_pos;
             let chunk_end = chunk_start + chunk_content.len();
 

@@ -1428,6 +1428,7 @@ mod tests {
             processing_stats: ProcessingStats::default(),
             is_streaming: false,
             is_refusal: false,
+            validation_result: None,
         }
     }
 

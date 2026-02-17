@@ -21,7 +21,7 @@ required-features = ["hydrate"]
 [features]
 default = ["voy"]
 voy = [] # Voy vector search for WASM
-# webgpu = [] # GPU acceleration via WebGPU - DISABLED due to Metal/objc build issues
+webgpu = [] # GPU acceleration via WebGPU
 hydrate = ["leptos/hydrate"]
 ssr = ["leptos/ssr"]
 
@@ -29,7 +29,7 @@ ssr = ["leptos/ssr"]
 # GraphRAG core library with WASM support (no async, no parallel-processing, no ollama)
 # Note: pagerank feature requires rayon which doesn't work in WASM
 # Added: leiden for hierarchical community detection
-graphrag-core = { path = "../graphrag-core", features = ["wasm", "memory-storage", "basic-retrieval", "leiden"], default-features = false }
+graphrag-core = { path = "../graphrag-core", features = ["wasm", "memory-storage", "basic-retrieval", "leiden", "tracing"], default-features = false }
 
 # Leptos framework (merged from graphrag-leptos)
 leptos = { workspace = true }
