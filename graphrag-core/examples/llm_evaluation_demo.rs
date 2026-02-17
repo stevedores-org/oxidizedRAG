@@ -9,7 +9,7 @@
 //! ```
 
 use graphrag_core::{
-    Document, DocumentId, Entity, EntityId, Relationship, ChunkId,
+    Document, DocumentId, Entity, EntityId, Relationship,
     evaluation::{
         EvaluableQueryResultBuilder, LLMEvaluationPrompt, LLMEvaluation,
         DocumentProcessingValidator, EntityExtractionValidator,

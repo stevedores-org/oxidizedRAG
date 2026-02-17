@@ -367,6 +367,7 @@ impl StreamingResponseBuilder {
             },
             is_streaming: self.config.enable_streaming,
             is_refusal: false,
+            validation_result: None,
         })
     }
 

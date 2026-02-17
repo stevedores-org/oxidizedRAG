@@ -8,7 +8,7 @@
 //! 2. Tree-sitter AST-based chunking for embedded code snippets - preserves syntactic boundaries
 
 use graphrag_core::{
-    core::{DocumentId, Document, TextChunk, ChunkingStrategy},
+    core::{DocumentId, Document, TextChunk},
     text::{TextProcessor, HierarchicalChunkingStrategy},
 };
 use std::time::Instant;
