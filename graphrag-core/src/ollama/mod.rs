@@ -3,6 +3,13 @@
 //! This module provides integration with Ollama for local LLM inference.
 
 use crate::core::{GraphRAGError, Result};
+#[cfg(feature = "async-traits")]
+use crate::core::traits::{AsyncLanguageModel, ModelInfo, GenerationParams, ModelUsageStats};
+#[cfg(feature = "async-traits")]
+use async_trait::async_trait;
+
+/// Type alias for AsyncOllamaGenerator to match async_graphrag usage
+pub type AsyncOllamaGenerator = OllamaClient;
 
 /// Ollama configuration
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
