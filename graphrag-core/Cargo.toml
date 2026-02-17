@@ -10,7 +10,7 @@ keywords = ["graphrag", "knowledge-graph", "rag", "llm", "ai"]
 categories = ["algorithms", "science", "text-processing"]
 
 [features]
-default = ["memory-storage", "basic-retrieval", "parallel-processing", "async", "ureq"]
+default = ["memory-storage", "basic-retrieval", "parallel-processing", "async", "ureq", "async-traits"]
 
 # Async support (enabled by default, disabled for WASM)
 async = ["tokio", "futures", "tracing"]
