@@ -497,44 +497,6 @@ impl App {
         Ok(())
     }
 
-    /// Handle loading a document
-    async fn handle_load_document(&mut self, path: PathBuf) -> Result<()> {
-        if !self.graphrag.is_initialized().await {
-            self.action_tx.send(Action::SetStatus(
-                StatusType::Error,
-                "GraphRAG not initialized. Load a config first".to_string(),
-            ))?;
-            return Ok(());
-        }
-
-        let expanded = FileOperations::expand_tilde(&path);
-
-        self.action_tx.send(Action::StartProgress(format!(
-            "Loading document: {}",
-            expanded.display()
-        )))?;
-
-        match self.graphrag.load_document(&expanded).await {
-            Ok(message) => {
-                self.action_tx.send(Action::StopProgress)?;
-                self.action_tx.send(Action::DocumentLoaded(message.clone()))?;
-                self.action_tx
-                    .send(Action::SetStatus(StatusType::Success, message))?;
-
-                self.update_stats().await;
-            }
-            Err(e) => {
-                self.action_tx.send(Action::StopProgress)?;
-                self.action_tx.send(Action::SetStatus(
-                    StatusType::Error,
-                    format!("Failed to load document: {}", e),
-                ))?;
-            }
-        }
-
-        Ok(())
-    }
-
     /// Handle loading a document with rebuild option
     async fn handle_load_document_with_rebuild(&mut self, path: PathBuf, rebuild: bool) -> Result<()> {
         if !self.graphrag.is_initialized().await {

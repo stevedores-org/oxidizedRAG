@@ -99,6 +99,7 @@ impl GraphRAGHandler {
     }
 
     /// Load a document into the knowledge graph (backwards compatibility)
+    #[allow(dead_code)]
     pub async fn load_document(&self, path: &Path) -> Result<String> {
         self.load_document_with_options(path, false).await
     }
@@ -150,6 +151,7 @@ impl GraphRAGHandler {
     }
 
     /// Execute a query against the knowledge graph
+    #[allow(dead_code)]
     pub async fn query(&self, query_text: &str) -> Result<String> {
         tracing::info!("Executing query: {}", query_text);
 

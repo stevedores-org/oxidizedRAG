@@ -11,7 +11,7 @@ use crate::Result;
 use crate::rograg::{
     DecompositionResult, FuzzyMatchResult, FuzzyMatcher, HybridQueryDecomposer, IntentClassifier,
     IntentResult, LogicFormResult, LogicFormRetriever, QueryDecomposer, QueryValidator,
-    StreamingResponseBuilder,
+    StreamingResponseBuilder, ValidationResult,
 };
 
 use crate::rograg::quality_metrics::QualityMetrics;
@@ -821,6 +821,9 @@ pub struct RogragResponse {
 
     /// Whether response was generated with streaming.
     pub is_streaming: bool,
+
+    /// Validation result for the response.
+    pub validation_result: Option<ValidationResult>,
 }
 
 #[cfg(feature = "rograg")]
@@ -844,6 +847,7 @@ impl RogragResponse {
             processing_stats: ProcessingStats::default(),
             is_refusal: true,
             is_streaming: false,
+            validation_result: None,
         }
     }
 }
