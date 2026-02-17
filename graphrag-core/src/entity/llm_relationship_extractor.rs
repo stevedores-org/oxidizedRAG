@@ -468,20 +468,33 @@ mod tests {
             50,
         );
 
-        let entities = vec![
-            Entity::new(
-                EntityId::new("person_socrates".to_string()),
-                "Socrates".to_string(),
-                "PERSON".to_string(),
-                0.9,
-            ),
-            Entity::new(
-                EntityId::new("person_phaedrus".to_string()),
-                "Phaedrus".to_string(),
-                "PERSON".to_string(),
-                0.9,
-            ),
-        ];
+        let mut entity1 = Entity::new(
+            EntityId::new("person_socrates".to_string()),
+            "Socrates".to_string(),
+            "PERSON".to_string(),
+            0.9,
+        );
+        entity1.mentions.push(crate::core::EntityMention {
+            chunk_id: ChunkId::new("test".to_string()),
+            start_offset: 0,
+            end_offset: 8,
+            confidence: 0.9,
+        });
+
+        let mut entity2 = Entity::new(
+            EntityId::new("person_phaedrus".to_string()),
+            "Phaedrus".to_string(),
+            "PERSON".to_string(),
+            0.9,
+        );
+        entity2.mentions.push(crate::core::EntityMention {
+            chunk_id: ChunkId::new("test".to_string()),
+            start_offset: 24,
+            end_offset: 32,
+            confidence: 0.9,
+        });
+
+        let entities = vec![entity1, entity2];
 
         let relationships = extractor.extract_relationships_fallback(&entities, &chunk);
 

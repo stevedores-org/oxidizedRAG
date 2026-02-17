@@ -88,7 +88,7 @@ pub use validator::{
     ValidationIssue, 
     IssueType, 
     IssueSeverity,
-    QualityMetrics as ValidatorQualityMetrics
+    ResponseValidationMetrics as ValidatorQualityMetrics
 };
 
 #[cfg(feature = "rograg")]

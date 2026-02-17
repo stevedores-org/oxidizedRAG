@@ -148,6 +148,7 @@ impl LanguageModel {
 
     /// Add training text
     fn train(&mut self, text: &str, n: usize) {
+        let text = text.to_lowercase();
         let chars: Vec<char> = text.chars().collect();
         for window in chars.windows(n) {
             let ngram: String = window.iter().collect();
@@ -158,6 +159,7 @@ impl LanguageModel {
 
     /// Calculate probability of text
     fn score(&self, text: &str, n: usize) -> f32 {
+        let text = text.to_lowercase();
         let chars: Vec<char> = text.chars().collect();
         let mut score = 0.0;
         let mut count = 0;
@@ -198,30 +200,36 @@ impl LanguageDetector {
         let mut english_model = LanguageModel::new();
         english_model.train("the quick brown fox jumps over the lazy dog", 3);
         english_model.train("this is a test of the english language", 3);
+        english_model.train("hello world this is an english sentence", 3);
         self.models.insert(Language::English, english_model);
 
         // Spanish
         let mut spanish_model = LanguageModel::new();
         spanish_model.train("el rápido zorro marrón salta sobre el perro perezoso", 3);
         spanish_model.train("esta es una prueba del idioma español", 3);
+        spanish_model.train("esto es un texto en español para probar", 3);
+        spanish_model.train("hola mundo esto es una frase en español", 3);
         self.models.insert(Language::Spanish, spanish_model);
 
         // French
         let mut french_model = LanguageModel::new();
         french_model.train("le renard brun rapide saute par-dessus le chien paresseux", 3);
         french_model.train("ceci est un test de la langue française", 3);
+        french_model.train("bonjour tout le monde ceci est une phrase en français", 3);
         self.models.insert(Language::French, french_model);
 
         // German
         let mut german_model = LanguageModel::new();
         german_model.train("der schnelle braune fuchs springt über den faulen hund", 3);
         german_model.train("dies ist ein test der deutschen sprache", 3);
+        german_model.train("hallo welt dies ist ein deutscher satz", 3);
         self.models.insert(Language::German, german_model);
 
         // Portuguese
         let mut portuguese_model = LanguageModel::new();
         portuguese_model.train("a rápida raposa marrom pula sobre o cão preguiçoso", 3);
         portuguese_model.train("este é um teste da língua portuguesa", 3);
+        portuguese_model.train("olá mundo esta é uma frase em português", 3);
         self.models.insert(Language::Portuguese, portuguese_model);
 
         // TODO: Add models for Chinese, Japanese, Korean, Arabic, Russian

@@ -58,6 +58,7 @@ impl Spinner {
     }
 
     /// Get current frame without updating
+    #[allow(dead_code)]
     pub fn current_frame(&self) -> &'static str {
         self.frames[self.frame_index]
     }
