@@ -230,11 +230,17 @@ impl TextProcessor {
     /// # Examples
     ///
     /// ```rust
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
     /// use graphrag_core::text::{TextProcessor, HierarchicalChunkingStrategy};
+    /// use graphrag_core::core::{Document, DocumentId};
     ///
+    /// let document = Document::new(DocumentId::new("doc1".to_string()), "Title".to_string(), "Content".to_string());
     /// let processor = TextProcessor::new(1000, 100)?;
     /// let strategy = HierarchicalChunkingStrategy::new(500, 50, document.id.clone());
     /// let chunks = processor.chunk_with_strategy(&document, &strategy)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn chunk_with_strategy(&self, document: &Document, strategy: &dyn ChunkingStrategy) -> Result<Vec<TextChunk>> {
         let chunks = strategy.chunk(&document.content);

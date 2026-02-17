@@ -716,6 +716,7 @@ mod tests {
         let summary = config.get_summary();
 
         let expected = {
+            #[allow(unused_mut)]
             let mut count = 4;
             #[cfg(feature = "lightrag")]
             {
