@@ -598,18 +598,18 @@ mod performance_baselines {
 // ---------------------------------------------------------------------------
 // Module 7: End-to-End Agent Workflows - Full RAG Pipeline Tests
 // ---------------------------------------------------------------------------
-//!
-//! End-to-end tests validating complete RAG agent workflows including:
-//! - Multi-turn conversations with context preservation
-//! - Full RAG pipeline: index → search → generate → validate
-//! - Cross-file entity relationship discovery
-//! - Code generation with syntax validation
-//! - Context-aware code suggestions
-//! - Feedback loop and iterative improvement
-//! - Error recovery and graceful degradation
-//!
-//! These tests simulate realistic agent interactions using actual fixture code
-//! and validate the complete pipeline end-to-end with real RAG operations.
+//
+// End-to-end tests validating complete RAG agent workflows including:
+// - Multi-turn conversations with context preservation
+// - Full RAG pipeline: index → search → generate → validate
+// - Cross-file entity relationship discovery
+// - Code generation with syntax validation
+// - Context-aware code suggestions
+// - Feedback loop and iterative improvement
+// - Error recovery and graceful degradation
+//
+// These tests simulate realistic agent interactions using actual fixture code
+// and validate the complete pipeline end-to-end with real RAG operations.
 
 mod e2e_agent_workflows {
     use super::*;
@@ -771,7 +771,7 @@ mod e2e_agent_workflows {
         .expect("Failed to build graph");
 
         // Simulate code generation based on indexed code
-        let generated_code = r#"
+        let _generated_code = r#"
             pub fn test_calculator() {
                 let calc = Calculator::new();
                 assert_eq!(calc.add(2, 3), 5);
