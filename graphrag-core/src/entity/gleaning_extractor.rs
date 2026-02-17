@@ -563,6 +563,19 @@ mod tests {
     }
 
     #[test]
+    fn test_normalize_name_multi_word_regression() {
+        // Regression test for multi-word normalization ensuring underscores are preserved
+        let ollama_config = OllamaConfig::default();
+        let ollama_client = OllamaClient::new(ollama_config);
+        let config = GleaningConfig::default();
+        let extractor = GleaningEntityExtractor::new(ollama_client, config);
+
+        assert_eq!(extractor.normalize_name("New York City"), "new_york_city");
+        assert_eq!(extractor.normalize_name("A B C"), "a_b_c");
+        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple___spaces");
+    }
+
+    #[test]
     fn test_find_mentions() {
         let ollama_config = OllamaConfig::default();
         let ollama_client = OllamaClient::new(ollama_config);
