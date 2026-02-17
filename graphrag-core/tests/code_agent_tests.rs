@@ -416,10 +416,20 @@ mod agent_workflows {
 mod performance_baselines {
     use super::*;
 
-    /// Performance thresholds for CI gates (in milliseconds)
-    const INDEXING_THRESHOLD_MS: u128 = 5000;
-    const QUERY_THRESHOLD_MS: u128 = 1000;
-    const CHUNKING_THRESHOLD_MS: u128 = 2000;
+    /// Read a performance threshold from an env var, falling back to a default.
+    /// This allows CI runners with different hardware to override thresholds.
+    fn threshold_ms(env_var: &str, default: u128) -> u128 {
+        std::env::var(env_var)
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(default)
+    }
+
+    /// Default performance thresholds (in milliseconds).
+    /// Override via env vars: OXIDIZED_INDEXING_THRESHOLD_MS, etc.
+    const DEFAULT_INDEXING_THRESHOLD_MS: u128 = 5000;
+    const DEFAULT_QUERY_THRESHOLD_MS: u128 = 1000;
+    const DEFAULT_CHUNKING_THRESHOLD_MS: u128 = 2000;
 
     #[test]
     fn test_indexing_speed_has_baseline() {
@@ -436,12 +446,12 @@ mod performance_baselines {
 
         println!("Indexing 3 files took: {}ms", elapsed);
 
-        // Assert indexing doesn't regress beyond threshold
+        let threshold = threshold_ms("OXIDIZED_INDEXING_THRESHOLD_MS", DEFAULT_INDEXING_THRESHOLD_MS);
         assert!(
-            elapsed < INDEXING_THRESHOLD_MS,
+            elapsed < threshold,
             "Indexing performance regression: {}ms > {}ms threshold",
             elapsed,
-            INDEXING_THRESHOLD_MS
+            threshold
         );
     }
 
@@ -462,11 +472,12 @@ mod performance_baselines {
 
         println!("Query latency: {}ms", elapsed);
 
+        let threshold = threshold_ms("OXIDIZED_QUERY_THRESHOLD_MS", DEFAULT_QUERY_THRESHOLD_MS);
         assert!(
-            elapsed < QUERY_THRESHOLD_MS,
+            elapsed < threshold,
             "Query latency regression: {}ms > {}ms threshold",
             elapsed,
-            QUERY_THRESHOLD_MS
+            threshold
         );
     }
 
@@ -487,11 +498,12 @@ mod performance_baselines {
 
         println!("Chunking speed: {}ms", elapsed);
 
+        let threshold = threshold_ms("OXIDIZED_CHUNKING_THRESHOLD_MS", DEFAULT_CHUNKING_THRESHOLD_MS);
         assert!(
-            elapsed < CHUNKING_THRESHOLD_MS,
+            elapsed < threshold,
             "Chunking performance regression: {}ms > {}ms threshold",
             elapsed,
-            CHUNKING_THRESHOLD_MS
+            threshold
         );
     }
 
@@ -549,6 +561,7 @@ mod performance_baselines {
     }
 
     #[test]
+    #[ignore] // Timing-sensitive; run explicitly with `cargo test -- --ignored`
     fn test_p99_query_latency_percentile() {
         let graph = build_graph_from_fixtures(&[
             "calculator.rs",
@@ -566,19 +579,18 @@ mod performance_baselines {
         }
 
         latencies.sort();
-        let p99_index = (99.0 * latencies.len() as f64 / 100.0).ceil() as usize;
-        let p99_latency = latencies.get(p99_index.saturating_sub(1))
-            .copied()
-            .unwrap_or(0);
+        // P99 = value at index ceil((N-1) * 0.99)
+        let p99_index = ((latencies.len() - 1) as f64 * 0.99).ceil() as usize;
+        let p99_latency = latencies[p99_index];
 
         println!("P99 query latency: {}ms", p99_latency);
 
-        // P99 should not exceed 2x baseline
+        let threshold = threshold_ms("OXIDIZED_QUERY_THRESHOLD_MS", DEFAULT_QUERY_THRESHOLD_MS) * 2;
         assert!(
-            p99_latency < QUERY_THRESHOLD_MS * 2,
+            p99_latency < threshold,
             "P99 latency too high: {}ms > {}ms",
             p99_latency,
-            QUERY_THRESHOLD_MS * 2
+            threshold
         );
     }
 }

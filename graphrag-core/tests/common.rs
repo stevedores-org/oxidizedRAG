@@ -64,10 +64,34 @@ pub fn validate_rust_syntax(code: &str) -> std::result::Result<(), String> {
 
     let root = tree.root_node();
     if root.has_error() {
-        Err(format!(
-            "Syntax error in generated code at byte {}",
-            root.start_byte()
-        ))
+        // Walk the tree to find the first ERROR/MISSING node for a useful location
+        let mut cursor = root.walk();
+        let mut error_pos = None;
+        loop {
+            let node = cursor.node();
+            if node.is_error() || node.is_missing() {
+                let pos = node.start_position();
+                error_pos = Some((node.start_byte(), pos.row + 1, pos.column + 1));
+                break;
+            }
+            if !cursor.goto_first_child() {
+                while !cursor.goto_next_sibling() {
+                    if !cursor.goto_parent() {
+                        break;
+                    }
+                }
+                if cursor.node() == root {
+                    break;
+                }
+            }
+        }
+        match error_pos {
+            Some((byte, line, col)) => Err(format!(
+                "Syntax error in generated code at byte {}, line {}:{}",
+                byte, line, col
+            )),
+            None => Err("Syntax error in generated code (location unknown)".to_string()),
+        }
     } else {
         Ok(())
     }
