@@ -368,18 +368,29 @@ mod code_understanding {
         let graph = build_graph_from_fixtures(&["calculator.rs"])
             .expect("Failed to build graph");
 
-        // Even if no explicit relationships, verify the API works
+        // Verify the relationships API works and returns a valid collection
         let relationships: Vec<_> = graph.relationships().collect();
-
-        // If entities were extracted, there should be at least some relationship
-        // inference between co-occurring entities
         let entity_count = graph.entities().count();
+
+        // With 2+ entities in the same document, the pattern-based extractor
+        // should infer co-occurrence relationships between them
         if entity_count >= 2 {
-            // With 2+ entities in the same chunk, pattern-based extraction
-            // should infer co-occurrence relationships
-            // This is a soft assertion — may depend on extraction quality
-            let _rel_count = relationships.len();
-            // Just verify it doesn't panic
+            assert!(
+                !relationships.is_empty(),
+                "With {} entities, should extract at least one relationship",
+                entity_count
+            );
+
+            // Each relationship should have valid source and target
+            for rel in &relationships {
+                assert!(
+                    !rel.source.0.is_empty() && !rel.target.0.is_empty(),
+                    "Relationship should have non-empty source and target"
+                );
+            }
+        } else {
+            // Even with fewer entities, the API should not panic
+            let _ = relationships.len();
         }
     }
 
@@ -437,11 +448,22 @@ mod code_understanding {
         // Search for entities by name
         let results: Vec<_> = graph.find_entities_by_name("Calculator").collect();
 
-        // Should find at least one match (exact or partial)
-        // Note: depends on how the extractor names entities
-        let all_entities: Vec<String> = graph.entities().map(|e| e.name.clone()).collect();
-        println!("All entities: {:?}", all_entities);
-        println!("Search results for 'Calculator': {}", results.len());
+        // Should find at least one match — the Calculator struct is the
+        // primary entity in this fixture
+        assert!(
+            !results.is_empty(),
+            "Should find 'Calculator' entity. All entities: {:?}",
+            graph.entities().map(|e| e.name.clone()).collect::<Vec<_>>()
+        );
+
+        // Every result should contain "Calculator" in its name
+        for entity in &results {
+            assert!(
+                entity.name.contains("Calculator"),
+                "Entity '{}' should contain 'Calculator'",
+                entity.name
+            );
+        }
     }
 }
 
@@ -565,33 +587,65 @@ mod code_retrieval {
 
     #[test]
     fn test_query_analysis_classifies_code_queries() {
+        use graphrag_core::retrieval::QueryType;
+
         let config = Config::default();
         let retrieval = RetrievalSystem::new(&config).expect("Failed to create retrieval");
-        let graph = KnowledgeGraph::new();
 
-        // Entity-focused query
+        // Use a populated graph so entity detection works
+        let graph = build_graph_from_fixtures(&["calculator.rs", "api_client.rs"])
+            .expect("Failed to build graph");
+
+        // Relationship query — "Calculator" matches multiple entities
+        // (Calculator, CalculatorError), triggering Relationship classification
         let analysis = retrieval
             .analyze_query("Calculator struct", &graph)
             .expect("Failed to analyze");
-        println!("'Calculator struct' classified as: {:?}", analysis.query_type);
+        assert_eq!(
+            analysis.query_type,
+            QueryType::Relationship,
+            "'Calculator struct' should be Relationship (matches multiple entities), got {:?}",
+            analysis.query_type
+        );
+        assert!(
+            !analysis.key_entities.is_empty(),
+            "'Calculator struct' should detect key entities"
+        );
 
-        // Relationship query
+        // Exploratory query — use empty graph so entity matching doesn't
+        // override the question-word heuristic
+        let empty_graph = KnowledgeGraph::new();
         let analysis = retrieval
-            .analyze_query("what functions call fetch_data", &graph)
+            .analyze_query("how does the graph algorithm module work", &empty_graph)
             .expect("Failed to analyze");
-        println!(
-            "'what functions call fetch_data' classified as: {:?}",
+        assert_eq!(
+            analysis.query_type,
+            QueryType::Exploratory,
+            "'how does the graph algorithm module work' should be Exploratory, got {:?}",
             analysis.query_type
         );
 
-        // Exploratory query
+        // Factual query — no entities match, no question words
         let analysis = retrieval
-            .analyze_query("how does the graph algorithm module work", &graph)
+            .analyze_query("shortest path algorithm", &empty_graph)
             .expect("Failed to analyze");
-        println!(
-            "'how does the graph algorithm module work' classified as: {:?}",
+        assert_eq!(
+            analysis.query_type,
+            QueryType::Factual,
+            "Query with no entity matches and no question words should be Factual, got {:?}",
             analysis.query_type
         );
+
+        // All analyses should have a complexity score in [0.0, 1.0]
+        for query in &["Calculator struct", "how does the graph algorithm module work"] {
+            let a = retrieval.analyze_query(query, &graph).unwrap();
+            assert!(
+                (0.0..=1.0).contains(&a.complexity_score),
+                "Complexity score for '{}' should be in [0.0, 1.0], got {}",
+                query,
+                a.complexity_score
+            );
+        }
     }
 
     #[test]
