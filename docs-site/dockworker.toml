@@ -1,0 +1,100 @@
+# dockworker.toml - OCI Standard Configuration for oxidizedRAG docs-site
+# No Dockerfile required - dockworker.ai builds OCI-compliant images
+
+[package]
+name = "oxidizedrag-docs-site"
+version = "0.1.0"
+description = "oxidizedRAG documentation site"
+runtime = "bun"
+
+[oci]
+spec = "1.0"
+builder = "nix"
+base = "cgr.dev/chainguard/nginx:1.27"
+
+[oci.image]
+authors = ["stevedores-org <community@stevedores.org>"]
+url = "https://github.com/stevedores-org/oxidizedRAG"
+source = "https://github.com/stevedores-org/oxidizedRAG"
+vendor = "stevedores-org"
+licenses = "MIT"
+title = "oxidizedrag-docs-site"
+
+[oci.image.labels]
+"ai.stevedores.app" = "oxidizedrag-docs-site"
+"ai.stevedores.runtime" = "bun"
+"ai.stevedores.team" = "community"
+"org.opencontainers.image.source" = "https://github.com/stevedores-org/oxidizedRAG"
+
+[oci.config]
+user = "nonroot:nonroot"
+workdir = "/usr/share/nginx/html"
+entrypoint = ["/usr/sbin/nginx"]
+cmd = ["-g", "daemon off;"]
+expose = ["8080/tcp"]
+stop_signal = "SIGTERM"
+
+[oci.config.env]
+PORT = "8080"
+
+[build]
+runtime = "bun"
+install = "bun install --frozen-lockfile"
+build = "bun run build"
+
+[build.output]
+include = [
+  "dist/**",
+  "nginx.conf.template",
+]
+exclude = [
+  "node_modules",
+  "src",
+  "*.md",
+  ".git",
+  ".env*",
+  "**/*.test.ts",
+  "**/*.spec.ts",
+  "Dockerfile",
+  "Containerfile",
+]
+
+[oci.layers]
+
+[[oci.layers.layer]]
+name = "nginx-config"
+paths = [{ src = "nginx.conf.template", dest = "/etc/nginx/templates/default.conf.template" }]
+cache = true
+
+[[oci.layers.layer]]
+name = "static-assets"
+paths = [{ src = "dist", dest = "/usr/share/nginx/html/oxidizedRAG" }]
+cache = false
+invalidate_on = ["package.json", "bun.lock"]
+
+[oci.healthcheck]
+test = ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/oxidizedRAG/"]
+interval = "30s"
+timeout = "5s"
+start_period = "10s"
+retries = 3
+
+[oci.platforms]
+architectures = ["amd64", "arm64"]
+
+[oci.security]
+user = 65532
+group = 65532
+read_only_rootfs = true
+no_new_privileges = true
+drop_capabilities = ["ALL"]
+
+[oci.sbom]
+enabled = true
+format = "spdx-json"
+attach = true
+
+[oci.signing]
+enabled = true
+provider = "sigstore"
+keyless = true
