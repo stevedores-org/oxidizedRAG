@@ -582,3 +582,82 @@ mod performance_baselines {
         );
     }
 }
+
+// ---------------------------------------------------------------------------
+// Module 8: Multi-Language Support
+// ---------------------------------------------------------------------------
+
+mod multi_language_support {
+    use super::*;
+
+    #[test]
+    fn test_python_code_chunking_preserves_boundaries() {
+        let doc = fixture_document("example.py");
+        let processor = TextProcessor::new(220, 40)
+            .expect("Failed to create processor");
+        let chunks = processor.chunk_text(&doc)
+            .expect("Failed to chunk Python fixture");
+
+        assert!(!chunks.is_empty(), "Python fixture should produce chunks");
+        assert!(
+            chunks.iter().any(|c| c.content.contains("class DataProcessor")),
+            "Expected class declaration to be preserved in at least one chunk"
+        );
+        assert!(
+            chunks.iter().any(|c| c.content.contains("def normalize_name")),
+            "Expected function declaration to be preserved in at least one chunk"
+        );
+    }
+
+    #[test]
+    fn test_javascript_function_extraction() {
+        let doc = fixture_document("example.js");
+        let processor = TextProcessor::new(220, 40)
+            .expect("Failed to create processor");
+        let chunks = processor.chunk_text(&doc)
+            .expect("Failed to chunk JavaScript fixture");
+
+        assert!(!chunks.is_empty(), "JavaScript fixture should produce chunks");
+        assert!(
+            chunks.iter().any(|c| c.content.contains("function createCounter")),
+            "Expected top-level JS function in chunk output"
+        );
+        assert!(
+            chunks.iter().any(|c| c.content.contains("async function fetchUserProfile")),
+            "Expected async JS function in chunk output"
+        );
+    }
+
+    #[test]
+    fn test_typescript_interface_detection() {
+        let doc = fixture_document("example.ts");
+        let processor = TextProcessor::new(220, 40)
+            .expect("Failed to create processor");
+        let chunks = processor.chunk_text(&doc)
+            .expect("Failed to chunk TypeScript fixture");
+
+        assert!(!chunks.is_empty(), "TypeScript fixture should produce chunks");
+        assert!(
+            chunks.iter().any(|c| c.content.contains("interface Repository<T>")),
+            "Expected generic interface declaration in chunk output"
+        );
+        assert!(
+            chunks.iter().any(|c| c.content.contains("class InMemoryRepository")),
+            "Expected class declaration in chunk output"
+        );
+    }
+
+    #[test]
+    fn test_multi_language_cross_file_understanding() {
+        let graph = build_graph_from_fixtures(&["example.py", "example.js", "example.ts"])
+            .expect("Failed to build graph from multi-language fixtures");
+
+        assert_eq!(graph.documents().count(), 3, "Should index all three language files");
+        assert!(graph.chunks().count() >= 3, "Should create chunks across all fixtures");
+
+        let titles: Vec<_> = graph.documents().map(|d| d.title.clone()).collect();
+        assert!(titles.contains(&"example.py".to_string()));
+        assert!(titles.contains(&"example.js".to_string()));
+        assert!(titles.contains(&"example.ts".to_string()));
+    }
+}
