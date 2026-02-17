@@ -11,9 +11,12 @@
 
 use graphrag_core::{
     core::{Document, DocumentId, Entity, EntityId, KnowledgeGraph, Relationship},
-    graph::LeidenConfig,
 };
 
+#[cfg(feature = "leiden")]
+use graphrag_core::graph::LeidenConfig;
+
+#[cfg(feature = "leiden")]
 fn main() -> graphrag_core::Result<()> {
     println!("🚀 Hierarchical GraphRAG Demo");
     println!("{}", "=".repeat(80));
@@ -269,5 +272,12 @@ fn main() -> graphrag_core::Result<()> {
     println!("\n✅ Hierarchical GraphRAG with Adaptive Routing demo completed!");
     println!("{}", "=".repeat(80));
 
+    Ok(())
+}
+
+#[cfg(not(feature = "leiden"))]
+fn main() -> graphrag_core::Result<()> {
+    println!("This example requires the 'leiden' feature.");
+    println!("Run with: cargo run --example hierarchical_graphrag_demo --features leiden");
     Ok(())
 }

@@ -3,6 +3,13 @@
 //! This module provides integration with Ollama for local LLM inference.
 
 use crate::core::{GraphRAGError, Result};
+#[cfg(feature = "async-traits")]
+use crate::core::traits::{AsyncLanguageModel, ModelInfo, GenerationParams, ModelUsageStats};
+#[cfg(feature = "async-traits")]
+use async_trait::async_trait;
+
+/// Type alias for AsyncOllamaGenerator to match async_graphrag usage
+pub type AsyncOllamaGenerator = OllamaClient;
 
 /// Ollama configuration
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -139,5 +146,38 @@ impl OllamaClient {
         Err(GraphRAGError::Generation {
             message: "ureq feature required for Ollama integration".to_string(),
         })
+    }
+}
+
+#[cfg(feature = "async-traits")]
+#[async_trait]
+impl AsyncLanguageModel for OllamaClient {
+    type Error = GraphRAGError;
+
+    async fn complete(&self, prompt: &str) -> Result<String> {
+        self.generate(prompt).await
+    }
+
+    async fn complete_with_params(&self, prompt: &str, _params: GenerationParams) -> Result<String> {
+        // TODO: Support custom parameters overrides
+        self.generate(prompt).await
+    }
+
+    async fn is_available(&self) -> bool {
+        // Simple availability check
+        true
+    }
+
+    async fn model_info(&self) -> ModelInfo {
+        ModelInfo {
+            name: self.config.chat_model.clone(),
+            version: None,
+            max_context_length: self.config.max_tokens.map(|t| t as usize),
+            supports_streaming: false,
+        }
+    }
+
+    async fn get_usage_stats(&self) -> Result<ModelUsageStats> {
+        Ok(ModelUsageStats::default())
     }
 }

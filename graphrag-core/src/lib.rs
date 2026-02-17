@@ -30,7 +30,7 @@
 //! ```rust
 //! use graphrag_core::{GraphRAG, Config};
 //!
-//! # fn example() -> graphrag_core::Result<()> {
+//! # async fn example() -> graphrag_core::Result<()> {
 //! let config = Config::default();
 //! let mut graphrag = GraphRAG::new(config)?;
 //! graphrag.initialize()?;
@@ -163,7 +163,7 @@ pub mod prelude {
 // Re-export core types
 pub use crate::config::Config;
 pub use crate::core::{
-    ChunkId, Document, DocumentId, Entity, EntityId, EntityMention,
+    ChunkId, ChunkingStrategy, Document, DocumentId, Entity, EntityId, EntityMention,
     ErrorContext, ErrorSeverity, GraphRAGError, KnowledgeGraph,
     Relationship, Result, TextChunk,
 };
@@ -233,7 +233,7 @@ pub use crate::retrieval::hipporag_ppr::{
 /// ```rust
 /// use graphrag_core::{GraphRAG, Config};
 ///
-/// # fn example() -> graphrag_core::Result<()> {
+/// # async fn example() -> graphrag_core::Result<()> {
 /// let config = Config::default();
 /// let mut graphrag = GraphRAG::new(config)?;
 /// graphrag.initialize()?;
@@ -242,10 +242,10 @@ pub use crate::retrieval::hipporag_ppr::{
 /// graphrag.add_document_from_text("Your document text")?;
 ///
 /// // Build knowledge graph
-/// graphrag.build_graph()?;
+/// graphrag.build_graph().await?;
 ///
 /// // Query
-/// let answer = graphrag.ask("Your question?")?;
+/// let answer = graphrag.ask("Your question?").await?;
 /// println!("Answer: {}", answer);
 /// # Ok(())
 /// # }

@@ -37,7 +37,7 @@ pub use traits::*;
 /// # Examples
 ///
 /// ```rust
-/// use graphrag_core::{ChunkingStrategy, TextChunk};
+/// use graphrag_core::core::{ChunkingStrategy, TextChunk};
 ///
 /// struct SimpleChunker;
 ///

@@ -569,7 +569,7 @@ impl GraphTraversal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{Entity, EntityMention, Relationship};
+    use crate::core::{Entity, Relationship};
 
     fn create_test_graph() -> KnowledgeGraph {
         let mut graph = KnowledgeGraph::new();

@@ -320,7 +320,17 @@ impl HierarchicalCommunities {
     /// # Example
     /// ```no_run
     /// use graphrag_core::query::AdaptiveRoutingConfig;
+    /// use graphrag_core::graph::leiden::HierarchicalCommunities;
+    /// use petgraph::graph::Graph;
+    /// use std::collections::HashMap;
     ///
+    /// let mut communities = HierarchicalCommunities {
+    ///     levels: HashMap::new(),
+    ///     hierarchy: HashMap::new(),
+    ///     summaries: HashMap::new(),
+    ///     entity_mapping: None,
+    /// };
+    /// let graph = Graph::new_undirected();
     /// let config = AdaptiveRoutingConfig::default();
     /// let results = communities.adaptive_retrieve("AI overview", &graph, config);
     /// ```

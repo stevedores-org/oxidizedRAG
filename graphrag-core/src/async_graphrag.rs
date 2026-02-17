@@ -575,7 +575,7 @@ impl AsyncGraphRAGBuilder {
         mut self,
         config: crate::ollama::OllamaConfig,
     ) -> Result<Self> {
-        let ollama_llm = crate::ollama::AsyncOllamaGenerator::new(config).await?;
+        let ollama_llm = crate::ollama::AsyncOllamaGenerator::new(config);
         self.language_model = Some(Arc::new(ollama_llm));
         Ok(self)
     }
