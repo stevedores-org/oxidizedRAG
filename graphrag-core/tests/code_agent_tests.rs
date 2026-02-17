@@ -513,13 +513,13 @@ mod performance_benchmarks {
 
     #[test]
     fn test_memory_efficiency() {
-        let code = load_fixture("graph_algorithms.rs");
-        let code_size_mb = (code.len() as f64) / (1024.0 * 1024.0);
+        let doc = fixture_document("graph_algorithms.rs");
+        let code_size_mb = (doc.content.len() as f64) / (1024.0 * 1024.0);
 
         let processor = TextProcessor::new(500, 100)
             .expect("Failed to create processor");
 
-        let chunks = processor.chunk_text(&code)
+        let chunks = processor.chunk_text(&doc)
             .expect("Failed to chunk");
 
         let chunks_per_mb = (chunks.len() as f64) / code_size_mb.max(0.001);

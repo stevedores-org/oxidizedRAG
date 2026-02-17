@@ -1,11 +1,10 @@
 //! Shared test fixtures and helpers for RAG agent tests
 
-use graphrag_core::core::{Document, DocumentId, KnowledgeGraph};
+pub use graphrag_core::core::{Document, DocumentId, KnowledgeGraph};
 use graphrag_core::graph::GraphBuilder;
-use graphrag_core::text::TextProcessor;
-use graphrag_core::Result;
+pub use graphrag_core::text::TextProcessor;
+pub use graphrag_core::Result;
 use std::fs;
-use std::time::Instant;
 
 pub const FIXTURE_DIR: &str = "tests/fixtures/code_samples";
 
@@ -74,7 +73,3 @@ pub fn validate_rust_syntax(code: &str) -> std::result::Result<(), String> {
     }
 }
 
-// Re-export commonly used types
-pub use graphrag_core::core::{KnowledgeGraph, Document, DocumentId};
-pub use graphrag_core::text::TextProcessor;
-pub use std::time::Instant;
