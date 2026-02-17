@@ -6,6 +6,8 @@
     extra-trusted-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
   };
 
+  # NOTE: Inputs are pinned to exact commits via flake.lock (committed to repo).
+  # Run `nix flake update` to bump, and review the lock diff before merging.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
