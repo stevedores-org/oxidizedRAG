@@ -7,8 +7,14 @@
 //! ## Usage
 //!
 //! ```rust
+//! use graphrag_server::embeddings::{EmbeddingService, EmbeddingConfig};
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let embedder = EmbeddingService::new(EmbeddingConfig::default()).await?;
 //! let embedding = embedder.generate(&["Hello world"]).await?;
+//! # Ok(())
+//! # }
 //! ```
 
 use graphrag_core::vector::EmbeddingGenerator;

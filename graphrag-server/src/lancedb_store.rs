@@ -19,11 +19,16 @@
 //!
 //! ## Usage
 //!
-//! ```rust
-//! let store = LanceDBStore::new("./data/graphrag").await?;
-//! store.create_table(384).await?;
-//! store.add_document("doc1", embedding, metadata).await?;
-//! let results = store.search(query_embedding, 10).await?;
+//! ```rust,no_run
+//! use graphrag_server::lancedb_store::{LanceDBStore, DocumentMetadata};
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let mut store = LanceDBStore::new("./data/graphrag", "vectors").await?;
+//! // Methods return NotImplemented error for now
+//! let _ = store.create_table(384).await;
+//! # Ok(())
+//! # }
 //! ```
 
 use serde::{Deserialize, Serialize};

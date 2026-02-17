@@ -244,3 +244,7 @@ tempfile = "3.8"
 crate-type = ["rlib", "cdylib"]  # rlib for Rust, cdylib for WASM/FFI
 
 # Benchmarks will be added later after migrating benches/ directory
+
+[[example]]
+name = "hierarchical_graphrag_demo"
+required-features = ["leiden"]
