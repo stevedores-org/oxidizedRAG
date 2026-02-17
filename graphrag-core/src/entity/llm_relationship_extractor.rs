@@ -467,34 +467,37 @@ mod tests {
             0,
             50,
         );
+        let socrates_start = chunk.content.find("Socrates").unwrap();
+        let socrates_end = socrates_start + "Socrates".len();
+        let phaedrus_start = chunk.content.find("Phaedrus").unwrap();
+        let phaedrus_end = phaedrus_start + "Phaedrus".len();
 
-        let mut entity1 = Entity::new(
-            EntityId::new("person_socrates".to_string()),
-            "Socrates".to_string(),
-            "PERSON".to_string(),
-            0.9,
-        );
-        entity1.mentions.push(crate::core::EntityMention {
-            chunk_id: ChunkId::new("test".to_string()),
-            start_offset: 0,
-            end_offset: 8,
-            confidence: 0.9,
-        });
-
-        let mut entity2 = Entity::new(
-            EntityId::new("person_phaedrus".to_string()),
-            "Phaedrus".to_string(),
-            "PERSON".to_string(),
-            0.9,
-        );
-        entity2.mentions.push(crate::core::EntityMention {
-            chunk_id: ChunkId::new("test".to_string()),
-            start_offset: 24,
-            end_offset: 32,
-            confidence: 0.9,
-        });
-
-        let entities = vec![entity1, entity2];
+        let entities = vec![
+            Entity::new(
+                EntityId::new("person_socrates".to_string()),
+                "Socrates".to_string(),
+                "PERSON".to_string(),
+                0.9,
+            )
+            .with_mentions(vec![crate::core::EntityMention {
+                chunk_id: chunk.id.clone(),
+                start_offset: socrates_start,
+                end_offset: socrates_end,
+                confidence: 0.9,
+            }]),
+            Entity::new(
+                EntityId::new("person_phaedrus".to_string()),
+                "Phaedrus".to_string(),
+                "PERSON".to_string(),
+                0.9,
+            )
+            .with_mentions(vec![crate::core::EntityMention {
+                chunk_id: chunk.id.clone(),
+                start_offset: phaedrus_start,
+                end_offset: phaedrus_end,
+                confidence: 0.9,
+            }]),
+        ];
 
         let relationships = extractor.extract_relationships_fallback(&entities, &chunk);
 

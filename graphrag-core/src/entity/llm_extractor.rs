@@ -396,6 +396,10 @@ impl LLMEntityExtractor {
             .chars()
             .filter(|c| c.is_alphanumeric() || *c == '_')
             .collect::<String>()
+            .split('_')
+            .filter(|segment| !segment.is_empty())
+            .collect::<Vec<_>>()
+            .join("_")
     }
 }
 
@@ -517,5 +521,17 @@ Here's the extraction:
         assert_eq!(extractor.normalize_name("Tom Sawyer"), "tom_sawyer");
         assert_eq!(extractor.normalize_name("New York City"), "new_york_city");
         assert_eq!(extractor.normalize_name("Dr. Smith"), "dr_smith");
+    }
+
+    #[test]
+    fn test_normalize_name_multi_word_regression() {
+        // Regression test for multi-word normalization ensuring underscores are preserved
+        let ollama_config = OllamaConfig::default();
+        let ollama_client = OllamaClient::new(ollama_config);
+        let extractor = LLMEntityExtractor::new(ollama_client, vec!["PERSON".to_string()]);
+
+        assert_eq!(extractor.normalize_name("San Francisco"), "san_francisco");
+        assert_eq!(extractor.normalize_name("A B C"), "a_b_c");
+        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple_spaces");
     }
 }

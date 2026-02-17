@@ -441,6 +441,10 @@ impl GleaningEntityExtractor {
             .chars()
             .filter(|c| c.is_alphanumeric() || *c == '_')
             .collect::<String>()
+            .split('_')
+            .filter(|segment| !segment.is_empty())
+            .collect::<Vec<_>>()
+            .join("_")
     }
 
     /// Get extraction statistics
@@ -560,6 +564,19 @@ mod tests {
 
         assert_eq!(extractor.normalize_name("Tom Sawyer"), "tom_sawyer");
         assert_eq!(extractor.normalize_name("St. Petersburg"), "st_petersburg");
+    }
+
+    #[test]
+    fn test_normalize_name_multi_word_regression() {
+        // Regression test for multi-word normalization ensuring underscores are preserved
+        let ollama_config = OllamaConfig::default();
+        let ollama_client = OllamaClient::new(ollama_config);
+        let config = GleaningConfig::default();
+        let extractor = GleaningEntityExtractor::new(ollama_client, config);
+
+        assert_eq!(extractor.normalize_name("New York City"), "new_york_city");
+        assert_eq!(extractor.normalize_name("A B C"), "a_b_c");
+        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple_spaces");
     }
 
     #[test]

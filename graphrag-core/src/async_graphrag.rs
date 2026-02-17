@@ -6,7 +6,7 @@
 use crate::{
     config::Config,
     core::{
-        traits::BoxedAsyncLanguageModel,
+        traits::{AsyncLanguageModel, BoxedAsyncLanguageModel},
         Document, DocumentId, Entity, EntityId, GraphRAGError, KnowledgeGraph, Result,
         TextChunk,
     },
@@ -18,9 +18,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+type SharedAsyncLanguageModel =
+    Arc<dyn AsyncLanguageModel<Error = GraphRAGError> + Send + Sync>;
+
 /// Adapter to connect BoxedAsyncLanguageModel to LLMClient trait
 pub struct AsyncLanguageModelAdapter {
-    model: Arc<BoxedAsyncLanguageModel>,
+    model: SharedAsyncLanguageModel,
 }
 
 impl AsyncLanguageModelAdapter {
@@ -31,7 +34,7 @@ impl AsyncLanguageModelAdapter {
     ///
     /// # Returns
     /// A new AsyncLanguageModelAdapter instance
-    pub fn new(model: Arc<BoxedAsyncLanguageModel>) -> Self {
+    pub fn new(model: SharedAsyncLanguageModel) -> Self {
         Self { model }
     }
 }
@@ -65,7 +68,7 @@ pub struct AsyncGraphRAG {
     knowledge_graph: Arc<RwLock<Option<KnowledgeGraph>>>,
     document_trees: Arc<RwLock<HashMap<DocumentId, DocumentTree>>>,
     hierarchical_config: HierarchicalConfig,
-    language_model: Option<Arc<BoxedAsyncLanguageModel>>,
+    language_model: Option<SharedAsyncLanguageModel>,
 }
 
 impl AsyncGraphRAG {
@@ -96,7 +99,7 @@ impl AsyncGraphRAG {
     }
 
     /// Set the async language model
-    pub async fn set_language_model(&mut self, model: Arc<BoxedAsyncLanguageModel>) {
+    pub async fn set_language_model(&mut self, model: SharedAsyncLanguageModel) {
         self.language_model = Some(model);
     }
 
@@ -274,7 +277,7 @@ impl AsyncGraphRAG {
         let hierarchical_results = self.hierarchical_query(question, 5).await?;
 
         // Generate answer using async LLM
-        self.generate_answer_async(question, search_results, hierarchical_results, llm)
+        self.generate_answer_async(question, search_results, hierarchical_results, llm.as_ref())
             .await
     }
 
@@ -334,7 +337,7 @@ impl AsyncGraphRAG {
         question: &str,
         search_results: Vec<SearchResult>,
         hierarchical_results: Vec<QueryResult>,
-        llm: &BoxedAsyncLanguageModel,
+        llm: &(dyn AsyncLanguageModel<Error = GraphRAGError> + Send + Sync),
     ) -> Result<GeneratedAnswer> {
         // Assemble context
         let context = self.assemble_context_async(search_results, hierarchical_results).await?;
@@ -526,7 +529,7 @@ pub enum AsyncHealthStatus {
 /// Builder for AsyncGraphRAG
 pub struct AsyncGraphRAGBuilder {
     config: Config,
-    language_model: Option<Arc<BoxedAsyncLanguageModel>>,
+    language_model: Option<SharedAsyncLanguageModel>,
     hierarchical_config: Option<HierarchicalConfig>,
 }
 
@@ -548,7 +551,7 @@ impl AsyncGraphRAGBuilder {
 
     /// Set async language model
     pub fn language_model(mut self, model: BoxedAsyncLanguageModel) -> Self {
-        self.language_model = Some(Arc::new(model));
+        self.language_model = Some(Arc::from(model));
         self
     }
 
