@@ -13,10 +13,12 @@
 pub mod run_recorder;
 pub mod config_hasher;
 pub mod aivcs_adapter;
+pub mod persistence;
 
 pub use run_recorder::RagRunRecorder;
 pub use config_hasher::RagConfigDigest;
 pub use aivcs_adapter::RagToAivcsAdapter;
+pub use persistence::{RagRunPersister, PersistedRagRun};
 
 /// GraphRAG AIVCS integration version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
