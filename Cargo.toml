@@ -4,6 +4,7 @@ members = [
     "graphrag-wasm",
     "graphrag-server",
     "graphrag-cli",
+    "graphrag-aivcs",
 ]
 exclude = ["examples/web-app"]
 resolver = "2"
@@ -26,6 +27,10 @@ thiserror = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
 futures = "0.3"
+
+# AIVCS - Agent Version Control System (for run tracking and evaluation)
+aivcs-core = "0.2.0"
+oxidized-state = "0.2.0"
 
 # Web frameworks
 # Axum (for API module and tests)
