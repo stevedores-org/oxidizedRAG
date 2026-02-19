@@ -118,7 +118,7 @@ impl AsyncGraphRAG {
             #[cfg(feature = "async-traits")]
             {
                 let mock_llm = crate::generation::async_mock_llm::AsyncMockLLM::new().await?;
-                self.language_model = Some(Arc::new(Box::new(mock_llm)));
+                self.language_model = Some(Arc::new(mock_llm));
             }
             #[cfg(not(feature = "async-traits"))]
             {
@@ -565,7 +565,7 @@ impl AsyncGraphRAGBuilder {
     #[cfg(feature = "async-traits")]
     pub async fn with_async_mock_llm(mut self) -> Result<Self> {
         let mock_llm = crate::generation::async_mock_llm::AsyncMockLLM::new().await?;
-        self.language_model = Some(Arc::new(Box::new(mock_llm)));
+        self.language_model = Some(Arc::new(mock_llm));
         Ok(self)
     }
 
@@ -576,7 +576,7 @@ impl AsyncGraphRAGBuilder {
         config: crate::ollama::OllamaConfig,
     ) -> Result<Self> {
         let ollama_llm = crate::ollama::AsyncOllamaGenerator::new(config).await?;
-        self.language_model = Some(Arc::new(Box::new(ollama_llm)));
+        self.language_model = Some(Arc::new(ollama_llm));
         Ok(self)
     }
 
@@ -637,6 +637,34 @@ mod tests {
             .build()
             .await;
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "async-traits")]
+    async fn test_mock_llm_trait_object_usable() {
+        // Regression: ensure Arc<AsyncMockLLM> (no Box) satisfies trait bounds
+        // and the LLM is actually callable through the trait object.
+        let graphrag = AsyncGraphRAGBuilder::new()
+            .with_async_mock_llm()
+            .await
+            .unwrap()
+            .build()
+            .await
+            .unwrap();
+        let answer = graphrag.answer_question("test question").await;
+        assert!(answer.is_ok());
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "async-traits")]
+    async fn test_initialize_default_llm_trait_object_usable() {
+        // Regression: ensure initialize() default mock LLM path (Arc::new, no Box)
+        // produces a usable trait object.
+        let config = Config::default();
+        let mut graphrag = AsyncGraphRAG::new(config).await.unwrap();
+        graphrag.initialize().await.unwrap();
+        let answer = graphrag.answer_question("test question").await;
+        assert!(answer.is_ok());
     }
 
     #[tokio::test]
