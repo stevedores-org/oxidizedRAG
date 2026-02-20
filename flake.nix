@@ -31,7 +31,7 @@
 
     # crane: Incremental Rust builds with Nix
     # v0.17.3 release - production-ready
-    crane.url = "github:ipetkov/crane/8b3d16633187e6100eda17fda357dc33b4ed28b47";
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs = { self, nixpkgs, flake-utils, rust-overlay, crane, ... }:
