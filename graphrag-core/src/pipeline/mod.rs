@@ -23,6 +23,10 @@
 #[cfg(feature = "async")]
 pub mod stage;
 
+/// Stage-level caching/memoization.
+#[cfg(feature = "async")]
+pub mod cached_stage;
+
 // Data import requires async feature
 #[cfg(feature = "async")]
 pub mod data_import;
@@ -37,3 +41,6 @@ pub use data_import::{
 
 #[cfg(feature = "async")]
 pub use stage::{Stage, ChunkBatch, EmbeddingBatch, EntityGraphDelta, RetrievalSet};
+
+#[cfg(feature = "async")]
+pub use cached_stage::CachedStage;
