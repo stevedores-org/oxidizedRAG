@@ -21,3 +21,6 @@ jobs:
 
       - name: Flake check
         run: nix flake check --print-build-logs
+
+      - name: Workspace tests
+        run: nix develop --command cargo test --workspace

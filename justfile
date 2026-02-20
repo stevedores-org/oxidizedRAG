@@ -7,6 +7,9 @@ hooks-install:
   ./.githooks/install.sh
 
 fmt:
+  cargo fmt --all
+
+fmt-check:
   cargo fmt --all -- --check
 
 clippy:
@@ -25,7 +28,7 @@ check:
   cargo check --workspace
 
 ci:
-  just fmt
+  just fmt-check
   just clippy
   just test
   just bench
