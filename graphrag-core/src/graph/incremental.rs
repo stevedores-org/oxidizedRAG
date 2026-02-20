@@ -2776,8 +2776,49 @@ impl IncrementalGraphStore for InMemoryIncrementalStore {
         entities: Vec<Entity>,
         strategy: ConflictStrategy,
     ) -> Result<Vec<UpdateId>> {
-        let mut ids = Vec::with_capacity(entities.len());
+        // Validate strategy upfront to fail fast
+        match &strategy {
+            ConflictStrategy::LLMDecision | ConflictStrategy::UserPrompt => {
+                return Err(GraphRAGError::ConflictResolution {
+                    message: format!(
+                        "{:?} conflict strategy not yet implemented",
+                        strategy
+                    ),
+                });
+            }
+            ConflictStrategy::Custom(name) => {
+                return Err(GraphRAGError::ConflictResolution {
+                    message: format!(
+                        "Custom conflict resolver '{}' not available in InMemoryIncrementalStore",
+                        name
+                    ),
+                });
+            }
+            _ => {}
+        }
+
+        // Dedup within the batch: if multiple entities share the same ID,
+        // apply the conflict strategy among them, keeping only one per ID.
+        let mut deduped: std::collections::HashMap<EntityId, Entity> =
+            std::collections::HashMap::with_capacity(entities.len());
         for entity in entities {
+            let eid = entity.id.clone();
+            if let Some(existing) = deduped.get(&eid) {
+                let resolved = match &strategy {
+                    ConflictStrategy::KeepExisting => existing.clone(),
+                    ConflictStrategy::KeepNew => entity,
+                    ConflictStrategy::Merge => Self::merge_entity_metadata(existing, &entity),
+                    _ => unreachable!(), // validated above
+                };
+                deduped.insert(eid, resolved);
+            } else {
+                deduped.insert(eid, entity);
+            }
+        }
+
+        // Now upsert each unique entity, resolving against existing graph state
+        let mut ids = Vec::with_capacity(deduped.len());
+        for (_eid, entity) in deduped {
             let existing = self.graph.get_entity(&entity.id).cloned();
             let to_insert = if let Some(existing_entity) = existing {
                 match &strategy {
@@ -2786,22 +2827,7 @@ impl IncrementalGraphStore for InMemoryIncrementalStore {
                     ConflictStrategy::Merge => {
                         Self::merge_entity_metadata(&existing_entity, &entity)
                     }
-                    ConflictStrategy::LLMDecision | ConflictStrategy::UserPrompt => {
-                        return Err(GraphRAGError::ConflictResolution {
-                            message: format!(
-                                "{:?} conflict strategy not yet implemented",
-                                strategy
-                            ),
-                        });
-                    }
-                    ConflictStrategy::Custom(name) => {
-                        return Err(GraphRAGError::ConflictResolution {
-                            message: format!(
-                                "Custom conflict resolver '{}' not available in InMemoryIncrementalStore",
-                                name
-                            ),
-                        });
-                    }
+                    _ => unreachable!(), // validated above
                 }
             } else {
                 entity
@@ -3513,5 +3539,83 @@ mod tests {
 
         assert!(matches!(event.event_type, ChangeEventType::EntityUpserted));
         assert!(event.entity_id.is_some());
+    }
+
+    #[test]
+    fn test_batch_upsert_dedup() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut store = InMemoryIncrementalStore::new(KnowledgeGraph::new());
+
+            // Create batch with duplicate entity IDs
+            let entities = vec![
+                Entity {
+                    id: EntityId::new("dup1".to_string()),
+                    name: "First".to_string(),
+                    entity_type: "Test".to_string(),
+                    confidence: 0.5,
+                    mentions: vec![],
+                    embedding: None,
+                },
+                Entity {
+                    id: EntityId::new("dup1".to_string()),
+                    name: "Second".to_string(),
+                    entity_type: "Test".to_string(),
+                    confidence: 0.9,
+                    mentions: vec![],
+                    embedding: None,
+                },
+                Entity {
+                    id: EntityId::new("unique1".to_string()),
+                    name: "Unique".to_string(),
+                    entity_type: "Test".to_string(),
+                    confidence: 0.7,
+                    mentions: vec![],
+                    embedding: None,
+                },
+            ];
+
+            // With KeepNew, duplicate should resolve to "Second"
+            let ids = store
+                .batch_upsert_entities(entities, ConflictStrategy::KeepNew)
+                .await
+                .unwrap();
+
+            // Should have 2 unique entities, not 3
+            assert_eq!(ids.len(), 2);
+
+            // Verify the duplicate resolved correctly
+            let stats = store.get_graph_statistics().await.unwrap();
+            assert_eq!(stats.node_count, 2);
+        });
+    }
+
+    #[test]
+    fn test_batch_upsert_1000_entities() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut store = InMemoryIncrementalStore::new(KnowledgeGraph::new());
+
+            let entities: Vec<Entity> = (0..1000)
+                .map(|i| Entity {
+                    id: EntityId::new(format!("entity_{}", i)),
+                    name: format!("Entity {}", i),
+                    entity_type: "Benchmark".to_string(),
+                    confidence: 0.8,
+                    mentions: vec![],
+                    embedding: None,
+                })
+                .collect();
+
+            let ids = store
+                .batch_upsert_entities(entities, ConflictStrategy::KeepNew)
+                .await
+                .unwrap();
+
+            assert_eq!(ids.len(), 1000);
+
+            let stats = store.get_graph_statistics().await.unwrap();
+            assert_eq!(stats.node_count, 1000);
+        });
     }
 }
