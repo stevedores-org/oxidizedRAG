@@ -23,9 +23,9 @@
     flake-utils.url = "github:numtide/flake-utils";
 
     # rust-overlay: Latest Rust toolchain management
-    # Pinned to recent stable commit with rust-src, rustfmt, clippy support
+    # Pinned via flake.lock (run `nix flake update rust-overlay` to bump)
     rust-overlay = {
-      url = "github:oxalica/rust-overlay/6ae973399d80b88b0c6c5e19d05a5b4efaf8c4df";
+      url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
