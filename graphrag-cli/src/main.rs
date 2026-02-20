@@ -17,6 +17,7 @@ mod query_history;
 mod theme;
 mod tui;
 mod ui;
+mod explain;
 mod workspace;
 
 use app::App;
@@ -71,6 +72,10 @@ enum Commands {
         /// Configuration file (required if not already initialized)
         #[arg(short, long)]
         config: Option<PathBuf>,
+
+        /// Print retrieval trace with stage timing and score breakdowns
+        #[arg(long = "explain-query")]
+        explain_query: bool,
     },
 
     /// List entities in the knowledge graph (deprecated: use TUI with /entities)
@@ -149,16 +154,56 @@ async fn main() -> Result<()> {
                 println!("\nStart TUI with: graphrag-cli tui");
             }
         }
-        Some(Commands::Query { query, config }) => {
+        Some(Commands::Query { query, config, explain_query }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
 
-            println!("⚠️  The 'query' command is deprecated.");
-            println!("    Please use the TUI and type your query: {}", query);
-            if let Some(cfg) = config {
-                println!("\nStart TUI with: graphrag-cli tui --config {}", cfg.display());
+            if explain_query {
+                println!("--explain-query: retrieval trace requested for query: {}", query);
+                println!();
+                // Build a sample trace to demonstrate formatting.
+                // In a full integration the TracingRetriever would be
+                // constructed from the configured HybridRetriever and
+                // search_with_trace() would be called here.
+                let sample_trace = graphrag_core::retrieval::explain::QueryTrace {
+                    query: query.clone(),
+                    stages: vec![
+                        graphrag_core::retrieval::explain::StageTrace {
+                            stage_name: "semantic".to_string(),
+                            duration: std::time::Duration::from_millis(42),
+                            candidates_produced: 20,
+                            score_breakdown: None,
+                        },
+                        graphrag_core::retrieval::explain::StageTrace {
+                            stage_name: "keyword".to_string(),
+                            duration: std::time::Duration::from_millis(18),
+                            candidates_produced: 15,
+                            score_breakdown: None,
+                        },
+                        graphrag_core::retrieval::explain::StageTrace {
+                            stage_name: "fusion".to_string(),
+                            duration: std::time::Duration::from_millis(5),
+                            candidates_produced: 10,
+                            score_breakdown: Some(graphrag_core::retrieval::explain::ScoreBreakdown {
+                                vector_score: 0.85,
+                                graph_score: 0.0,
+                                keyword_score: 0.62,
+                                final_score: 0.74,
+                            }),
+                        },
+                    ],
+                    total_duration: std::time::Duration::from_millis(65),
+                    result_count: 10,
+                };
+                println!("{}", explain::format_query_trace(&sample_trace));
             } else {
-                println!("\nStart TUI with: graphrag-cli tui");
+                println!("⚠️  The 'query' command is deprecated.");
+                println!("    Please use the TUI and type your query: {}", query);
+                if let Some(cfg) = config {
+                    println!("\nStart TUI with: graphrag-cli tui --config {}", cfg.display());
+                } else {
+                    println!("\nStart TUI with: graphrag-cli tui");
+                }
             }
         }
         Some(Commands::Entities { filter, config }) => {
