@@ -246,18 +246,55 @@ impl PipelineBuilder {
         }
     }
 
-    /// Print effective configuration for debugging.
-    pub fn print_effective_config(dag: &PipelineDAG) {
-        println!("Pipeline: {} v{}", dag.name, dag.version);
-        println!("Digest: {}", dag.digest);
-        println!("Stages:");
+    /// Render effective configuration for debugging and CLI output.
+    pub fn effective_config_report(dag: &PipelineDAG) -> String {
+        let mut lines = vec![
+            format!("Pipeline: {} v{}", dag.name, dag.version),
+            format!("Digest: {}", dag.digest),
+            "Stages:".to_string(),
+        ];
+
         for (i, stage) in dag.stages.iter().enumerate() {
-            println!("  [{}] {}@{}", i + 1, stage.name, stage.version);
+            lines.push(format!("  [{}] {}@{}", i + 1, stage.name, stage.version));
             if !stage.inputs.is_empty() {
-                println!("       depends: {:?}", stage.inputs);
+                lines.push(format!("       depends: {:?}", stage.inputs));
             }
         }
-        println!("Timestamp: {}", dag.timestamp);
+
+        lines.join("\n")
+    }
+
+    /// Print effective configuration for debugging.
+    pub fn print_effective_config(dag: &PipelineDAG) {
+        println!("{}", Self::effective_config_report(dag));
+    }
+
+    /// Render deterministic startup summary with per-stage rationale.
+    pub fn startup_summary(dag: &PipelineDAG) -> String {
+        let mut lines = vec![
+            format!(
+                "Startup pipeline summary: {}@{} (digest: {})",
+                dag.name, dag.version, dag.digest
+            ),
+            format!("Resolved stages: {}", dag.stages.len()),
+        ];
+
+        for (idx, stage) in dag.stages.iter().enumerate() {
+            let rationale = if stage.inputs.is_empty() || stage.inputs.iter().any(|s| s == "input") {
+                "entry stage from external input".to_string()
+            } else {
+                format!("depends on {}", stage.inputs.join(", "))
+            };
+            lines.push(format!(
+                "  [{}] {}@{} => {}",
+                idx + 1,
+                stage.name,
+                stage.version,
+                rationale
+            ));
+        }
+
+        lines.join("\n")
     }
 }
 
@@ -388,5 +425,32 @@ mod tests {
         let dag = PipelineBuilder::build(config).unwrap();
         // This just verifies it doesn't panic
         PipelineBuilder::print_effective_config(&dag);
+    }
+
+    #[test]
+    fn test_effective_config_report_contains_stages() {
+        let config = example_config();
+        let dag = PipelineBuilder::build(config).unwrap();
+        let rendered = PipelineBuilder::effective_config_report(&dag);
+
+        assert!(rendered.contains("Pipeline: test-pipeline v1.0.0"));
+        assert!(rendered.contains("[1] chunker@1.0.0"));
+        assert!(rendered.contains("[2] embedder@1.0.0"));
+        assert!(rendered.contains("[3] retriever@1.0.0"));
+        assert!(rendered.contains("Digest: "));
+    }
+
+    #[test]
+    fn test_startup_summary_is_stable_for_same_config() {
+        let config = example_config();
+        let dag1 = PipelineBuilder::build(config.clone()).unwrap();
+        let dag2 = PipelineBuilder::build(config).unwrap();
+
+        let summary1 = PipelineBuilder::startup_summary(&dag1);
+        let summary2 = PipelineBuilder::startup_summary(&dag2);
+
+        assert_eq!(summary1, summary2);
+        assert!(summary1.contains("entry stage from external input"));
+        assert!(summary1.contains("depends on chunker"));
     }
 }
