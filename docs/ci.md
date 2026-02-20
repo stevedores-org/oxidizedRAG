@@ -43,16 +43,20 @@ To use unified CI pipeline in pre-commit hooks (optional):
 - Install:
   - `just local-ci-install`
 - Run full pipeline:
-  - `just local-ci` (or `local-ci run`)
-- Run individual stages:
-  - `just local-ci-lint` — fmt + clippy checks
-  - `just local-ci-security` — audit + deny checks
-  - `just local-ci-test` — unit tests + doc tests
+  - `just local-ci` (or `local-ci`)
+- Run fix mode:
+  - `just local-ci-fix` (or `local-ci --fix`)
+- Run selected stages:
+  - `local-ci fmt clippy`
+  - `local-ci test`
 - Benefits:
   - Unified configuration across all tools
-  - Parallel execution (when available)
+  - Fast cached stage runs
   - Consistent output formatting
   - Built-in caching strategy
+- Current limitation:
+  - `local-ci` currently uses built-in stage definitions (`fmt`, `clippy`, `test`, `check`)
+  - `.local-ci.toml` is forward-compatible policy documentation and not enforced yet by the binary
 
 ### Option B: Traditional direct commands
 
@@ -114,15 +118,8 @@ For self-hosted service environments, place `ATTIC_TOKEN` in an env file loaded 
 
 The `.local-ci.toml` file defines a unified pipeline with the following stages:
 
-```toml
-[stages.lint]      # fmt + clippy checks
-[stages.security]  # cargo-audit + cargo-deny
-[stages.test]      # unit and doc tests
-[stages.bench]     # benchmark compilation
-[stages.doc]       # documentation build
-```
-
-Tools are cached by `Cargo.lock` hash for faster re-runs.
+`local-ci` currently executes built-in stages and does not load this file yet.
+Treat `.local-ci.toml` as desired policy documentation for upcoming schema-backed config support.
 
 ## Troubleshooting
 
@@ -133,7 +130,7 @@ Tools are cached by `Cargo.lock` hash for faster re-runs.
   - Add to PATH or ensure GOPATH/bin is in PATH
 - Stage fails to run:
   - Check configuration: `cat .local-ci.toml`
-  - Run with verbose output: `local-ci run --verbose`
+  - Run with verbose output: `local-ci --verbose fmt clippy test`
   - Verify tools are installed: `cargo audit --version`, `cargo deny --version`
 
 ### Pre-commit hook issues
