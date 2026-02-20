@@ -9,6 +9,8 @@ use std::collections::{HashMap, HashSet};
 
 // Async implementation module
 pub mod async_mock_llm;
+/// Deterministic mock embedder for CI testing
+pub mod mock_embedder;
 
 /// Mock LLM interface for testing without external dependencies
 pub trait LLMInterface: Send + Sync {
