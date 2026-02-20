@@ -5,6 +5,10 @@ This repository uses a three-layer CI strategy with a hybrid GitHub status lane.
 ## Layer 1: Local Pre-Commit
 
 - Hook path: `.githooks/pre-commit`
+- Priority order (first available tool is used):
+  1. **local-ci** (unified CI pipeline, if installed)
+  2. **Nix** (via `nix develop`)
+  3. **Cargo** (bare local installation)
 - Runs:
   - `cargo fmt --all -- --check`
   - `cargo clippy --workspace --all-targets -- -D warnings`
@@ -19,21 +23,53 @@ This repository uses a three-layer CI strategy with a hybrid GitHub status lane.
 3. Validate hook script:
    - `bash -n .githooks/pre-commit`
 
-## Layer 2: Full Local CI
+### Using local-ci in pre-commit
 
-- Command shortcuts are defined in `justfile`
+To use unified CI pipeline in pre-commit hooks (optional):
+
+1. Install local-ci:
+   - `just local-ci-install`
+   - Or manually: `git clone https://github.com/stevedores-org/local-ci && cd local-ci && make build`
+2. Hook will automatically detect and use it
+3. Check hook behavior:
+   - `bash -x .githooks/pre-commit` (debug mode)
+
+## Layer 2: Full Local CI (Optional: Unified via local-ci)
+
+### Option A: Unified pipeline with local-ci (Recommended)
+
+- Tool: `local-ci` (from https://github.com/stevedores-org/local-ci)
+- Configuration: `.local-ci.toml`
+- Install:
+  - `just local-ci-install`
+- Run full pipeline:
+  - `just local-ci` (or `local-ci run`)
+- Run individual stages:
+  - `just local-ci-lint` — fmt + clippy checks
+  - `just local-ci-security` — audit + deny checks
+  - `just local-ci-test` — unit tests + doc tests
+- Benefits:
+  - Unified configuration across all tools
+  - Parallel execution (when available)
+  - Consistent output formatting
+  - Built-in caching strategy
+
+### Option B: Traditional direct commands
+
+- Command shortcuts defined in `justfile`
 - Main command:
   - `just ci`
 - Equivalent to:
   - fmt + clippy + tests + benches compile + docs build
 
 Useful commands:
-- `just fmt`
-- `just fmt-check`
-- `just clippy`
-- `just test`
-- `just bench`
-- `just doc`
+- `just fmt` — Format code
+- `just fmt-check` — Check formatting
+- `just clippy` — Run clipper linter
+- `just test` — Run tests
+- `just bench` — Compile benches
+- `just doc` — Build docs
+- `just check` — Quick cargo check
 
 ## Layer 3: Self-Hosted Polling Runner
 
@@ -74,15 +110,46 @@ Useful commands:
 
 For self-hosted service environments, place `ATTIC_TOKEN` in an env file loaded by systemd.
 
+## Local-CI Configuration
+
+The `.local-ci.toml` file defines a unified pipeline with the following stages:
+
+```toml
+[stages.lint]      # fmt + clippy checks
+[stages.security]  # cargo-audit + cargo-deny
+[stages.test]      # unit and doc tests
+[stages.bench]     # benchmark compilation
+[stages.doc]       # documentation build
+```
+
+Tools are cached by `Cargo.lock` hash for faster re-runs.
+
 ## Troubleshooting
 
+### local-ci issues
+- local-ci not found:
+  - Install: `just local-ci-install`
+  - Or manually build: `git clone https://github.com/stevedores-org/local-ci && make build`
+  - Add to PATH or ensure GOPATH/bin is in PATH
+- Stage fails to run:
+  - Check configuration: `cat .local-ci.toml`
+  - Run with verbose output: `local-ci run --verbose`
+  - Verify tools are installed: `cargo audit --version`, `cargo deny --version`
+
+### Pre-commit hook issues
+- Hook not running:
+  - Re-run: `./.githooks/install.sh`
+  - Verify: `git config core.hooksPath`
+- Hook runs wrong tool:
+  - Check tool priority: local-ci > nix > cargo
+  - Debug: `bash -x .githooks/pre-commit`
+
+### General CI issues
 - Runner refuses to update branch:
-  - Check for dirty working tree (`git status --short`).
+  - Check for dirty working tree: `git status --short`
   - Runner intentionally refuses destructive updates on non-clean repos.
 - `nix flake check` fails:
-  - Reproduce locally with `just flake-check`.
-- Hook not running:
-  - Re-run `./.githooks/install.sh` and verify `core.hooksPath`.
+  - Reproduce locally: `just flake-check`
 - Attic push skipped:
-  - Confirm `ATTIC_TOKEN` is set in `/etc/oxidizedrag-ci.env`.
-  - Validate auth manually: `attic cache info stevedores`.
+  - Confirm `ATTIC_TOKEN` is set in `/etc/oxidizedrag-ci.env`
+  - Validate auth: `attic cache info stevedores`
