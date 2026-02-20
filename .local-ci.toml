@@ -1,0 +1,96 @@
+# Local CI Configuration for oxidizedRAG
+# Defines the local CI pipeline with tool checks, tests, and validation
+
+[workspace]
+# Auto-detected from Cargo.toml
+# Members: graphrag-core, graphrag-wasm, graphrag-server, graphrag-cli, graphrag-aivcs
+
+[stages]
+
+# Stage 1: Code Quality (fmt + clippy)
+[stages.lint]
+description = "Run cargo fmt and clippy checks"
+tools = ["cargo-fmt-check", "cargo-clippy"]
+fail_fast = true
+
+# Stage 2: Security Audits
+[stages.security]
+description = "Run security audits and supply chain checks"
+tools = ["cargo-audit", "cargo-deny"]
+fail_fast = false
+
+# Stage 3: Tests
+[stages.test]
+description = "Run workspace tests"
+tools = ["cargo-test"]
+fail_fast = true
+
+# Stage 4: Benchmarks compilation check
+[stages.bench]
+description = "Verify benches compile without running"
+tools = ["cargo-bench-build"]
+fail_fast = true
+
+# Stage 5: Documentation
+[stages.doc]
+description = "Build and check documentation"
+tools = ["cargo-doc"]
+fail_fast = true
+
+[tools]
+
+[tools.cargo-fmt-check]
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+description = "Check code formatting with cargo fmt"
+cache_key = "Cargo.lock"
+
+[tools.cargo-clippy]
+command = "cargo"
+args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
+description = "Run Clippy linter with strict warnings"
+cache_key = "Cargo.lock"
+
+[tools.cargo-audit]
+command = "cargo"
+args = ["audit", "--deny", "warnings"]
+description = "Audit dependencies for known vulnerabilities"
+cache_key = "Cargo.lock"
+
+[tools.cargo-deny]
+command = "cargo"
+args = ["deny", "check", "advisories", "licenses", "bans", "sources"]
+description = "Check dependency licenses and banned crates"
+optional = true
+cache_key = "Cargo.lock"
+
+[tools.cargo-test]
+command = "cargo"
+args = ["test", "--workspace", "--lib", "--doc"]
+description = "Run all library and doc tests"
+cache_key = "Cargo.lock"
+
+[tools.cargo-bench-build]
+command = "cargo"
+args = ["test", "--workspace", "--benches", "--no-run"]
+description = "Compile all benchmarks without running them"
+cache_key = "Cargo.lock"
+
+[tools.cargo-doc]
+command = "cargo"
+args = ["doc", "--workspace", "--no-deps", "--document-private-items"]
+description = "Build documentation with private items"
+cache_key = "Cargo.lock"
+
+[cache]
+# Use directory-based caching for Cargo artifacts
+enabled = true
+dir = ".local-ci-cache"
+# Cache Cargo.lock and key files
+watch_files = ["Cargo.lock", "Cargo.toml", "rust-toolchain.toml"]
+
+[output]
+# Use GitHub Actions-style group formatting for better visibility
+github_groups = true
+# Show timing for each stage
+show_timings = true

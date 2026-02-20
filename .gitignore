@@ -7,6 +7,11 @@ release
 Cargo.lock  # Uncomment if this is a library
 
 # ============================================
+# Local CI Cache
+# ============================================
+.local-ci-cache
+
+# ============================================
 # GraphRAG Output and Cache
 # ============================================
 /output

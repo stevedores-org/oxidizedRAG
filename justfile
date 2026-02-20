@@ -3,8 +3,23 @@ set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 default:
   @just --list
 
+# Install git hooks
 hooks-install:
   ./.githooks/install.sh
+
+# Install local-ci tool (optional, for unified CI pipeline)
+local-ci-install:
+  #!/usr/bin/env bash
+  if command -v local-ci >/dev/null 2>&1; then
+    echo "local-ci is already installed"
+  else
+    echo "Installing local-ci..."
+    if [[ -d ../local-ci ]]; then
+      cd ../local-ci && make build && mv local-ci $(go env GOPATH)/bin/ || echo "Please install from https://github.com/stevedores-org/local-ci"
+    else
+      echo "Please clone https://github.com/stevedores-org/local-ci and run 'make build'"
+    fi
+  fi
 
 fmt:
   cargo fmt --all
@@ -36,3 +51,39 @@ ci:
 
 flake-check:
   nix flake check --print-build-logs
+
+# Run full CI via local-ci tool (if installed)
+local-ci:
+  #!/usr/bin/env bash
+  if command -v local-ci >/dev/null 2>&1; then
+    echo "Running local-ci pipeline..."
+    local-ci run
+  else
+    echo "⚠️ local-ci not installed. Run 'just local-ci-install' first, or use 'just ci' for standard pipeline"
+    echo "   For setup: https://github.com/stevedores-org/local-ci"
+  fi
+
+# Run individual local-ci stages
+local-ci-lint:
+  #!/usr/bin/env bash
+  if command -v local-ci >/dev/null 2>&1; then
+    local-ci run --stage lint
+  else
+    echo "local-ci not installed. Run: just local-ci-install"
+  fi
+
+local-ci-security:
+  #!/usr/bin/env bash
+  if command -v local-ci >/dev/null 2>&1; then
+    local-ci run --stage security
+  else
+    echo "local-ci not installed. Run: just local-ci-install"
+  fi
+
+local-ci-test:
+  #!/usr/bin/env bash
+  if command -v local-ci >/dev/null 2>&1; then
+    local-ci run --stage test
+  else
+    echo "local-ci not installed. Run: just local-ci-install"
+  fi

@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if command -v nix >/dev/null 2>&1; then
+# Prefer local-ci if available (unified CI pipeline)
+if command -v local-ci >/dev/null 2>&1; then
+  echo "[pre-commit] running lint stage via local-ci"
+  local-ci run --stage lint
+elif command -v nix >/dev/null 2>&1; then
   echo "[pre-commit] running rust fmt + clippy via nix develop"
   nix develop --command bash -c '
     cargo fmt --all -- --check &&
     cargo clippy --workspace --all-targets -- -D warnings
   '
 else
-  echo "[pre-commit] nix not found; running local cargo checks"
+  echo "[pre-commit] running local cargo checks (no nix or local-ci)"
   cargo fmt --all -- --check
   cargo clippy --workspace --all-targets -- -D warnings
 fi
