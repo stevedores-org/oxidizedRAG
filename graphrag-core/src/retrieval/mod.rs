@@ -3,13 +3,17 @@ pub mod adaptive;
 pub mod bm25;
 /// Enriched metadata-aware retrieval
 pub mod enriched;
-/// Hybrid retrieval combining multiple search strategies
-pub mod hybrid;
-pub mod pagerank_retrieval;
+/// Pluggable fusion policies for hybrid retrieval
+pub mod fusion;
 /// HippoRAG Personalized PageRank retrieval
 #[cfg(feature = "pagerank")]
 pub mod hipporag_ppr;
+/// Hybrid retrieval combining multiple search strategies
+pub mod hybrid;
+pub mod pagerank_retrieval;
 
+#[cfg(feature = "parallel-processing")]
+use crate::parallel::ParallelProcessor;
 use crate::{
     config::Config,
     core::{ChunkId, EntityId, KnowledgeGraph},
@@ -17,19 +21,21 @@ use crate::{
     vector::{EmbeddingGenerator, VectorIndex, VectorUtils},
     Result,
 };
-#[cfg(feature = "parallel-processing")]
-use crate::parallel::ParallelProcessor;
 use std::collections::{HashMap, HashSet};
 
 pub use bm25::{BM25Result, BM25Retriever, Document as BM25Document};
 pub use enriched::{EnrichedRetrievalConfig, EnrichedRetriever};
+pub use fusion::{
+    CascadeFusion, FusedResult, FusionMetrics, FusionPolicy, RankedResult, ReciprocalRankFusion,
+    RetrievalSource, WeightedSum,
+};
 pub use hybrid::{FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
 
 #[cfg(feature = "pagerank")]
 pub use pagerank_retrieval::{PageRankRetrievalSystem, ScoredResult};
 
 #[cfg(feature = "pagerank")]
-pub use hipporag_ppr::{HippoRAGConfig, HippoRAGRetriever, Fact};
+pub use hipporag_ppr::{Fact, HippoRAGConfig, HippoRAGRetriever};
 
 /// Retrieval system for querying the knowledge graph
 pub struct RetrievalSystem {
@@ -273,7 +279,7 @@ impl RetrievalSystem {
             parallel_enabled: self.parallel_processor.is_some(),
             #[cfg(not(feature = "parallel-processing"))]
             parallel_enabled: false,
-            cache_size: 2000,   // Large cache for better performance
+            cache_size: 2000, // Large cache for better performance
             sparse_threshold: 500,
             incremental_updates: true,
             simd_block_size: 64, // Optimized for modern CPUs
@@ -329,7 +335,8 @@ impl RetrievalSystem {
             pagerank_retriever.search_with_pagerank(query, graph, max_results)
         } else {
             Err(crate::core::GraphRAGError::Retrieval {
-                message: "PageRank retriever not initialized. Call initialize_pagerank() first.".to_string(),
+                message: "PageRank retriever not initialized. Call initialize_pagerank() first."
+                    .to_string(),
             })
         }
     }
@@ -346,7 +353,8 @@ impl RetrievalSystem {
             pagerank_retriever.batch_search(queries, graph, max_results_per_query)
         } else {
             Err(crate::core::GraphRAGError::Retrieval {
-                message: "PageRank retriever not initialized. Call initialize_pagerank() first.".to_string(),
+                message: "PageRank retriever not initialized. Call initialize_pagerank() first."
+                    .to_string(),
             })
         }
     }
@@ -463,7 +471,9 @@ impl RetrievalSystem {
 
         let total_items = chunk_texts.len() + entity_texts.len();
         if processor.should_use_parallel(total_items) {
-            tracing::debug!("Processing {total_items} embeddings with enhanced sequential approach");
+            tracing::debug!(
+                "Processing {total_items} embeddings with enhanced sequential approach"
+            );
         }
 
         // Process chunks
@@ -517,7 +527,9 @@ impl RetrievalSystem {
             }
         }
 
-        tracing::debug!("Generated embeddings for {chunk_count} chunks and {entity_count} entities");
+        tracing::debug!(
+            "Generated embeddings for {chunk_count} chunks and {entity_count} entities"
+        );
 
         // Re-index the graph with new embeddings
         self.index_graph(graph)?;
@@ -579,7 +591,7 @@ impl RetrievalSystem {
                     Err(e) => {
                         tracing::warn!("Error processing query '{query}': {e}");
                         all_results.push(Vec::new());
-                    }
+                    },
                 }
             }
 
@@ -712,7 +724,7 @@ impl RetrievalSystem {
             let mut graph_results = match analysis.query_type {
                 QueryType::EntityFocused | QueryType::Relationship => {
                     self.entity_centric_search(query_embedding, graph, &analysis.key_entities)?
-                }
+                },
                 _ => self.entity_based_search(query_embedding, graph)?,
             };
             for result in &mut graph_results {
@@ -1091,18 +1103,18 @@ impl RetrievalSystem {
                     if result.result_type == ResultType::Entity {
                         result.score *= 1.2;
                     }
-                }
+                },
                 QueryType::Conceptual => {
                     if result.result_type == ResultType::HierarchicalSummary {
                         result.score *= 1.1;
                     }
-                }
+                },
                 QueryType::Relationship => {
                     if result.entities.len() > 1 {
                         result.score *= 1.15;
                     }
-                }
-                _ => {}
+                },
+                _ => {},
             }
 
             // Boost results that contain key entities
