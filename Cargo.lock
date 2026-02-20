@@ -301,6 +301,8 @@ dependencies = [
 [[package]]
 name = "aivcs-core"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba7c93c6bf52ed0648f2decc0fb4246af4c3399a4a8edef1f91c3091e369ec11"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7701,6 +7703,8 @@ dependencies = [
 [[package]]
 name = "nix-env-manager"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ce37746dad985fb9caacd86857bd3eb33ee2bf92403de681e0a2168824578b5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8190,6 +8194,8 @@ checksum = "9c6901729fa79e91a0913333229e9ca5dc725089d1c363b2f4b4760709dc4a52"
 [[package]]
 name = "oxidized-state"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "722ccf001022da7a3160375c76bb16ddc76c3f7162478ca1af6e84c129685f01"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -10278,6 +10284,8 @@ dependencies = [
 [[package]]
 name = "semantic-rag-merge"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9874e63511e7c398b5a8a86045702312c075f3f2383b0ace6e700aa3e720928f"
 dependencies = [
  "anyhow",
  "async-trait",
