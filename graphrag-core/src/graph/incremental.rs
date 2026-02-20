@@ -2608,6 +2608,35 @@ impl InMemoryIncrementalStore {
         Ok(())
     }
 
+    /// Merge two entities: new metadata wins on collision, mentions are unioned,
+    /// higher confidence wins, new embedding preferred if present.
+    fn merge_entity_metadata(existing: &Entity, new: &Entity) -> Entity {
+        let mut merged = existing.clone();
+
+        // Higher confidence wins for name/type
+        if new.confidence > existing.confidence {
+            merged.confidence = new.confidence;
+            merged.name = new.name.clone();
+            merged.entity_type = new.entity_type.clone();
+        }
+
+        // Union mentions (dedup by chunk_id + start_offset)
+        for new_mention in &new.mentions {
+            if !merged.mentions.iter().any(|m| {
+                m.chunk_id == new_mention.chunk_id && m.start_offset == new_mention.start_offset
+            }) {
+                merged.mentions.push(new_mention.clone());
+            }
+        }
+
+        // Prefer new embedding if available
+        if new.embedding.is_some() {
+            merged.embedding = new.embedding.clone();
+        }
+
+        merged
+    }
+
     /// Build rollback data from a delta's changes (captures pre-apply state).
     fn build_rollback_data(&self, delta: &GraphDelta) -> RollbackData {
         let mut previous_entities = Vec::new();
@@ -2745,11 +2774,39 @@ impl IncrementalGraphStore for InMemoryIncrementalStore {
     async fn batch_upsert_entities(
         &mut self,
         entities: Vec<Entity>,
-        _strategy: ConflictStrategy,
+        strategy: ConflictStrategy,
     ) -> Result<Vec<UpdateId>> {
         let mut ids = Vec::with_capacity(entities.len());
         for entity in entities {
-            ids.push(self.upsert_entity(entity).await?);
+            let existing = self.graph.get_entity(&entity.id).cloned();
+            let to_insert = if let Some(existing_entity) = existing {
+                match &strategy {
+                    ConflictStrategy::KeepExisting => existing_entity,
+                    ConflictStrategy::KeepNew => entity,
+                    ConflictStrategy::Merge => {
+                        Self::merge_entity_metadata(&existing_entity, &entity)
+                    }
+                    ConflictStrategy::LLMDecision | ConflictStrategy::UserPrompt => {
+                        return Err(GraphRAGError::ConflictResolution {
+                            message: format!(
+                                "{:?} conflict strategy not yet implemented",
+                                strategy
+                            ),
+                        });
+                    }
+                    ConflictStrategy::Custom(name) => {
+                        return Err(GraphRAGError::ConflictResolution {
+                            message: format!(
+                                "Custom conflict resolver '{}' not available in InMemoryIncrementalStore",
+                                name
+                            ),
+                        });
+                    }
+                }
+            } else {
+                entity
+            };
+            ids.push(self.upsert_entity(to_insert).await?);
         }
         Ok(ids)
     }
@@ -3273,6 +3330,139 @@ mod tests {
             store.rollback_transaction(tx_id).await.unwrap();
             // Note: simplified rollback clears staging area but entity was added to graph
             // In a full impl, transaction isolation would prevent graph modification until commit
+        });
+    }
+
+    #[test]
+    fn test_conflict_keep_existing() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut graph = KnowledgeGraph::new();
+            let orig = Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "Original".to_string(),
+                entity_type: "test".to_string(),
+                confidence: 0.9,
+                mentions: vec![],
+                embedding: None,
+            };
+            graph.add_entity(orig).unwrap();
+            let mut store = InMemoryIncrementalStore::new(graph);
+
+            let new_entity = Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "Updated".to_string(),
+                entity_type: "test".to_string(),
+                confidence: 0.5,
+                mentions: vec![],
+                embedding: None,
+            };
+            store.batch_upsert_entities(vec![new_entity], ConflictStrategy::KeepExisting).await.unwrap();
+
+            let e = store.graph.get_entity(&EntityId::new("e1".to_string())).unwrap();
+            assert_eq!(e.name, "Original");
+        });
+    }
+
+    #[test]
+    fn test_conflict_keep_new() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut graph = KnowledgeGraph::new();
+            graph.add_entity(Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "Original".to_string(),
+                entity_type: "test".to_string(),
+                confidence: 0.9,
+                mentions: vec![],
+                embedding: None,
+            }).unwrap();
+            let mut store = InMemoryIncrementalStore::new(graph);
+
+            store.batch_upsert_entities(vec![Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "Updated".to_string(),
+                entity_type: "test_new".to_string(),
+                confidence: 0.5,
+                mentions: vec![],
+                embedding: None,
+            }], ConflictStrategy::KeepNew).await.unwrap();
+
+            let e = store.graph.get_entity(&EntityId::new("e1".to_string())).unwrap();
+            assert_eq!(e.name, "Updated");
+        });
+    }
+
+    #[test]
+    fn test_conflict_merge() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut graph = KnowledgeGraph::new();
+            graph.add_entity(Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "LowConf".to_string(),
+                entity_type: "test".to_string(),
+                confidence: 0.3,
+                mentions: vec![],
+                embedding: None,
+            }).unwrap();
+            let mut store = InMemoryIncrementalStore::new(graph);
+
+            store.batch_upsert_entities(vec![Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "HighConf".to_string(),
+                entity_type: "test_merged".to_string(),
+                confidence: 0.9,
+                mentions: vec![],
+                embedding: Some(vec![1.0, 2.0]),
+            }], ConflictStrategy::Merge).await.unwrap();
+
+            let e = store.graph.get_entity(&EntityId::new("e1".to_string())).unwrap();
+            // Higher confidence wins name/type
+            assert_eq!(e.name, "HighConf");
+            assert_eq!(e.confidence, 0.9);
+            // New embedding preferred
+            assert!(e.embedding.is_some());
+        });
+    }
+
+    #[test]
+    fn test_batch_upsert_with_conflicts() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut graph = KnowledgeGraph::new();
+            graph.add_entity(Entity {
+                id: EntityId::new("e1".to_string()),
+                name: "Existing".to_string(),
+                entity_type: "t".to_string(),
+                confidence: 0.5,
+                mentions: vec![],
+                embedding: None,
+            }).unwrap();
+            let mut store = InMemoryIncrementalStore::new(graph);
+
+            let entities = vec![
+                Entity {
+                    id: EntityId::new("e1".to_string()),
+                    name: "Conflict".to_string(),
+                    entity_type: "t".to_string(),
+                    confidence: 0.8,
+                    mentions: vec![],
+                    embedding: None,
+                },
+                Entity {
+                    id: EntityId::new("e2".to_string()),
+                    name: "New".to_string(),
+                    entity_type: "t".to_string(),
+                    confidence: 1.0,
+                    mentions: vec![],
+                    embedding: None,
+                },
+            ];
+            let ids = store.batch_upsert_entities(entities, ConflictStrategy::KeepNew).await.unwrap();
+            assert_eq!(ids.len(), 2);
+            assert_eq!(store.graph.get_entity(&EntityId::new("e1".to_string())).unwrap().name, "Conflict");
+            assert!(store.graph.get_entity(&EntityId::new("e2".to_string())).is_some());
         });
     }
 
