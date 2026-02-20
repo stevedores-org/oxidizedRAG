@@ -779,6 +779,18 @@ RUST_LOG=debug cargo run --bin simple_cli config.toml
 RUST_BACKTRACE=1 cargo run
 ```
 
+## CI/CD
+
+This repository uses a three-layer CI model with a hybrid GitHub status lane:
+
+1. Local pre-commit hooks (`.githooks/pre-commit`) run `fmt` and `clippy`.
+2. Full local CI via `just ci` (fmt, clippy, tests, benches compile, docs build).
+3. Self-hosted polling runner (`ci/runner.sh`) executes `nix flake check` and can push successful closures to Attic.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `nix flake check` on `develop`/`main` push and PR events for visible PR status checks.
+
+For setup and operations, see `docs/ci.md`.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -915,4 +927,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 ---
 
 **Built with Rust** | [Documentation](https://docs.rs/graphrag-rs) | [Report Issues](https://github.com/your-username/graphrag-rs/issues)
-
