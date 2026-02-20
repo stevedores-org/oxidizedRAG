@@ -193,6 +193,7 @@ criterion/
 flamegraph.svg
 perf.data
 perf.data.old
+.local-ci-cache/
 
 # ============================================
 # Project Specific
