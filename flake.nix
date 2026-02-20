@@ -89,9 +89,9 @@
             partitionType = "count";
           });
 
-          benches = craneLib.cargoCheck (commonArgs // {
+          benches = craneLib.cargoBuild (commonArgs // {
             inherit cargoArtifacts;
-            cargoCheckExtraArgs = "--workspace --benches";
+            buildPhaseCargoCommand = "cargo check --workspace --benches";
           });
 
           doc = craneLib.cargoDoc (commonArgs // {
