@@ -1,0 +1,19 @@
+[cache]
+skip_dirs = [".git", "target", ".github", ".claude", "docs-site"]
+include_patterns = ["*.rs", "*.toml"]
+
+[stages.fmt]
+command = ["cargo", "fmt", "--all", "--", "--check"]
+fix_command = ["cargo", "fmt", "--all"]
+timeout = 120
+enabled = true
+
+[stages.clippy]
+command = ["cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings"]
+timeout = 600
+enabled = true
+
+[stages.test]
+command = ["cargo", "test", "--workspace"]
+timeout = 1200
+enabled = true
