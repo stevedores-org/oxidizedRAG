@@ -48,6 +48,7 @@ json5-support = ["json5", "jsonschema"]  # JSON5 + schema validation
 
 # Caching features
 caching = ["moka", "tracing"]
+persistent-cache = ["rocksdb", "bincode", "async"]  # RocksDB-based persistent cache
 
 # Incremental updates feature
 incremental = ["parking_lot", "dashmap"]
@@ -175,6 +176,7 @@ jsonfixer = { workspace = true }  # JSON repair for LLM output (always available
 # Caching dependencies
 moka = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
+rocksdb = { version = "0.21", optional = true }  # Persistent cache backend
 bincode = { workspace = true, optional = true }
 sha2 = { workspace = true }
 flate2 = { workspace = true }
