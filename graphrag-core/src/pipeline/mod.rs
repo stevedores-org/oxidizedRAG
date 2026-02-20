@@ -41,9 +41,13 @@ pub mod registry;
 pub mod stage;
 pub mod builder;
 pub mod types;
+pub mod hashable;
+pub mod cached_stage;
 
 pub use registry::{StageId, StageRegistry};
 pub use stage::{Stage, StageMeta, StageError};
 pub use types::{ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord,
                 EntityGraphDelta, GraphNode, GraphEdge, RetrievalSet, RankedResult,
                 ScoreBreakdown};
+pub use hashable::ContentHashable;
+pub use cached_stage::{CachedStage, StageCache};
