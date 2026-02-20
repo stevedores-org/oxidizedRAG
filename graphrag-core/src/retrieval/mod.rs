@@ -23,7 +23,7 @@ use std::collections::{HashMap, HashSet};
 
 pub use bm25::{BM25Result, BM25Retriever, Document as BM25Document};
 pub use enriched::{EnrichedRetrievalConfig, EnrichedRetriever};
-pub use hybrid::{FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
+pub use hybrid::{CascadeConfig, FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
 
 #[cfg(feature = "pagerank")]
 pub use pagerank_retrieval::{PageRankRetrievalSystem, ScoredResult};
