@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Prefer local-ci if available (unified CI pipeline)
+# Prefer local-ci if available (fast cached checks)
 if command -v local-ci >/dev/null 2>&1; then
-  echo "[pre-commit] running lint stage via local-ci"
-  local-ci run --stage lint
+  echo "[pre-commit] running fmt + clippy via local-ci"
+  local-ci fmt clippy
 elif command -v nix >/dev/null 2>&1; then
   echo "[pre-commit] running rust fmt + clippy via nix develop"
   nix develop --command bash -c '
