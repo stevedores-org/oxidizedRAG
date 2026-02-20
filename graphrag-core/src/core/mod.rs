@@ -309,6 +309,46 @@ impl KnowledgeGraph {
         Ok(())
     }
 
+    /// Remove an entity and all its edges from the graph.
+    /// Returns the removed entity, or None if not found.
+    pub fn remove_entity(&mut self, entity_id: &EntityId) -> Option<Entity> {
+        let node_idx = self.entity_index.remove(entity_id)?;
+        self.graph.remove_node(node_idx)
+        // petgraph::Graph::remove_node also removes all edges connected to the node
+    }
+
+    /// Remove a relationship between two entities by source, target, and relation_type.
+    /// Returns true if a matching edge was removed.
+    pub fn remove_relationship(
+        &mut self,
+        source: &EntityId,
+        target: &EntityId,
+        relation_type: &str,
+    ) -> bool {
+        use petgraph::visit::EdgeRef;
+
+        let (Some(&src_idx), Some(&tgt_idx)) = (
+            self.entity_index.get(source),
+            self.entity_index.get(target),
+        ) else {
+            return false;
+        };
+
+        // Find the matching edge
+        let edge_id = self
+            .graph
+            .edges(src_idx)
+            .find(|e| e.target() == tgt_idx && e.weight().relation_type == relation_type)
+            .map(|e| e.id());
+
+        if let Some(eid) = edge_id {
+            self.graph.remove_edge(eid);
+            true
+        } else {
+            false
+        }
+    }
+
     /// Add a chunk to the knowledge graph
     pub fn add_chunk(&mut self, chunk: TextChunk) -> Result<()> {
         self.chunks.insert(chunk.id.clone(), chunk);

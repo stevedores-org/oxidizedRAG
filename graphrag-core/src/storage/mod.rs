@@ -2,6 +2,20 @@
 //!
 //! This module provides abstractions and implementations for storing
 //! knowledge graph data, vectors, and metadata.
+//!
+//! ## Backends
+//!
+//! - [`MemoryStorage`] — in-memory storage for development/testing
+//! - [`surrealdb::SurrealDeltaStorage`] — SurrealDB-backed delta persistence
+//!   (requires `surrealdb-storage` feature)
+//! - [`async_bridge::AsyncKnowledgeGraph`] — sync/async bridge for incremental
+//!   updates (requires `incremental` feature)
+
+#[cfg(feature = "surrealdb-storage")]
+pub mod surrealdb;
+
+#[cfg(feature = "incremental")]
+pub mod async_bridge;
 
 use crate::core::{Document, Entity, Result, TextChunk};
 #[cfg(feature = "async")]

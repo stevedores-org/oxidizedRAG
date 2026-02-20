@@ -24,3 +24,12 @@ jobs:
 
       - name: Workspace tests
         run: nix develop --command cargo test --workspace
+
+      - name: Incremental correctness tests
+        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
+
+      - name: Incremental performance gate (<5% overhead)
+        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_perf_test --verbose -- --nocapture
+
+      - name: SurrealDB storage tests
+        run: nix develop --command cargo test -p graphrag-core --features "surrealdb-storage" surrealdb

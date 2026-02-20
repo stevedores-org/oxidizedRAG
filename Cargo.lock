@@ -5164,6 +5164,7 @@ dependencies = [
  "sha2",
  "sprs",
  "strum 0.25.0",
+ "surrealdb",
  "tap",
  "tempfile",
  "text-splitter",
