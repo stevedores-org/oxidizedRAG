@@ -19,6 +19,10 @@
 //! - Data quality checks
 //! - Error handling and reporting
 
+/// Typed pipeline stage trait and batch contracts.
+#[cfg(feature = "async")]
+pub mod stage;
+
 // Data import requires async feature
 #[cfg(feature = "async")]
 pub mod data_import;
@@ -30,3 +34,6 @@ pub use data_import::{
     ImportedEntity, ImportedRelationship, ImportResult,
     ImportError, DataImporter, StreamingImporter, StreamingSource,
 };
+
+#[cfg(feature = "async")]
+pub use stage::{Stage, ChunkBatch, EmbeddingBatch, EntityGraphDelta, RetrievalSet};
