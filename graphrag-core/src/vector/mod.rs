@@ -1,3 +1,7 @@
+pub mod ann_config;
+
+pub use ann_config::{ANNConfig, DistanceMetric};
+
 use crate::{GraphRAGError, Result};
 #[cfg(feature = "parallel-processing")]
 use crate::parallel::ParallelProcessor;
@@ -56,19 +60,37 @@ pub struct VectorIndex {
     #[cfg(not(feature = "vector-hnsw"))]
     index: Option<()>, // Placeholder when HNSW is not available
     embeddings: HashMap<String, Vec<f32>>,
+    ann_config: ANNConfig,
     #[cfg(feature = "parallel-processing")]
     parallel_processor: Option<ParallelProcessor>,
 }
 
 impl VectorIndex {
-    /// Create a new vector index
+    /// Create a new vector index with default (balanced) ANN config.
     pub fn new() -> Self {
         Self {
             index: None,
             embeddings: HashMap::new(),
+            ann_config: ANNConfig::default(),
             #[cfg(feature = "parallel-processing")]
             parallel_processor: None,
         }
+    }
+
+    /// Create a new vector index with the given ANN configuration.
+    pub fn with_ann_config(ann_config: ANNConfig) -> Self {
+        Self {
+            index: None,
+            embeddings: HashMap::new(),
+            ann_config,
+            #[cfg(feature = "parallel-processing")]
+            parallel_processor: None,
+        }
+    }
+
+    /// Get the current ANN configuration.
+    pub fn ann_config(&self) -> &ANNConfig {
+        &self.ann_config
     }
 
     /// Create a new vector index with parallel processing support
@@ -77,6 +99,7 @@ impl VectorIndex {
         Self {
             index: None,
             embeddings: HashMap::new(),
+            ann_config: ANNConfig::default(),
             parallel_processor: Some(parallel_processor),
         }
     }
