@@ -771,7 +771,7 @@ mod e2e_agent_workflows {
         .expect("Failed to build graph");
 
         // Simulate code generation based on indexed code
-        let _generated_code = r#"
+        let generated_code = r#"
             pub fn test_calculator() {
                 let calc = Calculator::new();
                 assert_eq!(calc.add(2, 3), 5);
