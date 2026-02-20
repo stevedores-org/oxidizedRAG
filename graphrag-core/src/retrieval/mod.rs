@@ -15,7 +15,7 @@ pub mod pagerank_retrieval;
 #[cfg(feature = "parallel-processing")]
 use crate::parallel::ParallelProcessor;
 use crate::{
-    config::Config,
+    config::{Config, HybridFusionConfig},
     core::{ChunkId, EntityId, KnowledgeGraph},
     summarization::DocumentTree,
     vector::{EmbeddingGenerator, VectorIndex, VectorUtils},
@@ -26,8 +26,8 @@ use std::collections::{HashMap, HashSet};
 pub use bm25::{BM25Result, BM25Retriever, Document as BM25Document};
 pub use enriched::{EnrichedRetrievalConfig, EnrichedRetriever};
 pub use fusion::{
-    CascadeFusion, FusedResult, FusionMetrics, FusionPolicy, RankedResult, ReciprocalRankFusion,
-    RetrievalSource, WeightedSum,
+    policy_from_config, CascadeFusion, FusedResult, FusionMetrics, FusionPolicy, RankedResult,
+    ReciprocalRankFusion, RetrievalSource, WeightedSum,
 };
 pub use hybrid::{FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
 
@@ -64,6 +64,8 @@ pub struct RetrievalConfig {
     pub chunk_weight: f32,
     /// Weight for graph-based results in scoring (0.0 to 1.0)
     pub graph_weight: f32,
+    /// Hybrid fusion configuration for cross-strategy ranking.
+    pub hybrid_fusion: HybridFusionConfig,
 }
 
 impl Default for RetrievalConfig {
@@ -75,6 +77,7 @@ impl Default for RetrievalConfig {
             entity_weight: 0.4,
             chunk_weight: 0.4,
             graph_weight: 0.2,
+            hybrid_fusion: HybridFusionConfig::default(),
         }
     }
 }
@@ -194,6 +197,12 @@ impl RetrievalSystem {
             entity_weight: 0.4,         // Default, could be added to config
             chunk_weight: 0.4,          // Default, could be added to config
             graph_weight: 0.2,          // Default, could be added to config
+            hybrid_fusion: config
+                .zero_cost_approach
+                .pure_algorithmic
+                .search_ranking
+                .hybrid_fusion
+                .clone(),
         };
 
         Ok(Self {
@@ -221,6 +230,12 @@ impl RetrievalSystem {
             entity_weight: 0.4,
             chunk_weight: 0.4,
             graph_weight: 0.2,
+            hybrid_fusion: config
+                .zero_cost_approach
+                .pure_algorithmic
+                .search_ranking
+                .hybrid_fusion
+                .clone(),
         };
 
         Ok(Self {
@@ -705,6 +720,7 @@ impl RetrievalSystem {
         analysis: &QueryAnalysis,
     ) -> Result<Vec<SearchResult>> {
         let mut all_results = Vec::new();
+        let mut ranked_candidates = Vec::new();
 
         // Strategy weights based on query analysis
         let (vector_weight, graph_weight, hierarchical_weight) =
@@ -716,6 +732,11 @@ impl RetrievalSystem {
             for result in &mut vector_results {
                 result.score *= vector_weight;
             }
+            Self::append_ranked_results(
+                &vector_results,
+                RetrievalSource::Vector,
+                &mut ranked_candidates,
+            );
             all_results.extend(vector_results);
         }
 
@@ -730,6 +751,11 @@ impl RetrievalSystem {
             for result in &mut graph_results {
                 result.score *= graph_weight;
             }
+            Self::append_ranked_results(
+                &graph_results,
+                RetrievalSource::Graph,
+                &mut ranked_candidates,
+            );
             all_results.extend(graph_results);
         }
 
@@ -740,6 +766,11 @@ impl RetrievalSystem {
             for result in &mut hierarchical_results {
                 result.score *= hierarchical_weight;
             }
+            Self::append_ranked_results(
+                &hierarchical_results,
+                RetrievalSource::Keyword,
+                &mut ranked_candidates,
+            );
             all_results.extend(hierarchical_results);
         }
 
@@ -747,11 +778,17 @@ impl RetrievalSystem {
         if analysis.complexity_score > 0.7 {
             let traversal_results =
                 self.advanced_graph_traversal(query_embedding, graph, analysis)?;
+            Self::append_ranked_results(
+                &traversal_results,
+                RetrievalSource::Graph,
+                &mut ranked_candidates,
+            );
             all_results.extend(traversal_results);
         }
 
         // 5. Cross-strategy fusion for hybrid results
-        let fusion_results = self.cross_strategy_fusion(&all_results, analysis)?;
+        let fusion_results =
+            self.cross_strategy_fusion(&all_results, &ranked_candidates, analysis)?;
         all_results.extend(fusion_results);
 
         // Final ranking and deduplication
@@ -1044,50 +1081,73 @@ impl RetrievalSystem {
     fn cross_strategy_fusion(
         &self,
         all_results: &[SearchResult],
+        ranked_candidates: &[RankedResult],
         _analysis: &QueryAnalysis,
     ) -> Result<Vec<SearchResult>> {
-        let mut fusion_results = Vec::new();
-
-        // Group results by content similarity
-        let mut content_groups: HashMap<String, Vec<&SearchResult>> = HashMap::new();
-
-        for result in all_results {
-            let content_key = Self::safe_truncate(&result.content, 50);
-
-            content_groups.entry(content_key).or_default().push(result);
+        if !self.config.hybrid_fusion.enabled || ranked_candidates.is_empty() {
+            return Ok(Vec::new());
         }
 
-        // Create fusion results for groups with multiple strategies
-        for (content_key, group) in content_groups {
-            if group.len() > 1 {
-                let types: HashSet<_> = group.iter().map(|r| &r.result_type).collect();
-                if types.len() > 1 {
-                    // This content was found by multiple strategies - boost confidence
-                    let avg_score = group.iter().map(|r| r.score).sum::<f32>() / group.len() as f32;
-                    let boost = 0.2 * (types.len() - 1) as f32;
+        let policy = policy_from_config(&self.config.hybrid_fusion)?;
+        let fused = policy.fuse(ranked_candidates.to_vec(), self.config.top_k);
 
-                    let all_entities: HashSet<_> =
-                        group.iter().flat_map(|r| r.entities.iter()).collect();
+        let mut by_id: HashMap<&str, Vec<&SearchResult>> = HashMap::new();
+        for result in all_results {
+            by_id.entry(result.id.as_str()).or_default().push(result);
+        }
 
-                    let all_chunks: HashSet<_> =
-                        group.iter().flat_map(|r| r.source_chunks.iter()).collect();
-
-                    fusion_results.push(SearchResult {
-                        id: format!(
-                            "fusion_{}",
-                            content_key.chars().take(10).collect::<String>()
-                        ),
-                        content: group[0].content.clone(),
-                        score: (avg_score + boost).min(1.0),
-                        result_type: ResultType::Hybrid,
-                        entities: all_entities.into_iter().cloned().collect(),
-                        source_chunks: all_chunks.into_iter().cloned().collect(),
-                    });
+        let mut fusion_results = Vec::new();
+        for fused_result in fused {
+            if let Some(group) = by_id.get(fused_result.id.as_str()) {
+                let mut all_entities = HashSet::new();
+                let mut all_chunks = HashSet::new();
+                let mut exemplar = group[0];
+                for item in group {
+                    if item.score > exemplar.score {
+                        exemplar = item;
+                    }
+                    all_entities.extend(item.entities.iter().cloned());
+                    all_chunks.extend(item.source_chunks.iter().cloned());
                 }
+
+                fusion_results.push(SearchResult {
+                    id: format!("fusion_{}", exemplar.id),
+                    content: exemplar.content.clone(),
+                    score: fused_result.score.min(1.0),
+                    result_type: ResultType::Hybrid,
+                    entities: all_entities.into_iter().collect(),
+                    source_chunks: all_chunks.into_iter().collect(),
+                });
             }
         }
 
         Ok(fusion_results)
+    }
+
+    fn append_ranked_results(
+        results: &[SearchResult],
+        source: RetrievalSource,
+        sink: &mut Vec<RankedResult>,
+    ) {
+        let mut sorted = results.to_vec();
+        sorted.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.id.cmp(&b.id))
+        });
+
+        sink.extend(
+            sorted
+                .into_iter()
+                .enumerate()
+                .map(|(rank, result)| RankedResult {
+                    id: result.id,
+                    source,
+                    score: result.score,
+                    rank,
+                }),
+        );
     }
 
     /// Adaptive ranking and deduplication based on query analysis

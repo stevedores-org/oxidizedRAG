@@ -1,7 +1,6 @@
 //! Pluggable fusion policies for hybrid retrieval ranking.
 
 use crate::config::HybridFusionConfig;
-use async_trait::async_trait;
 use std::collections::{HashMap, HashSet};
 
 /// Source channel that produced a ranked retrieval candidate.
@@ -80,17 +79,15 @@ pub struct CascadeFusion {
 }
 
 /// Trait for pluggable hybrid retrieval fusion strategies.
-#[async_trait]
 pub trait FusionPolicy: Send + Sync {
     /// Fuse source-ranked candidates into a top-k final ordering.
-    async fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult>;
+    fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult>;
     /// Stable policy identifier.
     fn name(&self) -> &str;
 }
 
-#[async_trait]
 impl FusionPolicy for WeightedSum {
-    async fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult> {
+    fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult> {
         fuse_with_weighted_sum(results, top_k, self)
     }
 
@@ -99,9 +96,8 @@ impl FusionPolicy for WeightedSum {
     }
 }
 
-#[async_trait]
 impl FusionPolicy for ReciprocalRankFusion {
-    async fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult> {
+    fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult> {
         let mut combined: HashMap<String, FusedResult> = HashMap::new();
         for result in results {
             let contrib = 1.0 / (self.k + result.rank as f32 + 1.0);
@@ -123,9 +119,8 @@ impl FusionPolicy for ReciprocalRankFusion {
     }
 }
 
-#[async_trait]
 impl FusionPolicy for CascadeFusion {
-    async fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult> {
+    fn fuse(&self, results: Vec<RankedResult>, top_k: usize) -> Vec<FusedResult> {
         let mut grouped: HashMap<RetrievalSource, Vec<RankedResult>> = HashMap::new();
         for result in results {
             grouped.entry(result.source).or_default().push(result);
@@ -183,16 +178,24 @@ impl FusionPolicy for CascadeFusion {
 }
 
 /// Select a concrete fusion policy from `HybridFusionConfig`.
-pub fn policy_from_config(config: &HybridFusionConfig) -> Box<dyn FusionPolicy> {
+pub fn policy_from_config(config: &HybridFusionConfig) -> crate::Result<Box<dyn FusionPolicy>> {
     match config.policy.as_str() {
-        "rrf" => Box::new(ReciprocalRankFusion { k: config.rrf_k }),
-        "cascade" => Box::new(CascadeFusion {
+        "rrf" => Ok(Box::new(ReciprocalRankFusion { k: config.rrf_k })),
+        "cascade" => Ok(Box::new(CascadeFusion {
             early_stop_score: config.cascade_early_stop_score,
-        }),
-        _ => Box::new(WeightedSum {
-            vector_weight: config.weights.keywords,
-            keyword_weight: config.weights.bm25,
+        })),
+        "weighted_sum" => Ok(Box::new(WeightedSum {
+            // HybridFusionConfig currently exposes `keywords`, `graph`, and `bm25`.
+            // In the retrieval pipeline, BM25 corresponds to keyword scoring, while
+            // `keywords` is used as the vector-side contribution.
+            vector_weight: config.weights.bm25,
+            keyword_weight: config.weights.keywords,
             graph_weight: config.weights.graph,
+        })),
+        invalid => Err(crate::GraphRAGError::Config {
+            message: format!(
+                "Invalid fusion policy '{invalid}'. Expected one of: weighted_sum, rrf, cascade"
+            ),
         }),
     }
 }
@@ -310,43 +313,43 @@ mod tests {
         ]
     }
 
-    #[tokio::test]
-    async fn deterministic_top_k_weighted_sum() {
+    #[test]
+    fn deterministic_top_k_weighted_sum() {
         let policy = WeightedSum {
             vector_weight: 0.5,
             keyword_weight: 0.3,
             graph_weight: 0.2,
         };
-        let first = policy.fuse(fixed_results(), 3).await;
-        let second = policy.fuse(fixed_results(), 3).await;
+        let first = policy.fuse(fixed_results(), 3);
+        let second = policy.fuse(fixed_results(), 3);
         assert_eq!(first, second);
         assert_eq!(first[0].id, "A");
     }
 
-    #[tokio::test]
-    async fn policy_swap_is_safe_and_produces_results() {
+    #[test]
+    fn policy_swap_is_safe_and_produces_results() {
         let cfg = HybridFusionConfig::default();
-        let weighted = policy_from_config(&cfg);
+        let weighted = policy_from_config(&cfg).expect("default weighted_sum policy must load");
         assert_eq!(weighted.name(), "weighted_sum");
-        assert!(!weighted.fuse(fixed_results(), 2).await.is_empty());
+        assert!(!weighted.fuse(fixed_results(), 2).is_empty());
 
         let mut rrf_cfg = cfg.clone();
         rrf_cfg.policy = "rrf".to_string();
-        let rrf = policy_from_config(&rrf_cfg);
+        let rrf = policy_from_config(&rrf_cfg).expect("rrf policy must load");
         assert_eq!(rrf.name(), "rrf");
-        assert!(!rrf.fuse(fixed_results(), 2).await.is_empty());
+        assert!(!rrf.fuse(fixed_results(), 2).is_empty());
 
         let mut cascade_cfg = cfg;
         cascade_cfg.policy = "cascade".to_string();
-        let cascade = policy_from_config(&cascade_cfg);
+        let cascade = policy_from_config(&cascade_cfg).expect("cascade policy must load");
         assert_eq!(cascade.name(), "cascade");
-        assert!(!cascade.fuse(fixed_results(), 2).await.is_empty());
+        assert!(!cascade.fuse(fixed_results(), 2).is_empty());
     }
 
-    #[tokio::test]
-    async fn recall_metrics_available_per_policy() {
+    #[test]
+    fn recall_metrics_available_per_policy() {
         let policy = ReciprocalRankFusion { k: 60.0 };
-        let fused = policy.fuse(fixed_results(), 3).await;
+        let fused = policy.fuse(fixed_results(), 3);
         let relevant: HashSet<String> = ["A".to_string(), "C".to_string()].into_iter().collect();
         let metrics = compute_metrics(policy.name(), &fused, &relevant);
         assert_eq!(metrics.policy_name, "rrf");
@@ -354,15 +357,15 @@ mod tests {
         assert!(metrics.score_max >= metrics.score_min);
     }
 
-    #[tokio::test]
-    async fn empty_and_tie_cases_are_stable() {
+    #[test]
+    fn empty_and_tie_cases_are_stable() {
         let policy = WeightedSum {
             vector_weight: 1.0,
             keyword_weight: 1.0,
             graph_weight: 1.0,
         };
 
-        let empty = policy.fuse(Vec::new(), 10).await;
+        let empty = policy.fuse(Vec::new(), 10);
         assert!(empty.is_empty());
 
         let ties = vec![
@@ -379,9 +382,48 @@ mod tests {
                 rank: 0,
             },
         ];
-        let out = policy.fuse(ties, 2).await;
+        let out = policy.fuse(ties, 2);
         assert_eq!(out.len(), 2);
         assert_eq!(out[0].id, "x");
         assert_eq!(out[1].id, "y");
+    }
+
+    #[test]
+    fn invalid_policy_is_rejected() {
+        let mut cfg = HybridFusionConfig::default();
+        cfg.policy = "nope".to_string();
+
+        let result = policy_from_config(&cfg);
+        assert!(result.is_err(), "invalid policy must not silently fallback");
+    }
+
+    #[test]
+    fn weighted_policy_mapping_prefers_vector_when_bm25_is_higher() {
+        let mut cfg = HybridFusionConfig::default();
+        cfg.policy = "weighted_sum".to_string();
+        cfg.weights.bm25 = 0.9;
+        cfg.weights.keywords = 0.1;
+        cfg.weights.graph = 0.0;
+
+        let policy = policy_from_config(&cfg).expect("weighted_sum policy must load");
+        let fused = policy.fuse(
+            vec![
+                RankedResult {
+                    id: "vector-first".to_string(),
+                    source: RetrievalSource::Vector,
+                    score: 1.0,
+                    rank: 0,
+                },
+                RankedResult {
+                    id: "keyword-first".to_string(),
+                    source: RetrievalSource::Keyword,
+                    score: 1.0,
+                    rank: 0,
+                },
+            ],
+            2,
+        );
+
+        assert_eq!(fused[0].id, "vector-first");
     }
 }
