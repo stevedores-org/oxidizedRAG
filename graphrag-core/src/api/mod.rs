@@ -7,6 +7,7 @@ pub mod simple;
 pub mod easy;
 pub mod rest;
 pub mod handlers;
+pub mod contracts;
 
 #[cfg(test)]
 mod tests;
