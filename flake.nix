@@ -88,6 +88,16 @@
             partitions = 1;
             partitionType = "count";
           });
+
+          benches = craneLib.cargoCheck (commonArgs // {
+            inherit cargoArtifacts;
+            cargoCheckExtraArgs = "--workspace --benches";
+          });
+
+          doc = craneLib.cargoDoc (commonArgs // {
+            inherit cargoArtifacts;
+            cargoDocExtraArgs = "--workspace --no-deps";
+          });
         };
 
         packages = {
@@ -131,17 +141,24 @@
           RUST_BACKTRACE = "1";
 
           shellHook = ''
+            if [ -x ./.githooks/install.sh ]; then
+              ./.githooks/install.sh >/dev/null 2>&1 || true
+            fi
+
             echo "🔍 oxidizedRAG Development Environment"
             echo ""
-            echo "Commands:"
-            echo "  cargo test --all                           # Run all tests"
-            echo "  cargo run -p graphrag-cli                  # Run CLI"
-            echo "  cargo run -p graphrag-server               # Run server"
-            echo "  cd graphrag-wasm && trunk serve --open     # Run WASM app"
+            echo "Quick commands (just):"
+            echo "  just fmt        # cargo fmt --check"
+            echo "  just clippy     # clippy -D warnings"
+            echo "  just test       # workspace tests"
+            echo "  just bench      # benches compile"
+            echo "  just doc        # docs build"
+            echo "  just ci         # full local CI"
+            echo "  just flake-check"
             echo ""
             echo "Nix Cache (Attic):"
             echo "  attic login stevedores https://nix-cache.stevedores.org \$ATTIC_TOKEN"
-            echo "  attic push stevedores <store-path>         # Push to cache"
+            echo "  attic push stevedores <store-path>"
             echo ""
           '';
         };

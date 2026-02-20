@@ -19,6 +19,8 @@ graph_data/
 docs/
 documents/
 docs-example/
+result
+result-*
 
 # ============================================
 # Screenshots and Media
@@ -202,3 +204,5 @@ graphrag-wasm/dist/models/minilm-l6.onnx
 # exclude md files except readme
 *.md
 !README.md
+!docs/
+!docs/ci.md

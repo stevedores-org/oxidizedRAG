@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v nix >/dev/null 2>&1; then
+  echo "[pre-commit] running rust fmt + clippy via nix develop"
+  nix develop --command cargo fmt --all -- --check
+  nix develop --command cargo clippy --workspace --all-targets -- -D warnings
+else
+  echo "[pre-commit] nix not found; running local cargo checks"
+  cargo fmt --all -- --check
+  cargo clippy --workspace --all-targets -- -D warnings
+fi
