@@ -20,7 +20,7 @@
 
     # flake-utils: utility functions for multi-platform Nix flakes
     # v1.0.0 release (stable)
-    flake-utils.url = "github:numtide/flake-utils/d1115de2106ddf9f236339fe7f033dde00dcf6b7";
+    flake-utils.url = "github:numtide/flake-utils";
 
     # rust-overlay: Latest Rust toolchain management
     # Pinned to recent stable commit with rust-src, rustfmt, clippy support
