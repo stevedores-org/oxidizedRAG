@@ -1,32 +1,49 @@
-//! Pipeline Module
+//! Pipeline DAG Architecture - typed, composable stages with explicit contracts.
 //!
-//! This module provides data pipeline capabilities for GraphRAG:
-//! - Data import from multiple formats
-//! - ETL (Extract, Transform, Load) operations
-//! - Batch and streaming processing
+//! Provides first-class pipeline composition with type-safe stage boundaries,
+//! deterministic DAG generation, and per-stage caching.
 //!
-//! ## Features
+//! ## Architecture
 //!
-//! ### Data Import
-//! - CSV/TSV file support
-//! - JSON/JSONL support
-//! - RDF/Turtle semantic web formats
-//! - GraphML graph exchange format
-//! - Streaming ingestion
+//! The pipeline is organized as a directed acyclic graph (DAG) of stages,
+//! where each stage has explicitly typed inputs and outputs.
 //!
-//! ### Validation
-//! - Schema validation
-//! - Data quality checks
-//! - Error handling and reporting
+//! ```text
+//! ChunkBatch → [Chunking Stage] → [Embedding Stage] → EmbeddingBatch → ...
+//! ```
+//!
+//! Each stage:
+//! - Implements the `Stage<I, O>` trait
+//! - Is independently testable
+//! - Can be swapped for alternative implementations
+//! - Registers with a StageRegistry for discovery
+//!
+//! ## Core Types
+//!
+//! - `ChunkBatch`: Documents and chunks
+//! - `EmbeddingBatch`: Vectors and sources
+//! - `EntityGraphDelta`: Graph changes (add/remove/update)
+//! - `RetrievalSet`: Ranked query results
+//!
+//! ## Example
+//!
+//! ```ignore
+//! let mut registry = StageRegistry::new();
+//! registry.register("chunker", "1.0.0", "Split documents into chunks");
+//!
+//! let chunker = MyChunker::new();
+//! let batch = ChunkBatch { /* ... */ };
+//!
+//! let result = chunker.execute(batch).await?;
+//! ```
 
-// Data import requires async feature
-#[cfg(feature = "async")]
-pub mod data_import;
+pub mod registry;
+pub mod stage;
+pub mod builder;
+pub mod types;
 
-// Re-export main types
-#[cfg(feature = "async")]
-pub use data_import::{
-    DataFormat, ImportConfig, ColumnMappings,
-    ImportedEntity, ImportedRelationship, ImportResult,
-    ImportError, DataImporter, StreamingImporter, StreamingSource,
-};
+pub use registry::{StageId, StageRegistry};
+pub use stage::{Stage, StageMeta, StageError};
+pub use types::{ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord,
+                EntityGraphDelta, GraphNode, GraphEdge, RetrievalSet, RankedResult,
+                ScoreBreakdown};
