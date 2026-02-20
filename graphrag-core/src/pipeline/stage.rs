@@ -4,6 +4,7 @@
 
 use crate::core::{ChunkId, Result, TextChunk};
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 #[cfg(feature = "incremental")]
@@ -33,7 +34,7 @@ pub trait Stage<I: Send + 'static, O: Send + 'static>: Send + Sync {
 // ============================================================================
 
 /// A batch of text chunks ready for embedding.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChunkBatch(pub Vec<TextChunk>);
 
 impl ChunkBatch {
@@ -54,7 +55,7 @@ impl ChunkBatch {
 }
 
 /// A batch of embeddings keyed by chunk ID.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingBatch(pub Vec<(ChunkId, Vec<f32>)>);
 
 impl EmbeddingBatch {
