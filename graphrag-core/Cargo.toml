@@ -52,6 +52,9 @@ caching = ["moka", "tracing"]
 # Incremental updates feature
 incremental = ["parking_lot", "dashmap"]
 
+# SurrealDB-backed incremental storage
+surrealdb-storage = ["surrealdb", "incremental", "async"]
+
 # ROGRAG (Robustly Optimized GraphRAG) feature
 rograg = ["derive_more", "strum", "itertools", "tap"]
 
@@ -183,6 +186,9 @@ indicatif = "0.17"  # Progress bars for long-running operations
 # Incremental updates dependencies
 uuid = { workspace = true, features = ["js"] }
 dashmap = { workspace = true, optional = true }
+
+# SurrealDB persistence
+surrealdb = { workspace = true, optional = true }
 
 # Error handling (core functionality)
 thiserror = { workspace = true }

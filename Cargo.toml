@@ -137,6 +137,9 @@ candle-core = { version = "0.8", default-features = false }
 candle-nn = { version = "0.8", default-features = false }
 candle-transformers = { version = "0.8", default-features = false }
 
+# Persistence layer
+surrealdb = { version = "2", features = ["kv-mem"] }
+
 [profile.release]
 opt-level = 3
 lto = "thin"
