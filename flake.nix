@@ -19,7 +19,6 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # flake-utils: utility functions for multi-platform Nix flakes
-    # v1.0.0 release (stable)
     flake-utils.url = "github:numtide/flake-utils";
 
     # rust-overlay: Latest Rust toolchain management
