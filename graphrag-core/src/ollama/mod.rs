@@ -209,3 +209,69 @@ impl AsyncLanguageModel for AsyncOllamaGenerator {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::traits::AsyncLanguageModel;
+
+    #[test]
+    fn default_config_matches_expected_values() {
+        let config = OllamaConfig::default();
+        assert!(!config.enabled);
+        assert_eq!(config.host, "http://localhost");
+        assert_eq!(config.port, 11434);
+        assert_eq!(config.embedding_model, "nomic-embed-text");
+        assert_eq!(config.chat_model, "llama3.2:3b");
+        assert_eq!(config.timeout_seconds, 30);
+        assert_eq!(config.max_retries, 3);
+        assert!(config.fallback_to_hash);
+        assert_eq!(config.max_tokens, Some(2000));
+        assert_eq!(config.temperature, Some(0.7));
+    }
+
+    #[tokio::test]
+    async fn model_info_reflects_configured_chat_model() {
+        let mut config = OllamaConfig::default();
+        config.chat_model = "mistral:7b".to_string();
+        let generator = AsyncOllamaGenerator::new(config).await.expect("generator");
+        let info = generator.model_info().await;
+
+        assert_eq!(info.name, "mistral:7b");
+        assert_eq!(info.max_context_length, Some(4096));
+        assert!(!info.supports_streaming);
+    }
+
+    #[cfg(feature = "ureq")]
+    #[tokio::test]
+    async fn complete_fails_immediately_when_retries_are_zero() {
+        let mut config = OllamaConfig::default();
+        config.max_retries = 0;
+
+        let generator = AsyncOllamaGenerator::new(config).await.expect("generator");
+        let err = generator.complete("hello").await.expect_err("expected error");
+
+        match err {
+            GraphRAGError::Generation { message } => {
+                assert!(message.contains("failed after 0 retries"), "{}", message);
+            }
+            other => panic!("unexpected error variant: {:?}", other),
+        }
+    }
+
+    #[cfg(not(feature = "ureq"))]
+    #[tokio::test]
+    async fn complete_reports_missing_ureq_feature() {
+        let generator = AsyncOllamaGenerator::new(OllamaConfig::default())
+            .await
+            .expect("generator");
+        let err = generator.complete("hello").await.expect_err("expected error");
+
+        match err {
+            GraphRAGError::Generation { message } => {
+                assert!(message.contains("ureq feature required"), "{}", message);
+            }
+            other => panic!("unexpected error variant: {:?}", other),
+        }
+    }
+}
