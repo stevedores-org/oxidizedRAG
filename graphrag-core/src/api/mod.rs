@@ -8,6 +8,8 @@ pub mod easy;
 pub mod rest;
 pub mod handlers;
 pub mod contracts;
+#[cfg(feature = "async")]
+pub mod code_agent;
 
 #[cfg(test)]
 mod tests;
