@@ -41,6 +41,7 @@ pub mod registry;
 pub mod stage;
 pub mod builder;
 pub mod types;
+pub mod persistent_cache;
 
 /// Stage-level caching/memoization.
 #[cfg(feature = "async")]
@@ -54,3 +55,7 @@ pub use types::{ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord,
 
 #[cfg(feature = "async")]
 pub use cached_stage::CachedStage;
+
+pub use persistent_cache::{PersistentCacheBackend, CacheStats};
+#[cfg(feature = "persistent-cache")]
+pub use persistent_cache::RocksDBCache;
