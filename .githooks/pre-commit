@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Prefer local-ci if available (fast cached checks)
+# Prefer local-ci if available, while keeping strict clippy parity with fallback paths.
 if command -v local-ci >/dev/null 2>&1; then
-  echo "[pre-commit] running fmt + clippy via local-ci"
-  local-ci fmt clippy
+  echo "[pre-commit] running fmt via local-ci + strict clippy"
+  local-ci fmt
+  cargo clippy --workspace --all-targets -- -D warnings
 elif command -v nix >/dev/null 2>&1; then
   echo "[pre-commit] running rust fmt + clippy via nix develop"
   nix develop --command bash -c '

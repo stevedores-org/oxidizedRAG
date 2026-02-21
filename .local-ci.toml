@@ -1,6 +1,10 @@
 # local-ci configuration for oxidizedRAG
 # See: https://github.com/stevedores-org/local-ci
 #
+# NOTE: local-ci v0.1.0 uses built-in stage definitions and does not currently
+# parse this file. Keep this as forward-compatible documentation of desired
+# stage policy until schema-backed config loading lands in local-ci.
+#
 # Core stages run by default: fmt, clippy, test
 # Optional tool stages available below (requires installation):
 #   - deny: cargo-deny (security/license checking)
