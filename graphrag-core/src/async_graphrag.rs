@@ -640,6 +640,34 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "async-traits")]
+    async fn test_mock_llm_trait_object_usable() {
+        // Regression: ensure Arc<AsyncMockLLM> (no Box) satisfies trait bounds
+        // and the LLM is actually callable through the trait object.
+        let graphrag = AsyncGraphRAGBuilder::new()
+            .with_async_mock_llm()
+            .await
+            .unwrap()
+            .build()
+            .await
+            .unwrap();
+        let answer = graphrag.answer_question("test question").await;
+        assert!(answer.is_ok());
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "async-traits")]
+    async fn test_initialize_default_llm_trait_object_usable() {
+        // Regression: ensure initialize() default mock LLM path (Arc::new, no Box)
+        // produces a usable trait object.
+        let config = Config::default();
+        let mut graphrag = AsyncGraphRAG::new(config).await.unwrap();
+        graphrag.initialize().await.unwrap();
+        let answer = graphrag.answer_question("test question").await;
+        assert!(answer.is_ok());
+    }
+
+    #[tokio::test]
     async fn test_health_check() {
         let config = Config::default();
         let mut graphrag = AsyncGraphRAG::new(config).await.unwrap();
