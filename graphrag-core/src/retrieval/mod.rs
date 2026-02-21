@@ -3,6 +3,8 @@ pub mod adaptive;
 pub mod bm25;
 /// Enriched metadata-aware retrieval
 pub mod enriched;
+/// Retrieval debug trace types for explainability
+pub mod explain;
 /// Pluggable fusion policies for hybrid retrieval
 pub mod fusion;
 /// HippoRAG Personalized PageRank retrieval
@@ -25,6 +27,7 @@ use std::collections::{HashMap, HashSet};
 
 pub use bm25::{BM25Result, BM25Retriever, Document as BM25Document};
 pub use enriched::{EnrichedRetrievalConfig, EnrichedRetriever};
+pub use explain::{ExplainableRetriever, QueryTrace, ScoreBreakdown, StageTrace};
 pub use fusion::{
     CascadeFusion, FusedResult, FusionMetrics, FusionPolicy, RankedResult, ReciprocalRankFusion,
     RetrievalSource, WeightedSum,
