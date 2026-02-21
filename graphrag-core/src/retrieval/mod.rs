@@ -29,7 +29,7 @@ pub use fusion::{
     CascadeFusion, FusedResult, FusionMetrics, FusionPolicy, RankedResult, ReciprocalRankFusion,
     RetrievalSource, WeightedSum,
 };
-pub use hybrid::{FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
+pub use hybrid::{CascadeConfig, FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
 
 #[cfg(feature = "pagerank")]
 pub use pagerank_retrieval::{PageRankRetrievalSystem, ScoredResult};

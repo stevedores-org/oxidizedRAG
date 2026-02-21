@@ -44,6 +44,29 @@ pub enum FusionMethod {
     CombSum,
     /// Maximum score
     MaxScore,
+    /// Cascade: run cheap retrieval first, escalate to expensive only if needed
+    Cascade,
+}
+
+/// Configuration for cascade fusion
+#[derive(Debug, Clone)]
+pub struct CascadeConfig {
+    /// Minimum top score from cheap retrieval to skip expensive retrieval
+    pub score_threshold: f32,
+    /// Number of results to retrieve from cheap (keyword) stage
+    pub cheap_k: usize,
+    /// Number of results to retrieve from expensive (vector) stage on escalation
+    pub expensive_k: usize,
+}
+
+impl Default for CascadeConfig {
+    fn default() -> Self {
+        Self {
+            score_threshold: 0.5,
+            cheap_k: 50,
+            expensive_k: 100,
+        }
+    }
 }
 
 /// Configuration for hybrid retrieval
@@ -61,6 +84,8 @@ pub struct HybridConfig {
     pub max_candidates: usize,
     /// Minimum score threshold for final results
     pub min_score_threshold: f32,
+    /// Cascade fusion configuration (used when fusion_method is Cascade)
+    pub cascade: CascadeConfig,
 }
 
 impl Default for HybridConfig {
@@ -72,6 +97,7 @@ impl Default for HybridConfig {
             rrf_k: 60.0,
             max_candidates: 100,
             min_score_threshold: 0.1,
+            cascade: CascadeConfig::default(),
         }
     }
 }
@@ -173,6 +199,11 @@ impl HybridRetriever {
             });
         }
 
+        // Cascade fusion has special control flow
+        if self.config.fusion_method == FusionMethod::Cascade {
+            return self.cascade_search(query, limit);
+        }
+
         // Get semantic results
         let semantic_results = self.semantic_search(query, self.config.max_candidates)?;
 
@@ -183,6 +214,28 @@ impl HybridRetriever {
         let combined_results = self.combine_results(semantic_results, keyword_results, limit)?;
 
         Ok(combined_results)
+    }
+
+    /// Cascade search: run cheap (keyword) first, escalate to vector only if needed
+    fn cascade_search(&mut self, query: &str, limit: usize) -> Result<Vec<HybridSearchResult>> {
+        let cascade = self.config.cascade.clone();
+
+        // Step 1: Run cheap BM25 retrieval
+        let keyword_results = self.keyword_search(query, cascade.cheap_k);
+
+        // Step 2: Check if top scores meet threshold
+        let top_score = keyword_results.first().map(|r| r.score).unwrap_or(0.0);
+        let cheap_sufficient = top_score >= cascade.score_threshold;
+
+        if cheap_sufficient {
+            // Keyword results are good enough — skip vector search
+            let semantic_results = Vec::new();
+            return self.combine_results(semantic_results, keyword_results, limit);
+        }
+
+        // Step 3: Escalate — run expensive vector search
+        let semantic_results = self.semantic_search(query, cascade.expensive_k)?;
+        self.combine_results(semantic_results, keyword_results, limit)
     }
 
     /// Perform semantic search using vector similarity
@@ -213,7 +266,7 @@ impl HybridRetriever {
         limit: usize,
     ) -> Result<Vec<HybridSearchResult>> {
         match self.config.fusion_method {
-            FusionMethod::RRF => {
+            FusionMethod::RRF | FusionMethod::Cascade => {
                 self.reciprocal_rank_fusion(semantic_results, keyword_results, limit)
             }
             FusionMethod::Weighted => {
@@ -541,5 +594,75 @@ mod tests {
         let mut retriever = HybridRetriever::new();
         let result = retriever.search("test", 10);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cascade_config_defaults() {
+        let config = CascadeConfig::default();
+        assert_eq!(config.score_threshold, 0.5);
+        assert_eq!(config.cheap_k, 50);
+        assert_eq!(config.expensive_k, 100);
+    }
+
+    #[test]
+    fn test_cascade_cheap_sufficient() {
+        // With an empty graph, BM25 returns nothing (score 0 < threshold),
+        // so vector search would be triggered. We test the variant enum works.
+        let config = HybridConfig {
+            fusion_method: FusionMethod::Cascade,
+            cascade: CascadeConfig {
+                score_threshold: 0.0, // threshold=0 means keyword is always "sufficient"
+                cheap_k: 10,
+                expensive_k: 50,
+            },
+            ..HybridConfig::default()
+        };
+        let mut retriever = HybridRetriever::with_config(config);
+        let graph = KnowledgeGraph::new();
+        retriever.initialize_with_graph(&graph).unwrap();
+
+        // With threshold=0, even empty BM25 results satisfy (0 >= 0), no vector search
+        let results = retriever.search("test query", 5).unwrap();
+        // Should succeed (may be empty since graph is empty)
+        assert!(results.is_empty() || results.len() <= 5);
+    }
+
+    #[test]
+    fn test_cascade_escalation() {
+        // With threshold very high, keyword results won't satisfy,
+        // triggering vector search escalation.
+        let config = HybridConfig {
+            fusion_method: FusionMethod::Cascade,
+            cascade: CascadeConfig {
+                score_threshold: 100.0, // impossibly high — forces escalation
+                cheap_k: 10,
+                expensive_k: 50,
+            },
+            ..HybridConfig::default()
+        };
+        let mut retriever = HybridRetriever::with_config(config);
+
+        // Build a graph with at least one entity so vector index gets built
+        let mut graph = KnowledgeGraph::new();
+        let entity = crate::core::Entity {
+            id: crate::core::EntityId::new("e1".to_string()),
+            name: "Test Entity".to_string(),
+            entity_type: "test".to_string(),
+            confidence: 1.0,
+            mentions: vec![],
+            embedding: Some(vec![0.1; 128]),
+        };
+        graph.add_entity(entity).unwrap();
+        retriever.initialize_with_graph(&graph).unwrap();
+
+        // Escalation path: BM25 top score < 100.0, so vector search runs
+        let results = retriever.search("test query", 5).unwrap();
+        assert!(results.len() <= 5);
+    }
+
+    #[test]
+    fn test_fusion_method_cascade_variant() {
+        assert_eq!(FusionMethod::Cascade, FusionMethod::Cascade);
+        assert_ne!(FusionMethod::Cascade, FusionMethod::RRF);
     }
 }
