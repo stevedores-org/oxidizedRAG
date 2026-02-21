@@ -9,7 +9,7 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
-use super::{Stage, StageError, CachedStage, StageCache, ContentHashable};
+use super::{Stage, CachedStage, StageCache, ContentHashable};
 use std::sync::Arc;
 
 /// Configuration for a pipeline DAG.

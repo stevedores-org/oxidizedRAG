@@ -2,7 +2,7 @@
 //!
 //! Enables seamless switching between in-memory (fast) and disk-based (persistent) caching.
 
-use super::persistent_cache::{CacheStats, PersistentCacheBackend};
+use super::persistent_cache::CacheStats;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
