@@ -549,8 +549,17 @@ pub struct GraphTraversalConfig {
 pub struct HybridFusionConfig {
     /// Whether hybrid fusion of search results is enabled
     pub enabled: bool,
+    /// Fusion policy selector: "weighted_sum", "rrf", or "cascade"
+    #[serde(default = "default_fusion_policy")]
+    pub policy: String,
     /// Weight configuration for different search strategies
     pub weights: FusionWeights,
+    /// RRF constant (used when policy = "rrf")
+    #[serde(default = "default_rrf_k")]
+    pub rrf_k: f32,
+    /// Early stop threshold (used when policy = "cascade")
+    #[serde(default = "default_cascade_early_stop_score")]
+    pub cascade_early_stop_score: f32,
 }
 
 /// Weight configuration for combining different search strategies.
@@ -660,12 +669,12 @@ impl Default for PureAlgorithmicConfig { fn default() -> Self { Self { enabled: 
 impl Default for PatternExtractionConfig { fn default() -> Self { Self { capitalized_patterns: vec![r"[A-Z][a-z]+".to_string()], technical_patterns: vec![r"[a-z]+-[a-z]+".to_string()], context_patterns: vec![r"\b(the|this)\s+(\w+)".to_string()] } } }
 impl Default for PureKeywordExtractionConfig { fn default() -> Self { Self { algorithm: "tf_idf".to_string(), max_keywords: 20, min_word_length: 4, use_positional_boost: true, use_frequency_filter: true, min_term_frequency: 2, max_term_frequency_ratio: 0.8 } } }
 impl Default for RelationshipDiscoveryConfig { fn default() -> Self { Self { window_size: 30, min_co_occurrence: 2, use_mutual_information: true, relationship_types: vec!["co_occurs_with".to_string()], scoring_method: "jaccard_similarity".to_string(), min_similarity_score: 0.1 } } }
-impl Default for SearchRankingConfig { fn default() -> Self { Self { vector_search: VectorSearchConfig { enabled: false }, keyword_search: KeywordSearchConfig { enabled: true, algorithm: "bm25".to_string(), k1: 1.2, b: 0.75 }, graph_traversal: GraphTraversalConfig { enabled: true, algorithm: "pagerank".to_string(), damping_factor: 0.85, max_iterations: 20, personalized: true }, hybrid_fusion: HybridFusionConfig { enabled: true, weights: FusionWeights { keywords: 0.4, graph: 0.4, bm25: 0.2 } } } } }
+impl Default for SearchRankingConfig { fn default() -> Self { Self { vector_search: VectorSearchConfig { enabled: false }, keyword_search: KeywordSearchConfig { enabled: true, algorithm: "bm25".to_string(), k1: 1.2, b: 0.75 }, graph_traversal: GraphTraversalConfig { enabled: true, algorithm: "pagerank".to_string(), damping_factor: 0.85, max_iterations: 20, personalized: true }, hybrid_fusion: HybridFusionConfig { enabled: true, policy: default_fusion_policy(), weights: FusionWeights { keywords: 0.4, graph: 0.4, bm25: 0.2 }, rrf_k: default_rrf_k(), cascade_early_stop_score: default_cascade_early_stop_score() } } } }
 impl Default for HybridStrategyConfig { fn default() -> Self { Self { lazy_algorithmic: LazyAlgorithmicConfig { indexing_approach: "e2_graphrag".to_string(), query_approach: "lazy_graphrag".to_string(), cost_optimization: "indexing".to_string() }, progressive: ProgressiveConfig { level_0: "pure_algorithmic".to_string(), level_1: "pure_algorithmic".to_string(), level_2: "e2_graphrag".to_string(), level_3: "lazy_graphrag".to_string(), level_4_plus: "lazy_graphrag".to_string() }, budget_aware: BudgetAwareConfig { daily_budget_usd: 1.0, queries_per_day: 1000, max_llm_cost_per_query: 0.002, strategy: "lazy_graphrag".to_string(), fallback_to_algorithmic: true } } } }
 impl Default for VectorSearchConfig { fn default() -> Self { Self { enabled: false } } }
 impl Default for KeywordSearchConfig { fn default() -> Self { Self { enabled: true, algorithm: "bm25".to_string(), k1: 1.2, b: 0.75 } } }
 impl Default for GraphTraversalConfig { fn default() -> Self { Self { enabled: true, algorithm: "pagerank".to_string(), damping_factor: 0.85, max_iterations: 20, personalized: true } } }
-impl Default for HybridFusionConfig { fn default() -> Self { Self { enabled: true, weights: FusionWeights { keywords: 0.4, graph: 0.4, bm25: 0.2 } } } }
+impl Default for HybridFusionConfig { fn default() -> Self { Self { enabled: true, policy: default_fusion_policy(), weights: FusionWeights { keywords: 0.4, graph: 0.4, bm25: 0.2 }, rrf_k: default_rrf_k(), cascade_early_stop_score: default_cascade_early_stop_score() } } }
 impl Default for FusionWeights { fn default() -> Self { Self { keywords: 0.4, graph: 0.4, bm25: 0.2 } } }
 impl Default for LazyAlgorithmicConfig { fn default() -> Self { Self { indexing_approach: "e2_graphrag".to_string(), query_approach: "lazy_graphrag".to_string(), cost_optimization: "indexing".to_string() } } }
 impl Default for ProgressiveConfig { fn default() -> Self { Self { level_0: "pure_algorithmic".to_string(), level_1: "pure_algorithmic".to_string(), level_2: "e2_graphrag".to_string(), level_3: "lazy_graphrag".to_string(), level_4_plus: "lazy_graphrag".to_string() } } }
@@ -868,6 +877,15 @@ fn default_entity_types() -> Vec<String> {
 }
 fn default_top_k() -> usize {
     10
+}
+fn default_fusion_policy() -> String {
+    "weighted_sum".to_string()
+}
+fn default_rrf_k() -> f32 {
+    60.0
+}
+fn default_cascade_early_stop_score() -> f32 {
+    0.9
 }
 fn default_search_algorithm() -> String {
     "cosine".to_string()
