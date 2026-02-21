@@ -3,49 +3,55 @@
 //! Provides content-addressed caching at the stage boundary, enabling
 //! incremental updates and avoiding recomputation of unchanged inputs.
 
+#![cfg(feature = "stage-caching")]
+
 use super::{Stage, StageMeta, StageError, ContentHashable};
 use async_trait::async_trait;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::collections::HashMap;
+use parking_lot::RwLock;
+use tracing::{debug, warn};
 
 /// In-memory cache for stage outputs.
 ///
 /// Uses a simple HashMap with content-based keys.
+/// Access pattern: reads are much more frequent than writes, so RwLock is more efficient
+/// than Mutex for concurrent access.
 pub struct StageCache {
-    entries: Mutex<HashMap<String, Vec<u8>>>,
+    entries: RwLock<HashMap<String, Vec<u8>>>,
 }
 
 impl StageCache {
     /// Create a new in-memory stage cache.
     pub fn new() -> Self {
         Self {
-            entries: Mutex::new(HashMap::new()),
+            entries: RwLock::new(HashMap::new()),
         }
     }
 
     /// Get a cached value by key.
     pub fn get(&self, key: &str) -> Option<Vec<u8>> {
-        self.entries.lock().unwrap().get(key).cloned()
+        self.entries.read().get(key).cloned()
     }
 
     /// Store a value in the cache.
     pub fn set(&self, key: String, value: Vec<u8>) {
-        self.entries.lock().unwrap().insert(key, value);
+        self.entries.write().insert(key, value);
     }
 
     /// Clear all cache entries.
     pub fn clear(&self) {
-        self.entries.lock().unwrap().clear();
+        self.entries.write().clear();
     }
 
     /// Get cache statistics.
     pub fn len(&self) -> usize {
-        self.entries.lock().unwrap().len()
+        self.entries.read().len()
     }
 
     /// Check if cache is empty.
     pub fn is_empty(&self) -> bool {
-        self.entries.lock().unwrap().is_empty()
+        self.entries.read().is_empty()
     }
 }
 
@@ -125,8 +131,15 @@ where
 
         // Try cache lookup
         if let Some(cached_bytes) = self.cache.get(&key) {
-            if let Ok(output) = bincode::deserialize::<O>(&cached_bytes) {
-                return Ok(output);
+            match bincode::deserialize::<O>(&cached_bytes) {
+                Ok(output) => {
+                    debug!("Cache hit for key: {}", key);
+                    return Ok(output);
+                }
+                Err(e) => {
+                    warn!("Failed to deserialize cached entry for key {}: {}", key, e);
+                    // Treat as cache miss and continue with execution
+                }
             }
         }
 
@@ -134,8 +147,14 @@ where
         let output = self.inner.execute(input).await?;
 
         // Store in cache (best-effort, ignore serialization errors)
-        if let Ok(bytes) = bincode::serialize(&output) {
-            self.cache.set(key, bytes);
+        match bincode::serialize(&output) {
+            Ok(bytes) => {
+                self.cache.set(key, bytes);
+                debug!("Stored cache entry for key: {}", key);
+            }
+            Err(e) => {
+                warn!("Failed to serialize output for cache key {}: {}", key, e);
+            }
         }
 
         Ok(output)
