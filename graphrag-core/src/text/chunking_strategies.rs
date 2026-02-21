@@ -95,28 +95,20 @@ impl SemanticChunkingStrategy {
 
 impl ChunkingStrategy for SemanticChunkingStrategy {
     fn chunk(&self, text: &str) -> Vec<TextChunk> {
-        // Use lock_or_else to handle poisoned mutex gracefully
+        // Try to acquire lock, fall back to sentence-based chunking on error
         let mut inner = match self.inner.lock() {
-            Ok(guard) => guard,
-            Err(poisoned) => {
-                tracing::warn!("Mutex poisoned in SemanticChunkingStrategy, falling back to simple chunking");
-                poisoned.into_inner()
+            Ok(lock) => lock,
+            Err(_) => {
+                // Mutex poisoned or lock failed; fall back to sentence-based chunking
+                return self.fallback_sentence_chunking(text);
             }
         };
 
-        // Try semantic chunking, fall back to simple sentence-based chunking on error
         let semantic_chunks = match inner.chunk(text) {
             Ok(chunks) => chunks,
-            Err(e) => {
-                tracing::warn!("Semantic chunking failed: {}, using fallback sentence-based chunking", e);
-                // Fallback to sentence-based chunking
-                let sentences: Vec<&str> = text
-                    .split(&['.', '!', '?'][..])
-                    .filter(|s| !s.trim().is_empty())
-                    .collect();
-                // Return empty to signal fallback to caller's fallback logic
-                // In a real scenario, we'd return the sentence chunks directly
-                return Vec::new();
+            Err(_) => {
+                // Semantic chunking failed; fall back to sentence-based approach
+                return self.fallback_sentence_chunking(text);
             }
         };
 
@@ -142,6 +134,39 @@ impl ChunkingStrategy for SemanticChunkingStrategy {
             );
             chunks.push(chunk);
             current_pos = chunk_end;
+        }
+
+        chunks
+    }
+
+    /// Fallback chunking strategy using sentence boundaries
+    fn fallback_sentence_chunking(&self, text: &str) -> Vec<TextChunk> {
+        let sentences: Vec<&str> = text
+            .split(&['.', '!', '?'][..])
+            .filter(|s| !s.trim().is_empty())
+            .collect();
+
+        let mut chunks = Vec::new();
+        let mut current_pos = 0;
+
+        for sentence in sentences {
+            let chunk_id = ChunkId::new(format!(
+                "{}_{}",
+                self.document_id,
+                CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)
+            ));
+            let chunk_start = current_pos;
+            let chunk_end = chunk_start + sentence.len();
+
+            let chunk = TextChunk::new(
+                chunk_id,
+                self.document_id.clone(),
+                sentence.to_string(),
+                chunk_start,
+                chunk_end,
+            );
+            chunks.push(chunk);
+            current_pos = chunk_end + 1; // +1 for the sentence terminator
         }
 
         chunks
