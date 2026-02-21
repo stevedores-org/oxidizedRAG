@@ -204,6 +204,96 @@ impl CacheConfig {
         }
     }
 
+    /// Stage-specific preset: Chunking cache (fast writes, short TTL)
+    pub fn for_chunking() -> Self {
+        Self {
+            max_capacity: 5_000,
+            ttl_seconds: 24 * 3600, // 1 day
+            eviction_policy: EvictionPolicy::TTL,
+            enable_statistics: true,
+            enable_warming: false,
+            initial_capacity: Some(500),
+            cleanup_interval_seconds: 300, // 5 minutes
+            max_entry_size: 5 * 1024 * 1024, // 5MB per entry
+            enable_compression: false, // Fast writes preferred
+            compression_threshold: 10 * 1024,
+            persistence: PersistenceConfig::default(),
+        }
+    }
+
+    /// Stage-specific preset: Embedding cache (large, long TTL)
+    pub fn for_embeddings() -> Self {
+        Self {
+            max_capacity: 100_000,
+            ttl_seconds: 30 * 24 * 3600, // 30 days
+            eviction_policy: EvictionPolicy::LRU,
+            enable_statistics: true,
+            enable_warming: true,
+            initial_capacity: Some(10_000),
+            cleanup_interval_seconds: 3600, // 1 hour
+            max_entry_size: 50 * 1024 * 1024, // 50MB per entry (embeddings are large)
+            enable_compression: true, // Compress to save space
+            compression_threshold: 100 * 1024, // 100KB threshold
+            persistence: PersistenceConfig {
+                enabled: true,
+                directory: Some("./cache/embeddings".to_string()),
+                save_interval_seconds: 3600, // 1 hour
+                load_on_startup: true,
+            },
+        }
+    }
+
+    /// Stage-specific preset: Entity/Graph extraction cache (medium TTL)
+    pub fn for_entity_extraction() -> Self {
+        Self {
+            max_capacity: 50_000,
+            ttl_seconds: 7 * 24 * 3600, // 7 days
+            eviction_policy: EvictionPolicy::LFU,
+            enable_statistics: true,
+            enable_warming: false,
+            initial_capacity: Some(5_000),
+            cleanup_interval_seconds: 1800, // 30 minutes
+            max_entry_size: 20 * 1024 * 1024, // 20MB per entry
+            enable_compression: true,
+            compression_threshold: 50 * 1024, // 50KB threshold
+            persistence: PersistenceConfig::default(),
+        }
+    }
+
+    /// Stage-specific preset: Retrieval cache (frequent reads, adaptive eviction)
+    pub fn for_retrieval() -> Self {
+        Self {
+            max_capacity: 50_000,
+            ttl_seconds: 12 * 3600, // 12 hours
+            eviction_policy: EvictionPolicy::Adaptive,
+            enable_statistics: true,
+            enable_warming: true,
+            initial_capacity: Some(10_000),
+            cleanup_interval_seconds: 600, // 10 minutes
+            max_entry_size: 10 * 1024 * 1024, // 10MB per entry
+            enable_compression: true,
+            compression_threshold: 50 * 1024,
+            persistence: PersistenceConfig::default(),
+        }
+    }
+
+    /// Stage-specific preset: Reranking cache (small, short-lived)
+    pub fn for_reranking() -> Self {
+        Self {
+            max_capacity: 10_000,
+            ttl_seconds: 3600, // 1 hour
+            eviction_policy: EvictionPolicy::TTL,
+            enable_statistics: false,
+            enable_warming: false,
+            initial_capacity: Some(1_000),
+            cleanup_interval_seconds: 300, // 5 minutes
+            max_entry_size: 1024 * 1024, // 1MB per entry
+            enable_compression: false,
+            compression_threshold: 10 * 1024,
+            persistence: PersistenceConfig::default(),
+        }
+    }
+
     /// Create a high-performance configuration
     pub fn high_performance() -> Self {
         Self {
@@ -387,5 +477,56 @@ mod tests {
         assert!(perf_config.validate().is_ok());
         assert_eq!(perf_config.eviction_policy, EvictionPolicy::LFU);
         assert!(!perf_config.enable_statistics);
+    }
+
+    #[test]
+    fn test_stage_config_for_chunking() {
+        let config = CacheConfig::for_chunking();
+        assert!(config.validate().is_ok());
+        assert_eq!(config.max_capacity, 5_000);
+        assert_eq!(config.ttl_seconds, 24 * 3600);
+        assert_eq!(config.eviction_policy, EvictionPolicy::TTL);
+        assert!(!config.enable_compression);
+    }
+
+    #[test]
+    fn test_stage_config_for_embeddings() {
+        let config = CacheConfig::for_embeddings();
+        assert!(config.validate().is_ok());
+        assert_eq!(config.max_capacity, 100_000);
+        assert_eq!(config.ttl_seconds, 30 * 24 * 3600);
+        assert_eq!(config.eviction_policy, EvictionPolicy::LRU);
+        assert!(config.enable_compression);
+        assert!(config.persistence.enabled);
+    }
+
+    #[test]
+    fn test_stage_config_for_entity_extraction() {
+        let config = CacheConfig::for_entity_extraction();
+        assert!(config.validate().is_ok());
+        assert_eq!(config.max_capacity, 50_000);
+        assert_eq!(config.ttl_seconds, 7 * 24 * 3600);
+        assert_eq!(config.eviction_policy, EvictionPolicy::LFU);
+        assert!(config.enable_compression);
+    }
+
+    #[test]
+    fn test_stage_config_for_retrieval() {
+        let config = CacheConfig::for_retrieval();
+        assert!(config.validate().is_ok());
+        assert_eq!(config.max_capacity, 50_000);
+        assert_eq!(config.ttl_seconds, 12 * 3600);
+        assert_eq!(config.eviction_policy, EvictionPolicy::Adaptive);
+        assert!(config.enable_warming);
+    }
+
+    #[test]
+    fn test_stage_config_for_reranking() {
+        let config = CacheConfig::for_reranking();
+        assert!(config.validate().is_ok());
+        assert_eq!(config.max_capacity, 10_000);
+        assert_eq!(config.ttl_seconds, 3600);
+        assert_eq!(config.eviction_policy, EvictionPolicy::TTL);
+        assert!(!config.enable_compression);
     }
 }

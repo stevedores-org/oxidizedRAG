@@ -41,21 +41,18 @@ pub mod registry;
 pub mod stage;
 pub mod builder;
 pub mod types;
+pub mod hashable;
+pub mod cached_stage;
 pub mod persistent_cache;
 pub mod dual_mode_cache;
-
-/// Stage-level caching/memoization.
-#[cfg(feature = "async")]
-pub mod cached_stage;
 
 pub use registry::{StageId, StageRegistry};
 pub use stage::{Stage, StageMeta, StageError};
 pub use types::{ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord,
                 EntityGraphDelta, GraphNode, GraphEdge, RetrievalSet, RankedResult,
                 ScoreBreakdown};
-
-#[cfg(feature = "async")]
-pub use cached_stage::CachedStage;
+pub use hashable::ContentHashable;
+pub use cached_stage::{CachedStage, StageCache};
 
 pub use persistent_cache::{PersistentCacheBackend, CacheStats};
 pub use dual_mode_cache::{DualModeCache, CacheMode};

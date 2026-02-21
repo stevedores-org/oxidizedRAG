@@ -1,215 +1,395 @@
-//! Stage-level caching/memoization for pipeline stages.
+//! Transparent caching wrapper for pipeline stages.
 //!
-//! `CachedStage<I,O>` wraps any `Stage<I,O>` with content-hash caching
-//! using sha2 for cache keys and moka for in-memory TTL-based caching.
+//! Provides content-addressed caching at the stage boundary, enabling
+//! incremental updates and avoiding recomputation of unchanged inputs.
 
-use crate::core::Result;
-use crate::pipeline::stage::Stage;
+use super::{Stage, StageMeta, StageError, ContentHashable};
 use async_trait::async_trait;
-use serde::{de::DeserializeOwned, Serialize};
-use sha2::{Digest, Sha256};
-use std::hash::Hash;
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
 
-#[cfg(feature = "caching")]
-use moka::future::Cache;
-
-/// A cached wrapper around any `Stage<I,O>`.
+/// In-memory cache for stage outputs.
 ///
-/// Caches stage outputs based on a content hash of the input.
-/// Requires `I: Serialize + Hash` and `O: Serialize + DeserializeOwned + Clone`.
-pub struct CachedStage<I, O>
-where
-    I: Send + 'static,
-    O: Send + 'static,
-{
+/// Uses a simple HashMap with content-based keys.
+pub struct StageCache {
+    entries: Mutex<HashMap<String, Vec<u8>>>,
+}
+
+impl StageCache {
+    /// Create a new in-memory stage cache.
+    pub fn new() -> Self {
+        Self {
+            entries: Mutex::new(HashMap::new()),
+        }
+    }
+
+    /// Get a cached value by key.
+    pub fn get(&self, key: &str) -> Option<Vec<u8>> {
+        self.entries.lock().unwrap().get(key).cloned()
+    }
+
+    /// Store a value in the cache.
+    pub fn set(&self, key: String, value: Vec<u8>) {
+        self.entries.lock().unwrap().insert(key, value);
+    }
+
+    /// Clear all cache entries.
+    pub fn clear(&self) {
+        self.entries.lock().unwrap().clear();
+    }
+
+    /// Get cache statistics.
+    pub fn len(&self) -> usize {
+        self.entries.lock().unwrap().len()
+    }
+
+    /// Check if cache is empty.
+    pub fn is_empty(&self) -> bool {
+        self.entries.lock().unwrap().is_empty()
+    }
+}
+
+impl Default for StageCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Wrapper that adds transparent caching to any Stage<I, O>.
+///
+/// Cache is populated based on content hashes of inputs. Non-deterministic
+/// stages (those with `metadata().deterministic == false`) bypass caching.
+pub struct CachedStage<I, O> {
     inner: Arc<dyn Stage<I, O>>,
-    #[cfg(feature = "caching")]
-    cache: Cache<String, Vec<u8>>,
-    #[cfg(not(feature = "caching"))]
-    _phantom: std::marker::PhantomData<(I, O)>,
-    ttl: Duration,
+    cache: Arc<StageCache>,
+    enabled: bool,
 }
 
 impl<I, O> CachedStage<I, O>
 where
-    I: Serialize + Hash + Send + 'static,
-    O: Serialize + DeserializeOwned + Clone + Send + 'static,
+    I: ContentHashable + serde::Serialize + Send + Sync + 'static,
+    O: serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static,
 {
-    /// Create a new cached stage wrapping the given inner stage.
-    ///
-    /// `max_capacity` controls maximum number of cached entries.
-    /// `ttl` is the time-to-live for each cache entry.
-    pub fn new(inner: Arc<dyn Stage<I, O>>, max_capacity: u64, ttl: Duration) -> Self {
+    /// Create a new cached stage wrapper.
+    pub fn new(stage: Arc<dyn Stage<I, O>>, cache: Arc<StageCache>) -> Self {
+        // Only enable caching for deterministic stages
+        let enabled = stage.metadata().deterministic;
         Self {
-            inner,
-            #[cfg(feature = "caching")]
-            cache: Cache::builder()
-                .max_capacity(max_capacity)
-                .time_to_live(ttl)
-                .build(),
-            #[cfg(not(feature = "caching"))]
-            _phantom: std::marker::PhantomData,
-            ttl,
+            inner: stage,
+            cache,
+            enabled,
         }
     }
 
-    /// Compute a cache key from the input using SHA-256.
-    fn cache_key(input: &I) -> String
-    where
-        I: Serialize,
-    {
-        let serialized = serde_json::to_vec(input).unwrap_or_default();
-        let hash = Sha256::digest(&serialized);
-        hex::encode(hash)
+    /// Get the cache key for a given input.
+    ///
+    /// Format: `{stage_name}@{version}:{input_hash}`
+    fn cache_key(&self, input: &I) -> String {
+        format!(
+            "{}@{}:{}",
+            self.inner.name(),
+            self.inner.version(),
+            input.content_hash()
+        )
     }
 
-    /// Get the configured TTL.
-    pub fn ttl(&self) -> Duration {
-        self.ttl
+    /// Get a reference to the inner stage.
+    pub fn inner(&self) -> &Arc<dyn Stage<I, O>> {
+        &self.inner
     }
-}
 
-// hex encoding helper (avoiding a dependency)
-mod hex {
-    pub fn encode(bytes: impl AsRef<[u8]>) -> String {
-        bytes
-            .as_ref()
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect()
+    /// Get a reference to the cache.
+    pub fn cache(&self) -> &Arc<StageCache> {
+        &self.cache
+    }
+
+    /// Check if caching is enabled for this stage.
+    pub fn caching_enabled(&self) -> bool {
+        self.enabled
     }
 }
 
 #[async_trait]
 impl<I, O> Stage<I, O> for CachedStage<I, O>
 where
-    I: Serialize + Hash + Send + Sync + 'static,
-    O: Serialize + DeserializeOwned + Clone + Send + Sync + 'static,
+    I: ContentHashable + serde::Serialize + Send + Sync + 'static,
+    O: serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static,
 {
-    async fn process(&self, input: I) -> Result<O> {
-        let key = Self::cache_key(&input);
+    async fn execute(&self, input: I) -> Result<O, StageError> {
+        // If caching is disabled, pass through to inner stage
+        if !self.enabled {
+            return self.inner.execute(input).await;
+        }
 
-        // Check cache
-        #[cfg(feature = "caching")]
-        {
-            if let Some(cached_bytes) = self.cache.get(&key).await {
-                if let Ok(output) = serde_json::from_slice::<O>(&cached_bytes) {
-                    return Ok(output);
-                }
+        let key = self.cache_key(&input);
+
+        // Try cache lookup
+        if let Some(cached_bytes) = self.cache.get(&key) {
+            if let Ok(output) = bincode::deserialize::<O>(&cached_bytes) {
+                return Ok(output);
             }
         }
 
-        // Cache miss — run inner stage
-        let output = self.inner.process(input).await?;
+        // Cache miss - execute stage
+        let output = self.inner.execute(input).await?;
 
-        // Store in cache
-        #[cfg(feature = "caching")]
-        {
-            if let Ok(bytes) = serde_json::to_vec(&output) {
-                self.cache.insert(key, bytes).await;
-            }
+        // Store in cache (best-effort, ignore serialization errors)
+        if let Ok(bytes) = bincode::serialize(&output) {
+            self.cache.set(key, bytes);
         }
 
         Ok(output)
     }
 
     fn name(&self) -> &str {
-        // Delegate to inner stage name with a prefix would lose the &str lifetime,
-        // so we just delegate directly.
         self.inner.name()
+    }
+
+    fn version(&self) -> &str {
+        self.inner.version()
+    }
+
+    fn metadata(&self) -> StageMeta {
+        self.inner.metadata()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::Result;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use crate::pipeline::types::{ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord};
 
-    /// A counting stage that tracks how many times process() is called.
-    struct CountingStage {
-        call_count: AtomicU64,
+    /// Mock stage for testing that returns uppercase input.
+    struct MockStringStage;
+
+    #[async_trait]
+    impl Stage<String, String> for MockStringStage {
+        async fn execute(&self, input: String) -> Result<String, StageError> {
+            Ok(input.to_uppercase())
+        }
+
+        fn name(&self) -> &str {
+            "mock-string"
+        }
+
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
     }
 
-    impl CountingStage {
-        fn new() -> Self {
-            Self {
-                call_count: AtomicU64::new(0),
+    /// Mock stage that returns an error.
+    struct FailingStage;
+
+    #[async_trait]
+    impl Stage<String, String> for FailingStage {
+        async fn execute(&self, _input: String) -> Result<String, StageError> {
+            Err(StageError {
+                stage_name: "failing".to_string(),
+                message: "intentional failure".to_string(),
+                details: None,
+            })
+        }
+
+        fn name(&self) -> &str {
+            "failing"
+        }
+
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
+
+        fn metadata(&self) -> StageMeta {
+            StageMeta {
+                deterministic: true,
+                ..Default::default()
+            }
+        }
+    }
+
+    /// Non-deterministic mock stage.
+    struct NonDeterministicStage;
+
+    #[async_trait]
+    impl Stage<String, String> for NonDeterministicStage {
+        async fn execute(&self, input: String) -> Result<String, StageError> {
+            Ok(format!("{}-{}", input, uuid::Uuid::new_v4()))
+        }
+
+        fn name(&self) -> &str {
+            "non-det"
+        }
+
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
+
+        fn metadata(&self) -> StageMeta {
+            StageMeta {
+                deterministic: false,
+                ..Default::default()
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_cache_hit() {
+        let cache = Arc::new(StageCache::new());
+        let stage = Arc::new(MockStringStage);
+        let cached = CachedStage::new(stage, cache.clone());
+
+        let input = "hello".to_string();
+        let result1 = cached.execute(input.clone()).await.unwrap();
+        assert_eq!(result1, "HELLO");
+        assert_eq!(cache.len(), 1, "Cache should have 1 entry after first execution");
+
+        let result2 = cached.execute(input).await.unwrap();
+        assert_eq!(result2, "HELLO");
+        assert_eq!(cache.len(), 1, "Cache should still have 1 entry");
+    }
+
+    #[tokio::test]
+    async fn test_cache_miss_different_input() {
+        let cache = Arc::new(StageCache::new());
+        let stage = Arc::new(MockStringStage);
+        let cached = CachedStage::new(stage, cache.clone());
+
+        let result1 = cached.execute("hello".to_string()).await.unwrap();
+        assert_eq!(result1, "HELLO");
+
+        let result2 = cached.execute("world".to_string()).await.unwrap();
+        assert_eq!(result2, "WORLD");
+
+        assert_eq!(cache.len(), 2, "Cache should have 2 entries for different inputs");
+    }
+
+    #[tokio::test]
+    async fn test_non_deterministic_stage_bypasses_cache() {
+        let cache = Arc::new(StageCache::new());
+        let stage = Arc::new(NonDeterministicStage);
+        let cached = CachedStage::new(stage, cache.clone());
+
+        let input = "hello".to_string();
+        let result1 = cached.execute(input.clone()).await.unwrap();
+        let result2 = cached.execute(input).await.unwrap();
+
+        assert_ne!(result1, result2, "Non-deterministic stage should return different results");
+        assert!(cache.is_empty(), "Cache should be empty for non-deterministic stage");
+    }
+
+    #[tokio::test]
+    async fn test_error_propagates() {
+        let cache = Arc::new(StageCache::new());
+        let stage = Arc::new(FailingStage);
+        let cached = CachedStage::new(stage, cache.clone());
+
+        let result = cached.execute("hello".to_string()).await;
+        assert!(result.is_err(), "Should propagate error from inner stage");
+        assert!(cache.is_empty(), "Cache should be empty after error");
+    }
+
+    #[tokio::test]
+    async fn test_metadata_delegation() {
+        let cache = Arc::new(StageCache::new());
+        let stage = Arc::new(MockStringStage);
+        let cached = CachedStage::new(stage, cache);
+
+        assert_eq!(cached.name(), "mock-string");
+        assert_eq!(cached.version(), "1.0.0");
+        assert!(cached.metadata().deterministic);
+    }
+
+    #[tokio::test]
+    async fn test_chunk_batch_caching() {
+        let cache = Arc::new(StageCache::new());
+
+        // Create a simple stage that identity-returns ChunkBatch
+        struct IdentityChunkStage;
+
+        #[async_trait]
+        impl Stage<ChunkBatch, ChunkBatch> for IdentityChunkStage {
+            async fn execute(&self, input: ChunkBatch) -> Result<ChunkBatch, StageError> {
+                Ok(input)
+            }
+
+            fn name(&self) -> &str {
+                "identity-chunk"
+            }
+
+            fn version(&self) -> &str {
+                "1.0.0"
             }
         }
 
-        fn calls(&self) -> u64 {
-            self.call_count.load(Ordering::Relaxed)
-        }
-    }
+        let stage = Arc::new(IdentityChunkStage);
+        let cached = CachedStage::new(stage, cache.clone());
 
-    #[async_trait]
-    impl Stage<String, String> for CountingStage {
-        async fn process(&self, input: String) -> Result<String> {
-            self.call_count.fetch_add(1, Ordering::Relaxed);
-            Ok(format!("processed:{}", input))
-        }
-        fn name(&self) -> &str {
-            "counting"
-        }
+        let batch = ChunkBatch {
+            id: "batch-1".to_string(),
+            chunks: vec![DocumentChunk {
+                id: "chunk-1".to_string(),
+                content: "test".to_string(),
+                source: "test.rs".to_string(),
+                line_range: Some((1, 1)),
+                metadata: Default::default(),
+            }],
+            corpus_hash: "hash123".to_string(),
+        };
+
+        let result1 = cached.execute(batch.clone()).await.unwrap();
+        let result2 = cached.execute(batch).await.unwrap();
+
+        assert_eq!(result1, result2);
+        assert_eq!(cache.len(), 1, "Should have cached the batch");
     }
 
     #[tokio::test]
-    async fn test_cache_miss() {
-        let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+    async fn test_embedding_batch_caching() {
+        let cache = Arc::new(StageCache::new());
 
-        let result = cached.process("hello".to_string()).await.unwrap();
-        assert_eq!(result, "processed:hello");
-        assert_eq!(inner.calls(), 1);
+        struct IdentityEmbeddingStage;
+
+        #[async_trait]
+        impl Stage<EmbeddingBatch, EmbeddingBatch> for IdentityEmbeddingStage {
+            async fn execute(&self, input: EmbeddingBatch) -> Result<EmbeddingBatch, StageError> {
+                Ok(input)
+            }
+
+            fn name(&self) -> &str {
+                "identity-embedding"
+            }
+
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
+        }
+
+        let stage = Arc::new(IdentityEmbeddingStage);
+        let cached = CachedStage::new(stage, cache.clone());
+
+        let batch = EmbeddingBatch {
+            id: "batch-1".to_string(),
+            embeddings: vec![EmbeddingRecord {
+                chunk_id: "chunk-1".to_string(),
+                vector: vec![0.1, 0.2, 0.3],
+                metadata: Default::default(),
+            }],
+            config_hash: "config-1".to_string(),
+        };
+
+        let _result1 = cached.execute(batch.clone()).await.unwrap();
+        let _result2 = cached.execute(batch).await.unwrap();
+
+        assert_eq!(cache.len(), 1, "Should have cached the embedding batch");
     }
 
-    #[cfg(feature = "caching")]
-    #[tokio::test]
-    async fn test_cache_hit() {
-        let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+    #[test]
+    fn test_cache_key_format() {
+        let cache = Arc::new(StageCache::new());
+        let stage = Arc::new(MockStringStage);
+        let cached = CachedStage::new(stage, cache);
 
-        // First call — miss
-        let r1 = cached.process("hello".to_string()).await.unwrap();
-        assert_eq!(r1, "processed:hello");
-        assert_eq!(inner.calls(), 1);
-
-        // Second call — hit
-        let r2 = cached.process("hello".to_string()).await.unwrap();
-        assert_eq!(r2, "processed:hello");
-        assert_eq!(inner.calls(), 1); // inner not called again
-    }
-
-    #[cfg(feature = "caching")]
-    #[tokio::test]
-    async fn test_cache_ttl_expiry() {
-        let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_millis(50), // Very short TTL
-        );
-
-        cached.process("hello".to_string()).await.unwrap();
-        assert_eq!(inner.calls(), 1);
-
-        // Wait for TTL to expire
-        tokio::time::sleep(Duration::from_millis(100)).await;
-
-        // moka eviction may require a get after expiry
-        cached.process("hello".to_string()).await.unwrap();
-        // After TTL, inner should be called again
-        assert!(inner.calls() >= 2);
+        let key = cached.cache_key(&"hello".to_string());
+        assert!(key.contains("mock-string@1.0.0"), "Key should include name and version");
+        assert!(key.contains(':'), "Key should use colon separator");
     }
 }

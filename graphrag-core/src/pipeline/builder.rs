@@ -9,6 +9,8 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
+use super::{Stage, StageError, CachedStage, StageCache, ContentHashable};
+use std::sync::Arc;
 
 /// Configuration for a pipeline DAG.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -259,6 +261,29 @@ impl PipelineBuilder {
         }
         println!("Timestamp: {}", dag.timestamp);
     }
+
+    /// Wrap a stage with caching support if it implements ContentHashable.
+    ///
+    /// If the stage is deterministic and caching is enabled, returns a CachedStage.
+    /// Otherwise, returns the original stage.
+    pub fn wrap_stage_with_caching<I, O>(
+        stage: Arc<dyn Stage<I, O>>,
+        cache: Option<Arc<StageCache>>,
+    ) -> Arc<dyn Stage<I, O>>
+    where
+        I: ContentHashable + serde::Serialize + Send + Sync + 'static,
+        O: serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static,
+    {
+        match cache {
+            Some(cache) => Arc::new(CachedStage::new(stage, cache)),
+            None => stage,
+        }
+    }
+
+    /// Create a new shared cache for the pipeline.
+    pub fn create_cache() -> Arc<StageCache> {
+        Arc::new(StageCache::new())
+    }
 }
 
 impl Default for PipelineBuilder {
@@ -388,5 +413,68 @@ mod tests {
         let dag = PipelineBuilder::build(config).unwrap();
         // This just verifies it doesn't panic
         PipelineBuilder::print_effective_config(&dag);
+    }
+
+    #[test]
+    fn test_create_cache() {
+        let cache = PipelineBuilder::create_cache();
+        assert!(cache.is_empty());
+    }
+
+    #[test]
+    fn test_wrap_stage_with_caching_some() {
+        use async_trait::async_trait;
+
+        struct MockStage;
+
+        #[async_trait]
+        impl Stage<String, String> for MockStage {
+            async fn execute(&self, input: String) -> Result<String, StageError> {
+                Ok(input.to_uppercase())
+            }
+
+            fn name(&self) -> &str {
+                "mock"
+            }
+
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
+        }
+
+        let stage = Arc::new(MockStage) as Arc<dyn Stage<String, String>>;
+        let cache = PipelineBuilder::create_cache();
+        let wrapped = PipelineBuilder::wrap_stage_with_caching(stage, Some(cache));
+
+        // Should have the same name
+        assert_eq!(wrapped.name(), "mock");
+    }
+
+    #[test]
+    fn test_wrap_stage_with_caching_none() {
+        use async_trait::async_trait;
+
+        struct MockStage;
+
+        #[async_trait]
+        impl Stage<String, String> for MockStage {
+            async fn execute(&self, input: String) -> Result<String, StageError> {
+                Ok(input.to_uppercase())
+            }
+
+            fn name(&self) -> &str {
+                "mock"
+            }
+
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
+        }
+
+        let stage = Arc::new(MockStage) as Arc<dyn Stage<String, String>>;
+        let wrapped = PipelineBuilder::wrap_stage_with_caching(stage.clone(), None);
+
+        // Should be the same stage (not wrapped)
+        assert_eq!(wrapped.name(), stage.name());
     }
 }

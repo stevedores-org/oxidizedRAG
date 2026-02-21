@@ -10,7 +10,7 @@ keywords = ["graphrag", "knowledge-graph", "rag", "llm", "ai"]
 categories = ["algorithms", "science", "text-processing"]
 
 [features]
-default = ["memory-storage", "basic-retrieval", "parallel-processing", "async", "ureq", "async-traits"]
+default = ["memory-storage", "basic-retrieval", "parallel-processing", "async", "ureq", "async-traits", "stage-caching"]
 
 # Async support (enabled by default, disabled for WASM)
 async = ["tokio", "futures", "tracing"]
@@ -48,6 +48,7 @@ json5-support = ["json5", "jsonschema"]  # JSON5 + schema validation
 
 # Caching features
 caching = ["moka", "tracing"]
+stage-caching = ["bincode"]  # Content-addressed stage-level caching
 persistent-cache = ["rocksdb", "bincode", "async"]  # RocksDB-based persistent cache
 
 # Incremental updates feature
