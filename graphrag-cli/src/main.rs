@@ -128,27 +128,39 @@ async fn main() -> Result<()> {
         Some(Commands::Tui) | None => {
             // Start interactive TUI (default) - logging setup is done inside run_tui
             run_tui(cli.config, cli.workspace).await?;
-        }
+        },
         Some(Commands::Init { config }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
 
             println!("⚠️  The 'init' command is deprecated.");
-            println!("    Please use the TUI and execute: /config {}", config.display());
-            println!("\nStart TUI with: graphrag-cli tui --config {}", config.display());
-        }
+            println!(
+                "    Please use the TUI and execute: /config {}",
+                config.display()
+            );
+            println!(
+                "\nStart TUI with: graphrag-cli tui --config {}",
+                config.display()
+            );
+        },
         Some(Commands::Load { document, config }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
 
             println!("⚠️  The 'load' command is deprecated.");
-            println!("    Please use the TUI and execute: /load {}", document.display());
+            println!(
+                "    Please use the TUI and execute: /load {}",
+                document.display()
+            );
             if let Some(cfg) = config {
-                println!("\nStart TUI with: graphrag-cli tui --config {}", cfg.display());
+                println!(
+                    "\nStart TUI with: graphrag-cli tui --config {}",
+                    cfg.display()
+                );
             } else {
                 println!("\nStart TUI with: graphrag-cli tui");
             }
-        }
+        },
         Some(Commands::Query { query, config }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
@@ -156,11 +168,14 @@ async fn main() -> Result<()> {
             println!("⚠️  The 'query' command is deprecated.");
             println!("    Please use the TUI and type your query: {}", query);
             if let Some(cfg) = config {
-                println!("\nStart TUI with: graphrag-cli tui --config {}", cfg.display());
+                println!(
+                    "\nStart TUI with: graphrag-cli tui --config {}",
+                    cfg.display()
+                );
             } else {
                 println!("\nStart TUI with: graphrag-cli tui");
             }
-        }
+        },
         Some(Commands::Entities { filter, config }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
@@ -172,11 +187,14 @@ async fn main() -> Result<()> {
                 println!("    Please use the TUI and execute: /entities");
             }
             if let Some(cfg) = config {
-                println!("\nStart TUI with: graphrag-cli tui --config {}", cfg.display());
+                println!(
+                    "\nStart TUI with: graphrag-cli tui --config {}",
+                    cfg.display()
+                );
             } else {
                 println!("\nStart TUI with: graphrag-cli tui");
             }
-        }
+        },
         Some(Commands::Stats { config }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
@@ -184,17 +202,20 @@ async fn main() -> Result<()> {
             println!("⚠️  The 'stats' command is deprecated.");
             println!("    Please use the TUI and execute: /stats");
             if let Some(cfg) = config {
-                println!("\nStart TUI with: graphrag-cli tui --config {}", cfg.display());
+                println!(
+                    "\nStart TUI with: graphrag-cli tui --config {}",
+                    cfg.display()
+                );
             } else {
                 println!("\nStart TUI with: graphrag-cli tui");
             }
-        }
+        },
         Some(Commands::Workspace { action }) => {
             // Setup logging for CLI commands
             setup_logging(cli.debug)?;
 
             handle_workspace_commands(action).await?;
-        }
+        },
     }
 
     Ok(())
@@ -226,30 +247,45 @@ async fn handle_workspace_commands(action: WorkspaceCommands) -> Result<()> {
                 println!("Available workspaces:\n");
                 for ws in workspaces {
                     println!("  📁 {} ({})", ws.name, ws.id);
-                    println!("     Created: {}", ws.created_at.format("%Y-%m-%d %H:%M:%S"));
-                    println!("     Last accessed: {}", ws.last_accessed.format("%Y-%m-%d %H:%M:%S"));
+                    println!(
+                        "     Created: {}",
+                        ws.created_at.format("%Y-%m-%d %H:%M:%S")
+                    );
+                    println!(
+                        "     Last accessed: {}",
+                        ws.last_accessed.format("%Y-%m-%d %H:%M:%S")
+                    );
                     if let Some(ref cfg) = ws.config_path {
                         println!("     Config: {}", cfg.display());
                     }
                     println!();
                 }
             }
-        }
+        },
         WorkspaceCommands::Create { name } => {
             let workspace = workspace_manager.create_workspace(name.clone()).await?;
             println!("✅ Workspace created successfully!");
             println!("   Name: {}", workspace.name);
             println!("   ID:   {}", workspace.id);
-            println!("\nUse it with: graphrag-cli tui --workspace {}", workspace.id);
-        }
+            println!(
+                "\nUse it with: graphrag-cli tui --workspace {}",
+                workspace.id
+            );
+        },
         WorkspaceCommands::Info { id } => {
             match workspace_manager.load_metadata(&id).await {
                 Ok(workspace) => {
                     println!("Workspace Information:\n");
                     println!("  Name: {}", workspace.name);
                     println!("  ID:   {}", workspace.id);
-                    println!("  Created: {}", workspace.created_at.format("%Y-%m-%d %H:%M:%S"));
-                    println!("  Last accessed: {}", workspace.last_accessed.format("%Y-%m-%d %H:%M:%S"));
+                    println!(
+                        "  Created: {}",
+                        workspace.created_at.format("%Y-%m-%d %H:%M:%S")
+                    );
+                    println!(
+                        "  Last accessed: {}",
+                        workspace.last_accessed.format("%Y-%m-%d %H:%M:%S")
+                    );
                     if let Some(ref cfg) = workspace.config_path {
                         println!("  Config: {}", cfg.display());
                     }
@@ -257,21 +293,22 @@ async fn handle_workspace_commands(action: WorkspaceCommands) -> Result<()> {
                     // Show query history stats if available
                     let history_path = workspace_manager.query_history_path(&id);
                     if history_path.exists() {
-                        if let Ok(history) = query_history::QueryHistory::load(&history_path).await {
+                        if let Ok(history) = query_history::QueryHistory::load(&history_path).await
+                        {
                             println!("\n  Total queries: {}", history.total_queries());
                         }
                     }
-                }
+                },
                 Err(e) => {
                     eprintln!("❌ Error loading workspace: {}", e);
                     eprintln!("\nList available workspaces with: graphrag-cli workspace list");
-                }
+                },
             }
-        }
+        },
         WorkspaceCommands::Delete { id } => {
             workspace_manager.delete_workspace(&id).await?;
             println!("✅ Workspace deleted: {}", id);
-        }
+        },
     }
 
     Ok(())
@@ -282,10 +319,7 @@ fn install_panic_hook() {
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
         // Try to restore terminal
-        let _ = crossterm::execute!(
-            std::io::stderr(),
-            crossterm::terminal::LeaveAlternateScreen,
-        );
+        let _ = crossterm::execute!(std::io::stderr(), crossterm::terminal::LeaveAlternateScreen,);
         let _ = crossterm::terminal::disable_raw_mode();
 
         // Call original hook
@@ -315,9 +349,9 @@ fn setup_logging(debug: bool) -> Result<()> {
 
 /// Setup tracing/logging for TUI mode (logs to file)
 fn setup_tui_logging() -> Result<()> {
-    use tracing_subscriber::EnvFilter;
     use std::fs::OpenOptions;
     use std::sync::Arc;
+    use tracing_subscriber::EnvFilter;
 
     // Create logs directory if it doesn't exist
     let log_dir = dirs::data_local_dir()
