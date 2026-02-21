@@ -70,7 +70,7 @@ cache = true
 name = "static-assets"
 paths = [{ src = "dist", dest = "/usr/share/nginx/html/oxidizedRAG" }]
 cache = false
-invalidate_on = ["package.json", "bun.lock"]
+invalidate_on = ["package.json", "bun.lockb"]
 
 [oci.healthcheck]
 test = ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/oxidizedRAG/"]

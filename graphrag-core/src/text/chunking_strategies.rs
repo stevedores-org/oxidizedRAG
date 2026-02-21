@@ -95,10 +95,23 @@ impl SemanticChunkingStrategy {
 
 impl ChunkingStrategy for SemanticChunkingStrategy {
     fn chunk(&self, text: &str) -> Vec<TextChunk> {
-        let mut inner = self.inner.lock().unwrap();
-        let semantic_chunks = match inner.chunk(text) {
-            Ok(chunks) => chunks,
-            Err(_) => return Vec::new(),
+        // Attempt semantic chunking, with fallback to hierarchical on error or poisoned mutex
+        let semantic_chunks = match self.inner.lock() {
+            Ok(mut inner) => {
+                match inner.chunk(text) {
+                    Ok(chunks) => chunks,
+                    Err(_) => {
+                        // Fallback to hierarchical chunking on semantic chunking failure
+                        let hierarchical = HierarchicalChunkingStrategy::new(1024, 128, self.document_id.clone());
+                        return hierarchical.chunk(text);
+                    }
+                }
+            }
+            Err(_) => {
+                // Fallback to hierarchical chunking on poisoned mutex
+                let hierarchical = HierarchicalChunkingStrategy::new(1024, 128, self.document_id.clone());
+                return hierarchical.chunk(text);
+            }
         };
 
         let mut chunks = Vec::new();
