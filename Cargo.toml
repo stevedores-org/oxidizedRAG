@@ -87,6 +87,7 @@ regex = "1.0"
 
 # Utilities
 sha2 = "0.10"
+hex = "0.4"
 flate2 = "1.0"
 dashmap = "5.5"
 itertools = "0.12"
@@ -123,6 +124,10 @@ json = "0.12"
 # Other
 chrono = { version = "0.4.38", default-features = false, features = ["serde", "clock", "std"] }  # Compatible with arrow
 uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# AIVCS integration (published to crates.io)
+aivcs-core = "0.2.0"
+oxidized-state = "0.2.0"
 
 # Vector databases (optional, for persistent storage)
 # NOTE: lancedb 0.22.2 uses arrow 56 and half ^2.6 (compatible with burn 0.18)

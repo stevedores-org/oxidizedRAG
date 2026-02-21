@@ -7,6 +7,11 @@ release
 Cargo.lock  # Uncomment if this is a library
 
 # ============================================
+# Local CI Cache
+# ============================================
+.local-ci-cache
+
+# ============================================
 # GraphRAG Output and Cache
 # ============================================
 /output
@@ -17,8 +22,12 @@ Cargo.lock  # Uncomment if this is a library
 storage_data/
 graph_data/
 docs/
+!docs/
+!docs/ci.md
 documents/
 docs-example/
+result
+result-*
 
 # ============================================
 # Screenshots and Media
@@ -199,6 +208,4 @@ config_*.json
 # *.txt  # Uncomment if needed
 graphrag-wasm/dist/models/minilm-l6.onnx
 
-# exclude md files except readme
-*.md
-!README.md
+# Keep markdown documentation tracked by default.

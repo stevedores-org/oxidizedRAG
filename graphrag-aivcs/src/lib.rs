@@ -1,24 +1,12 @@
-//! GraphRAG AIVCS Integration
+//! AIVCS integration for oxidizedRAG.
 //!
-//! Provides run tracking, versioning, and evaluation capabilities for GraphRAG agents
-//! using AIVCS (AI Agent Version Control System).
-//!
-//! This module enables:
-//! - Tracking RAG agent runs and experiments
-//! - Versioning RAG configurations and knowledge graphs
-//! - Evaluating code generation quality
-//! - Comparing multi-run results
-//! - Integration with AIVCS for version control
+//! Bridges GraphRAG `ask()` runs to the AIVCS ledger for run tracking,
+//! content-addressed config specs, and observability hooks.
 
-pub mod run_recorder;
-pub mod config_hasher;
-pub mod aivcs_adapter;
-pub mod persistence;
+pub mod adapter;
+pub mod recorder;
+pub mod spec;
 
-pub use run_recorder::RagRunRecorder;
-pub use config_hasher::RagConfigDigest;
-pub use aivcs_adapter::RagToAivcsAdapter;
-pub use persistence::{RagRunPersister, PersistedRagRun};
-
-/// GraphRAG AIVCS integration version
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub use adapter::RagAdapter;
+pub use recorder::RagRunRecorder;
+pub use spec::GraphRagSpec;

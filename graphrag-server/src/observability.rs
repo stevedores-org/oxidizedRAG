@@ -309,30 +309,7 @@ impl Observability {
 
 /// Middleware for automatic request tracing
 ///
-/// This can be used with Axum to automatically trace all HTTP requests.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use axum::{Router, routing::get};
-/// use tower::ServiceBuilder;
-/// use graphrag_server::observability::Observability;
-///
-/// async fn handler() -> &'static str {
-///     "Hello, World!"
-/// }
-///
-/// #[tokio::main]
-/// async fn main() {
-///     let obs = Observability::new("graphrag-api", None, None);
-///
-///     let app = Router::new()
-///         .route("/", get(handler));
-///         // Add tracing middleware here if needed
-///
-///     // Run server...
-/// }
-/// ```
+/// This can be used with web frameworks to automatically trace all HTTP requests.
 pub struct TracingMiddleware {
     #[allow(dead_code)]
     observability: Arc<Observability>,

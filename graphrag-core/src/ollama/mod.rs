@@ -2,7 +2,9 @@
 //!
 //! This module provides integration with Ollama for local LLM inference.
 
+use crate::core::traits::{AsyncLanguageModel, GenerationParams, ModelInfo};
 use crate::core::{GraphRAGError, Result};
+use async_trait::async_trait;
 
 /// Ollama configuration
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -142,15 +144,13 @@ impl OllamaClient {
     }
 }
 
-/// Async generator for Ollama LLM
-#[cfg(feature = "async-traits")]
+/// Async Ollama generator implementing AsyncLanguageModel
 pub struct AsyncOllamaGenerator {
     client: OllamaClient,
 }
 
-#[cfg(feature = "async-traits")]
 impl AsyncOllamaGenerator {
-    /// Create a new async Ollama generator
+    /// Create a new AsyncOllamaGenerator
     pub async fn new(config: OllamaConfig) -> Result<Self> {
         Ok(Self {
             client: OllamaClient::new(config),
@@ -158,28 +158,53 @@ impl AsyncOllamaGenerator {
     }
 }
 
-#[cfg(feature = "async-traits")]
-#[async_trait::async_trait]
-impl crate::core::traits::AsyncLanguageModel for AsyncOllamaGenerator {
+#[async_trait]
+impl AsyncLanguageModel for AsyncOllamaGenerator {
     type Error = GraphRAGError;
 
     async fn complete(&self, prompt: &str) -> Result<String> {
         self.client.generate(prompt).await
     }
 
-    async fn complete_with_params(&self, prompt: &str, _params: crate::core::traits::GenerationParams) -> Result<String> {
-        self.client.generate(prompt).await
+    async fn complete_with_params(&self, prompt: &str, params: GenerationParams) -> Result<String> {
+        // Clone config and update with params
+        let mut config = self.client.config.clone();
+
+        if let Some(max_tokens) = params.max_tokens {
+            config.max_tokens = Some(max_tokens as u32);
+        }
+
+        if let Some(temperature) = params.temperature {
+            config.temperature = Some(temperature);
+        }
+
+        // Create temporary client with updated config
+        let client = OllamaClient::new(config);
+        client.generate(prompt).await
     }
 
     async fn is_available(&self) -> bool {
-        self.client.config.enabled
+        // Simple connectivity check
+        // We could try to hit /api/tags or version endpoint
+        #[cfg(feature = "ureq")]
+        {
+            let endpoint = format!("{}:{}/api/version", self.client.config.host, self.client.config.port);
+            match self.client.client.get(&endpoint).call() {
+                Ok(_) => true,
+                Err(_) => false,
+            }
+        }
+        #[cfg(not(feature = "ureq"))]
+        {
+            false
+        }
     }
 
-    async fn model_info(&self) -> crate::core::traits::ModelInfo {
-        crate::core::traits::ModelInfo {
+    async fn model_info(&self) -> ModelInfo {
+        ModelInfo {
             name: self.client.config.chat_model.clone(),
             version: None,
-            max_context_length: Some(4096),
+            max_context_length: Some(4096), // Assuming default Llama/Mistral context
             supports_streaming: false,
         }
     }

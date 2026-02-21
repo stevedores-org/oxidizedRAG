@@ -17,6 +17,7 @@ use std::future::Future;
 use std::pin::Pin;
 
 use async_trait::async_trait;
+use futures;
 
 /// Type alias for vector metadata
 pub type VectorMetadata = Option<HashMap<String, String>>;
@@ -1284,6 +1285,55 @@ pub mod sync_to_async {
 
         async fn model_info(&self) -> ModelInfo {
             self.0.model_info()
+        }
+    }
+
+    /// Blanket implementation for Box<T> where T implements AsyncLanguageModel
+    #[async_trait]
+    impl<T> AsyncLanguageModel for Box<T>
+    where
+        T: AsyncLanguageModel + ?Sized,
+    {
+        type Error = T::Error;
+
+        async fn complete(&self, prompt: &str) -> Result<String> {
+            (**self).complete(prompt).await
+        }
+
+        async fn complete_with_params(&self, prompt: &str, params: GenerationParams) -> Result<String> {
+            (**self).complete_with_params(prompt, params).await
+        }
+
+        async fn is_available(&self) -> bool {
+            (**self).is_available().await
+        }
+
+        async fn model_info(&self) -> ModelInfo {
+            (**self).model_info().await
+        }
+
+        async fn complete_batch(&self, prompts: &[&str]) -> Result<Vec<String>> {
+            (**self).complete_batch(prompts).await
+        }
+
+        async fn complete_batch_concurrent(&self, prompts: &[&str], max_concurrent: usize) -> Result<Vec<String>> {
+            (**self).complete_batch_concurrent(prompts, max_concurrent).await
+        }
+
+        async fn complete_streaming(&self, prompt: &str) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String>> + Send>>> {
+            (**self).complete_streaming(prompt).await
+        }
+
+        async fn health_check(&self) -> Result<bool> {
+            (**self).health_check().await
+        }
+
+        async fn estimate_tokens(&self, prompt: &str) -> Result<usize> {
+            (**self).estimate_tokens(prompt).await
+        }
+
+        async fn get_usage_stats(&self) -> Result<ModelUsageStats> {
+            (**self).get_usage_stats().await
         }
     }
 }

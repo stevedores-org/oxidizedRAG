@@ -1,29 +1,22 @@
 [package]
 name = "graphrag-aivcs"
-description = "AIVCS integration for GraphRAG - run tracking, versioning, and evaluation"
+description = "AIVCS integration for oxidizedRAG — run tracking, content-addressed config, observability"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-# Core
-tokio = { workspace = true }
-async-trait = "0.1"
-tracing = { workspace = true }
-
-# AIVCS
-aivcs-core = { workspace = true }
-oxidized-state = { workspace = true }
-
-# Utilities
-serde = { workspace = true }
+aivcs-core.workspace = true
+oxidized-state.workspace = true
+serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
+hex.workspace = true
+tokio.workspace = true
+async-trait.workspace = true
 thiserror.workspace = true
-anyhow = "1.0"
-uuid = { version = "1.6", features = ["v4", "serde"] }
-chrono = { version = "0.4", features = ["serde"] }
-sha2 = { workspace = true }
+chrono.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
