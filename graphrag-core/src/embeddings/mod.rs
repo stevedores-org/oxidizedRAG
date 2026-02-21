@@ -12,8 +12,11 @@ use crate::core::error::Result;
 pub mod huggingface;
 
 /// Neural embedding models (local inference)
+/// Note: This module is currently not implemented. Use huggingface or api_providers instead.
 #[cfg(feature = "neural-embeddings")]
-pub mod neural;
+pub mod neural {
+    //! Placeholder for neural embedding models
+}
 
 /// API-based embedding providers (OpenAI, Voyage AI, Cohere, etc.)
 #[cfg(feature = "ureq")]

@@ -37,13 +37,14 @@
 //! let result = chunker.execute(batch).await?;
 //! ```
 
+pub mod builder;
 pub mod registry;
 pub mod stage;
-pub mod builder;
 pub mod types;
 
 pub use registry::{StageId, StageRegistry};
-pub use stage::{Stage, StageMeta, StageError};
-pub use types::{ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord,
-                EntityGraphDelta, GraphNode, GraphEdge, RetrievalSet, RankedResult,
-                ScoreBreakdown};
+pub use stage::{Stage, StageError, StageMeta};
+pub use types::{
+    ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord, EntityGraphDelta, GraphEdge,
+    GraphNode, RankedResult, RetrievalSet, ScoreBreakdown,
+};
