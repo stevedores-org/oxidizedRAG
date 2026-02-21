@@ -1854,6 +1854,9 @@ pub struct ProductionGraphStore {
     incremental_pagerank: Arc<IncrementalPageRank>,
     event_publisher: broadcast::Sender<ChangeEvent>,
     config: IncrementalConfig,
+    /// Optional SurrealDB storage backend for delta persistence
+    #[cfg(feature = "surrealdb-storage")]
+    storage: Option<Arc<tokio::sync::Mutex<crate::storage::surrealdb::SurrealDeltaStorage>>>,
 }
 
 /// Transaction state for ACID operations
@@ -1953,7 +1956,43 @@ impl ProductionGraphStore {
             incremental_pagerank: Arc::new(IncrementalPageRank::new(0.85, 1e-6, 100)),
             event_publisher: event_tx,
             config,
+            #[cfg(feature = "surrealdb-storage")]
+            storage: None,
         }
+    }
+
+    /// Attach a SurrealDB storage backend for delta persistence.
+    #[cfg(feature = "surrealdb-storage")]
+    pub fn with_storage(
+        mut self,
+        storage: crate::storage::surrealdb::SurrealDeltaStorage,
+    ) -> Self {
+        self.storage = Some(Arc::new(tokio::sync::Mutex::new(storage)));
+        self
+    }
+
+    /// Create a store with crash recovery: replays committed deltas from SurrealDB.
+    #[cfg(feature = "surrealdb-storage")]
+    pub async fn with_recovery(
+        storage: crate::storage::surrealdb::SurrealDeltaStorage,
+        config: IncrementalConfig,
+        conflict_resolver: ConflictResolver,
+    ) -> Result<Self> {
+        // Load committed deltas before constructing
+        let committed_deltas = storage.get_committed_deltas().await?;
+
+        let graph = KnowledgeGraph::new();
+        let mut store = Self::new(graph, config, conflict_resolver)
+            .with_storage(storage);
+
+        // Replay committed deltas to reconstruct state
+        for delta in committed_deltas {
+            for change in &delta.changes {
+                store.apply_change_internal(change.clone()).await?;
+            }
+        }
+
+        Ok(store)
     }
 
     /// Subscribes to change events for monitoring
@@ -2083,8 +2122,8 @@ impl ProductionGraphStore {
                             self.incremental_pagerank.record_change(entity.id.clone());
                         }
                         Operation::Delete => {
-                            // Remove entity and its relationships
-                            // Implementation would go here
+                            graph.remove_entity(&entity.id);
+                            self.incremental_pagerank.record_change(entity.id.clone());
                         }
                         _ => {}
                     }
@@ -2099,8 +2138,15 @@ impl ProductionGraphStore {
                                 .record_change(relationship.target.clone());
                         }
                         Operation::Delete => {
-                            // Remove relationship
-                            // Implementation would go here
+                            graph.remove_relationship(
+                                &relationship.source,
+                                &relationship.target,
+                                &relationship.relation_type,
+                            );
+                            self.incremental_pagerank
+                                .record_change(relationship.source.clone());
+                            self.incremental_pagerank
+                                .record_change(relationship.target.clone());
                         }
                         _ => {}
                     }
@@ -2214,8 +2260,57 @@ impl IncrementalGraphStore for ProductionGraphStore {
     }
 
     async fn delete_entity(&mut self, entity_id: &EntityId) -> Result<UpdateId> {
-        // Implementation for entity deletion
-        let update_id = UpdateId::new();
+        // Capture existing entity for rollback data
+        let existing_entity = {
+            let graph = self.graph.read();
+            graph.get_entity(entity_id).cloned()
+        };
+
+        let entity_for_change = existing_entity.clone().unwrap_or_else(|| Entity {
+            id: entity_id.clone(),
+            name: String::new(),
+            entity_type: String::new(),
+            confidence: 0.0,
+            mentions: vec![],
+            embedding: None,
+        });
+
+        let change = self.create_change_record(
+            ChangeType::EntityRemoved,
+            Operation::Delete,
+            ChangeData::Entity(entity_for_change),
+            Some(entity_id.clone()),
+            None,
+        );
+
+        let update_id = change.change_id.clone();
+
+        // Store rollback data before deletion
+        if let Some(entity) = existing_entity {
+            let graph = self.graph.read();
+            let mut previous_relationships = Vec::new();
+            for rel in graph.get_all_relationships() {
+                if rel.source == *entity_id || rel.target == *entity_id {
+                    previous_relationships.push(rel.clone());
+                }
+            }
+            self.rollback_data.insert(
+                update_id.clone(),
+                RollbackData {
+                    previous_entities: vec![entity],
+                    previous_relationships,
+                    affected_caches: vec![],
+                },
+            );
+        }
+
+        // Apply deletion
+        {
+            let mut graph = self.graph.write();
+            graph.remove_entity(entity_id);
+        }
+
+        self.change_log.insert(update_id.clone(), change);
 
         // Publish event
         self.publish_event(ChangeEvent {
@@ -2233,11 +2328,60 @@ impl IncrementalGraphStore for ProductionGraphStore {
     async fn delete_relationship(
         &mut self,
         source: &EntityId,
-        _target: &EntityId,
-        _relation_type: &str,
+        target: &EntityId,
+        relation_type: &str,
     ) -> Result<UpdateId> {
-        // Implementation for relationship deletion
-        let update_id = UpdateId::new();
+        // Capture existing relationship for rollback
+        let existing_rel = {
+            let graph = self.graph.read();
+            graph
+                .get_all_relationships()
+                .into_iter()
+                .find(|r| {
+                    r.source == *source
+                        && r.target == *target
+                        && r.relation_type == relation_type
+                })
+                .cloned()
+        };
+
+        let rel_for_change = existing_rel.clone().unwrap_or_else(|| Relationship {
+            source: source.clone(),
+            target: target.clone(),
+            relation_type: relation_type.to_string(),
+            confidence: 0.0,
+            context: vec![],
+        });
+
+        let change = self.create_change_record(
+            ChangeType::RelationshipRemoved,
+            Operation::Delete,
+            ChangeData::Relationship(rel_for_change),
+            Some(source.clone()),
+            None,
+        );
+
+        let update_id = change.change_id.clone();
+
+        // Store rollback data
+        if let Some(rel) = existing_rel {
+            self.rollback_data.insert(
+                update_id.clone(),
+                RollbackData {
+                    previous_entities: vec![],
+                    previous_relationships: vec![rel],
+                    affected_caches: vec![],
+                },
+            );
+        }
+
+        // Apply deletion
+        {
+            let mut graph = self.graph.write();
+            graph.remove_relationship(source, target, relation_type);
+        }
+
+        self.change_log.insert(update_id.clone(), change);
 
         // Publish event
         self.publish_event(ChangeEvent {
@@ -2253,18 +2397,100 @@ impl IncrementalGraphStore for ProductionGraphStore {
     }
 
     async fn apply_delta(&mut self, delta: GraphDelta) -> Result<UpdateId> {
+        let delta_id = delta.delta_id.clone();
         let tx_id = self.begin_transaction().await?;
 
-        for change in delta.changes {
-            self.apply_change_with_conflict_resolution(change).await?;
+        for change in &delta.changes {
+            self.apply_change_with_conflict_resolution(change.clone()).await?;
+        }
+
+        // Persist delta to SurrealDB if storage is configured
+        #[cfg(feature = "surrealdb-storage")]
+        if let Some(ref storage) = self.storage {
+            let mut committed_delta = delta.clone();
+            committed_delta.status = DeltaStatus::Committed;
+            storage.lock().await.persist_delta(&committed_delta).await?;
         }
 
         self.commit_transaction(tx_id).await?;
-        Ok(delta.delta_id)
+        Ok(delta_id)
     }
 
-    async fn rollback_delta(&mut self, _delta_id: &UpdateId) -> Result<()> {
-        // Implementation for delta rollback
+    async fn rollback_delta(&mut self, delta_id: &UpdateId) -> Result<()> {
+        // Collect all change IDs belonging to this delta from the change log
+        let delta_changes: Vec<ChangeRecord> = self
+            .change_log
+            .iter()
+            .filter(|entry| {
+                // Changes are associated with the delta if they match the delta_id
+                // or were created within a transaction context
+                entry.key() == delta_id
+            })
+            .map(|entry| entry.value().clone())
+            .collect();
+
+        // Reverse each change in LIFO order using stored rollback data
+        let mut graph = self.graph.write();
+
+        for change in delta_changes.iter().rev() {
+            if let Some((_, rollback)) = self.rollback_data.remove(&change.change_id) {
+                match change.change_type {
+                    ChangeType::EntityAdded => {
+                        // Undo add: remove the entity
+                        if let Some(ref eid) = change.entity_id {
+                            graph.remove_entity(eid);
+                        }
+                    }
+                    ChangeType::EntityRemoved => {
+                        // Undo remove: re-add entities and their relationships
+                        for entity in rollback.previous_entities {
+                            let _ = graph.add_entity(entity);
+                        }
+                        for rel in rollback.previous_relationships {
+                            let _ = graph.add_relationship(rel);
+                        }
+                    }
+                    ChangeType::EntityUpdated => {
+                        // Undo update: restore previous version
+                        if let Some(ref eid) = change.entity_id {
+                            graph.remove_entity(eid);
+                        }
+                        for entity in rollback.previous_entities {
+                            let _ = graph.add_entity(entity);
+                        }
+                    }
+                    ChangeType::RelationshipAdded => {
+                        // Undo add: remove the relationship
+                        if let ChangeData::Relationship(ref rel) = change.data {
+                            graph.remove_relationship(
+                                &rel.source,
+                                &rel.target,
+                                &rel.relation_type,
+                            );
+                        }
+                    }
+                    ChangeType::RelationshipRemoved => {
+                        // Undo remove: re-add relationships
+                        for rel in rollback.previous_relationships {
+                            let _ = graph.add_relationship(rel);
+                        }
+                    }
+                    ChangeType::EmbeddingUpdated => {
+                        // Undo embedding update: restore previous entity (with old embedding)
+                        for entity in rollback.previous_entities {
+                            if let Some(existing) = graph.get_entity_mut(&entity.id) {
+                                existing.embedding = entity.embedding;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            // Remove the change from the log
+            self.change_log.remove(&change.change_id);
+        }
+
         Ok(())
     }
 
@@ -2344,10 +2570,53 @@ impl IncrementalGraphStore for ProductionGraphStore {
         if let Some((_, mut tx)) = self.transactions.remove(&tx_id) {
             tx.status = TransactionStatus::Aborted;
 
-            // Rollback all changes in this transaction
-            for _change in &tx.changes {
-                // Implementation for rollback
-            }
+            // Rollback all changes in LIFO order
+            {
+                let mut graph = self.graph.write();
+                for change in tx.changes.iter().rev() {
+                    if let Some((_, rollback)) = self.rollback_data.remove(&change.change_id) {
+                        match change.change_type {
+                            ChangeType::EntityAdded => {
+                                if let Some(ref eid) = change.entity_id {
+                                    graph.remove_entity(eid);
+                                }
+                            }
+                            ChangeType::EntityRemoved => {
+                                for entity in rollback.previous_entities {
+                                    let _ = graph.add_entity(entity);
+                                }
+                                for rel in rollback.previous_relationships {
+                                    let _ = graph.add_relationship(rel);
+                                }
+                            }
+                            ChangeType::RelationshipAdded => {
+                                if let ChangeData::Relationship(ref rel) = change.data {
+                                    graph.remove_relationship(
+                                        &rel.source,
+                                        &rel.target,
+                                        &rel.relation_type,
+                                    );
+                                }
+                            }
+                            ChangeType::RelationshipRemoved => {
+                                for rel in rollback.previous_relationships {
+                                    let _ = graph.add_relationship(rel);
+                                }
+                            }
+                            ChangeType::EmbeddingUpdated => {
+                                for entity in rollback.previous_entities {
+                                    if let Some(existing) = graph.get_entity_mut(&entity.id) {
+                                        existing.embedding = entity.embedding;
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    // Remove change from log
+                    self.change_log.remove(&change.change_id);
+                }
+            } // graph lock dropped here before await
 
             // Publish event
             self.publish_event(ChangeEvent {

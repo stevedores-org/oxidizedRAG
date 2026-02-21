@@ -56,34 +56,17 @@ flake-check:
 local-ci:
   #!/usr/bin/env bash
   if command -v local-ci >/dev/null 2>&1; then
-    echo "Running local-ci pipeline..."
-    local-ci run
+    local-ci
   else
     echo "⚠️ local-ci not installed. Run 'just local-ci-install' first, or use 'just ci' for standard pipeline"
     echo "   For setup: https://github.com/stevedores-org/local-ci"
   fi
 
-# Run individual local-ci stages
-local-ci-lint:
+# Run local-ci with auto-fix (formatting)
+local-ci-fix:
   #!/usr/bin/env bash
   if command -v local-ci >/dev/null 2>&1; then
-    local-ci run --stage lint
-  else
-    echo "local-ci not installed. Run: just local-ci-install"
-  fi
-
-local-ci-security:
-  #!/usr/bin/env bash
-  if command -v local-ci >/dev/null 2>&1; then
-    local-ci run --stage security
-  else
-    echo "local-ci not installed. Run: just local-ci-install"
-  fi
-
-local-ci-test:
-  #!/usr/bin/env bash
-  if command -v local-ci >/dev/null 2>&1; then
-    local-ci run --stage test
+    local-ci --fix
   else
     echo "local-ci not installed. Run: just local-ci-install"
   fi
