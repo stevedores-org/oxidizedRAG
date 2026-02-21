@@ -17,6 +17,10 @@ pub mod traits;
 #[cfg(test)]
 pub mod test_traits;
 
+// Mock providers for offline CI testing
+#[cfg(feature = "async")]
+pub mod mock_providers;
+
 // Re-export key items for convenience
 pub use error::{ErrorContext, ErrorSeverity, GraphRAGError, Result};
 pub use metadata::ChunkMetadata;
