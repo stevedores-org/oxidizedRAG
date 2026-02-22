@@ -15,12 +15,27 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v14
+        with:
+          extra-conf: |
+            extra-substituters = https://nix-cache.stevedores.org/stevedores
+            extra-trusted-substituters = https://nix-cache.stevedores.org/stevedores
 
       - name: Configure Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v7
 
+      - name: Configure Attic cache
+        run: |
+          nix profile install nixpkgs#attic-client
+          attic login stevedores https://nix-cache.stevedores.org ${{ secrets.ATTIC_TOKEN }}
+
       - name: Flake check
         run: nix flake check --print-build-logs
+
+      - name: Push to Attic cache
+        if: always()
+        run: |
+          attic push stevedores $(nix path-info --derivation .#checks.x86_64-linux.fmt 2>/dev/null || true)
+          attic push stevedores $(nix build .#devShells.x86_64-linux.default --no-link --print-out-paths 2>/dev/null || true)
 
       - name: Workspace tests
         run: nix develop --command cargo test --workspace
