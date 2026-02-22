@@ -866,7 +866,7 @@ done > commands.txt
 ## 🤝 Contribuire
 
 Hai trovato bug o vuoi contribuire? Apri una issue o pull request su:
-https://github.com/yourusername/graphrag-rs
+https://github.com/stevedores-org/oxidizedRAG
 
 ---
 

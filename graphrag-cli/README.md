@@ -205,7 +205,7 @@ This TUI is inspired by modern terminal tools:
 
 ## 🤝 Contributing
 
-Contributions are welcome! This is part of the larger [graphrag-rs](https://github.com/yourusername/graphrag-rs) project.
+Contributions are welcome! This is part of the larger [graphrag-rs](https://github.com/stevedores-org/oxidizedRAG) project.
 
 ## 📄 License
 
