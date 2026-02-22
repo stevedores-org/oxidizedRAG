@@ -1,20 +1,24 @@
 //! Property-based tests for GraphRAG components
 //!
 //! These tests use property-based testing to verify that system invariants
-//! hold across a wide range of inputs, ensuring robustness of the modular architecture.
+//! hold across a wide range of inputs, ensuring robustness of the modular
+//! architecture.
 
 #![cfg(feature = "test-utils")]
 
 use graphrag_rs::{
-    core::{Document, DocumentId, Entity, EntityId},
-    core::traits::{Storage, Embedder, VectorStore, EntityExtractor, LanguageModel, MetricsCollector, ConfigProvider},
+    core::{
+        traits::{
+            ConfigProvider, Embedder, EntityExtractor, LanguageModel, MetricsCollector, Storage,
+            VectorStore,
+        },
+        Document, DocumentId, Entity, EntityId,
+    },
+    test_utils::{
+        MockConfigProvider, MockEmbedder, MockEntityExtractor, MockLanguageModel,
+        MockMetricsCollector, MockStorage, MockVectorStore,
+    },
 };
-
-use graphrag_rs::test_utils::{
-    MockStorage, MockEmbedder, MockVectorStore, MockEntityExtractor,
-    MockLanguageModel, MockMetricsCollector, MockConfigProvider,
-};
-
 use proptest::prelude::*;
 
 // Property test strategies for generating test data

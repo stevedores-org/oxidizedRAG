@@ -6,9 +6,10 @@
 //! - Deterministic hashing for content-addressing
 //! - Immutability guarantees
 
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashSet;
 
 /// Configuration for a pipeline DAG.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -129,12 +130,7 @@ impl PipelineBuilder {
 
         for stage in stages {
             if !visited.contains(&stage.name) {
-                Self::dfs_cycle_check(
-                    &stage.name,
-                    stages,
-                    &mut visited,
-                    &mut rec_stack,
-                )?;
+                Self::dfs_cycle_check(&stage.name, stages, &mut visited, &mut rec_stack)?;
             }
         }
 
@@ -238,10 +234,10 @@ impl PipelineBuilder {
                     }
                 }
                 serde_json::Value::Object(sorted)
-            }
+            },
             serde_json::Value::Array(arr) => {
                 serde_json::Value::Array(arr.iter().map(|v| Self::canonicalize_json(v)).collect())
-            }
+            },
             other => other.clone(),
         }
     }

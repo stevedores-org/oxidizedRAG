@@ -1,6 +1,7 @@
 //! Multi-Document GraphRAG REST API Server
 //!
-//! This server provides REST endpoints for multi-document knowledge graph operations:
+//! This server provides REST endpoints for multi-document knowledge graph
+//! operations:
 //! - Batch document upload
 //! - Incremental document merging
 //! - Cross-document queries with RRF ranking
@@ -38,6 +39,8 @@
 //!   -d '{"query": "philosophy and freedom", "collections": ["classics"]}'
 //! ```
 
+use std::{collections::HashMap, sync::Arc, time::Instant};
+
 use axum::{
     extract::{Path, State},
     http::{Method, StatusCode},
@@ -45,13 +48,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Instant;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
-use rayon::prelude::*;
 
 // Include the handlers module inline (for standalone example)
 // In a real app, this would be in a separate file
@@ -201,10 +201,7 @@ async fn main() {
     // Build router
     let app = Router::new()
         .route("/health", get(health_check))
-        .route(
-            "/api/collections/:name/documents/batch",
-            post(batch_upload),
-        )
+        .route("/api/collections/:name/documents/batch", post(batch_upload))
         .route("/api/collections/:name/merge", post(incremental_merge))
         .route("/api/query/multi", post(cross_document_query))
         .route("/api/collections/:name/stats", get(get_collection_stats))
@@ -362,7 +359,9 @@ async fn incremental_merge(
             }
         }
         if !is_duplicate {
-            collection.entities.insert(new_id.clone(), new_entity.clone());
+            collection
+                .entities
+                .insert(new_id.clone(), new_entity.clone());
         }
     }
 
@@ -403,7 +402,9 @@ async fn cross_document_query(
 
     let mut source_distribution: HashMap<String, usize> = HashMap::new();
     for result in &merged_results {
-        *source_distribution.entry(result.source.clone()).or_insert(0) += 1;
+        *source_distribution
+            .entry(result.source.clone())
+            .or_insert(0) += 1;
     }
 
     Ok(Json(CrossDocumentQueryResponse {
@@ -419,7 +420,9 @@ async fn get_collection_stats(
     Path(collection_name): Path<String>,
 ) -> Result<Json<CollectionStatsResponse>, StatusCode> {
     let collections = state.collections.read().await;
-    let collection = collections.get(&collection_name).ok_or(StatusCode::NOT_FOUND)?;
+    let collection = collections
+        .get(&collection_name)
+        .ok_or(StatusCode::NOT_FOUND)?;
 
     let memory_mb = estimate_memory_mb(collection);
 
@@ -566,7 +569,10 @@ fn query_collection(
         .collect();
 
     results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
-    results.iter_mut().enumerate().for_each(|(i, r)| r.rank = i + 1);
+    results
+        .iter_mut()
+        .enumerate()
+        .for_each(|(i, r)| r.rank = i + 1);
     results.truncate(top_k);
     results
 }

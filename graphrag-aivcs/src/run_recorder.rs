@@ -3,8 +3,9 @@
 //! Records query processing, retrieval operations, and LLM interactions
 //! as discrete events in an AIVCS run for later analysis and comparison.
 
-use serde::{Deserialize, Serialize};
 use std::time::Instant;
+
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Represents a single RAG query execution event
@@ -14,7 +15,8 @@ pub struct RagEvent {
     pub id: String,
     /// Sequence number (starts at 1)
     pub seq: u64,
-    /// Event type (query_started, retrieval_complete, llm_called, response_generated, etc.)
+    /// Event type (query_started, retrieval_complete, llm_called,
+    /// response_generated, etc.)
     pub event_type: String,
     /// Event timestamp (ISO 8601)
     pub timestamp: String,

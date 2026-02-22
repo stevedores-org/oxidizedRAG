@@ -4,13 +4,17 @@
 //! [`ProductionGraphStore`], keeping both in sync through the incremental
 //! update pipeline.
 
-use crate::core::{Entity, EntityId, KnowledgeGraph, Relationship, Result};
-use crate::graph::incremental::{
-    ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
-    ProductionGraphStore, UpdateId,
-};
 use std::sync::Arc;
+
 use tokio::sync::Mutex;
+
+use crate::{
+    core::{Entity, EntityId, KnowledgeGraph, Relationship, Result},
+    graph::incremental::{
+        ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
+        ProductionGraphStore, UpdateId,
+    },
+};
 
 /// Bridges the synchronous [`KnowledgeGraph`] with the async
 /// [`ProductionGraphStore`] for incremental updates.
@@ -67,7 +71,9 @@ impl AsyncKnowledgeGraph {
         relation_type: &str,
     ) -> Result<UpdateId> {
         let mut store = self.store.lock().await;
-        store.delete_relationship(source, target, relation_type).await
+        store
+            .delete_relationship(source, target, relation_type)
+            .await
     }
 
     /// Batch upsert entities with conflict resolution.
@@ -87,7 +93,9 @@ impl AsyncKnowledgeGraph {
         strategy: ConflictStrategy,
     ) -> Result<Vec<UpdateId>> {
         let mut store = self.store.lock().await;
-        store.batch_upsert_relationships(relationships, strategy).await
+        store
+            .batch_upsert_relationships(relationships, strategy)
+            .await
     }
 
     /// Get a reference to the underlying store for advanced operations.

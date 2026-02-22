@@ -1,18 +1,29 @@
 //! Async implementation of MockLLM demonstrating async trait patterns
 //!
-//! This module provides an async version of MockLLM that implements the AsyncLanguageModel trait,
-//! showcasing how to migrate synchronous implementations to async patterns.
+//! This module provides an async version of MockLLM that implements the
+//! AsyncLanguageModel trait, showcasing how to migrate synchronous
+//! implementations to async patterns.
 
-use crate::core::traits::{AsyncLanguageModel, GenerationParams, ModelInfo, ModelUsageStats};
-use crate::core::{GraphRAGError, Result};
-use crate::generation::LLMInterface;
-use crate::text::TextProcessor;
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
+    time::{Duration, Instant},
+};
+
 use async_trait::async_trait;
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
+
+use crate::{
+    core::{
+        traits::{AsyncLanguageModel, GenerationParams, ModelInfo, ModelUsageStats},
+        GraphRAGError, Result,
+    },
+    generation::LLMInterface,
+    text::TextProcessor,
+};
 
 /// Async version of MockLLM that implements AsyncLanguageModel trait
 #[derive(Debug)]
@@ -194,7 +205,11 @@ impl AsyncMockLLM {
             // Look for character names and relationships
             let names = self.extract_character_names(&context_lower).await;
             if !names.is_empty() {
-                return Ok(format!("Based on the context, the main characters mentioned include: {}. These appear to be friends and companions in the story.", names.join(", ")));
+                return Ok(format!(
+                    "Based on the context, the main characters mentioned include: {}. These \
+                     appear to be friends and companions in the story.",
+                    names.join(", ")
+                ));
             }
         }
 
@@ -231,15 +246,25 @@ impl AsyncMockLLM {
 
         // Generic pattern-based responses for common query types
         if question_lower.contains("friend") || question_lower.contains("relationship") {
-            return Ok("The text describes various character relationships and friendships throughout the narrative.".to_string());
+            return Ok(
+                "The text describes various character relationships and friendships throughout \
+                 the narrative."
+                    .to_string(),
+            );
         }
 
         if question_lower.contains("main character") || question_lower.contains("protagonist") {
-            return Ok("The text features several important characters who drive the narrative forward.".to_string());
+            return Ok(
+                "The text features several important characters who drive the narrative forward."
+                    .to_string(),
+            );
         }
 
         if question_lower.contains("event") || question_lower.contains("scene") {
-            return Ok("The text contains various significant events and scenes that advance the story.".to_string());
+            return Ok(
+                "The text contains various significant events and scenes that advance the story."
+                    .to_string(),
+            );
         }
 
         Ok(
@@ -404,7 +429,7 @@ impl AsyncLanguageModel for AsyncMockLLM {
                     return Err(GraphRAGError::Generation {
                         message: format!("Task join error: {e}"),
                     })
-                }
+                },
             }
         }
 
@@ -510,7 +535,8 @@ impl Clone for AsyncMockLLM {
 #[async_trait]
 impl LLMInterface for AsyncMockLLM {
     fn generate_response(&self, prompt: &str) -> Result<String> {
-        // For sync compatibility, use tokio's block_in_place if we're in a tokio context
+        // For sync compatibility, use tokio's block_in_place if we're in a tokio
+        // context
         if tokio::runtime::Handle::try_current().is_ok() {
             tokio::task::block_in_place(|| {
                 tokio::runtime::Handle::current().block_on(self.complete(prompt))

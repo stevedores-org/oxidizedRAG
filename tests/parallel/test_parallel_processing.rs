@@ -1,12 +1,13 @@
+use std::time::Instant;
+
 use graphrag_rs::{
     config::{Config, ParallelConfig},
     core::{ChunkId, DocumentId, EntityId, KnowledgeGraph, TextChunk},
-    parallel::{ParallelProcessor, ItemComplexity, ProcessingStrategy},
+    parallel::{ItemComplexity, ParallelProcessor, ProcessingStrategy},
     retrieval::RetrievalSystem,
-    vector::{EmbeddingGenerator, VectorIndex},
     summarization::{DocumentTree, HierarchicalConfig},
+    vector::{EmbeddingGenerator, VectorIndex},
 };
-use std::time::Instant;
 
 fn create_test_parallel_config() -> ParallelConfig {
     ParallelConfig {
@@ -26,7 +27,8 @@ fn create_test_chunks(count: usize) -> Vec<TextChunk> {
             id: ChunkId::new(format!("chunk_{}", i)),
             content: format!(
                 "This is test content for chunk {}. It contains information about topic {}.",
-                i, i % 3
+                i,
+                i % 3
             ),
             start_offset: i * 50,
             end_offset: (i + 1) * 50,
@@ -55,7 +57,12 @@ fn test_parallel_embedding_generation() {
     let mut generator = EmbeddingGenerator::new(64);
 
     // Test batch generation
-    let texts = vec!["hello world", "test document", "parallel processing", "embedding generation"];
+    let texts = vec![
+        "hello world",
+        "test document",
+        "parallel processing",
+        "embedding generation",
+    ];
     let embeddings = generator.batch_generate(&texts);
 
     assert_eq!(embeddings.len(), texts.len());
@@ -102,7 +109,10 @@ fn test_parallel_vector_operations() {
     let similarities = index.compute_all_similarities();
     assert!(!similarities.is_empty());
 
-    println!("Parallel vector operations completed in {:?}", parallel_duration);
+    println!(
+        "Parallel vector operations completed in {:?}",
+        parallel_duration
+    );
 }
 
 #[test]
@@ -123,7 +133,10 @@ fn test_parallel_node_creation() {
     assert!(stats.total_nodes > 0);
     assert!(stats.max_level >= 0);
 
-    println!("Parallel node creation completed in {:?}", parallel_duration);
+    println!(
+        "Parallel node creation completed in {:?}",
+        parallel_duration
+    );
 }
 
 #[test]
@@ -145,11 +158,7 @@ fn test_processing_strategy_selection() {
 
     for strategy in &strategies {
         let start = Instant::now();
-        let results = processor.execute_with_strategy(
-            items.clone(),
-            operation,
-            *strategy,
-        );
+        let results = processor.execute_with_strategy(items.clone(), operation, *strategy);
         let duration = start.elapsed();
 
         assert_eq!(results.len(), items.len());
@@ -171,21 +180,17 @@ fn test_adaptive_strategy_selection() {
     let operation = |x: i32| -> i32 { x + 1 };
 
     // Test adaptive selection with different complexities
-    for complexity in [ItemComplexity::Low, ItemComplexity::Medium, ItemComplexity::High] {
+    for complexity in [
+        ItemComplexity::Low,
+        ItemComplexity::Medium,
+        ItemComplexity::High,
+    ] {
         // Small workload
-        let small_results = processor.execute_adaptive(
-            small_items.clone(),
-            operation,
-            complexity,
-        );
+        let small_results = processor.execute_adaptive(small_items.clone(), operation, complexity);
         assert_eq!(small_results.len(), 5);
 
         // Large workload
-        let large_results = processor.execute_adaptive(
-            large_items.clone(),
-            operation,
-            complexity,
-        );
+        let large_results = processor.execute_adaptive(large_items.clone(), operation, complexity);
         assert_eq!(large_results.len(), 100);
         assert_eq!(large_results[0], 1);
         assert_eq!(large_results[99], 100);

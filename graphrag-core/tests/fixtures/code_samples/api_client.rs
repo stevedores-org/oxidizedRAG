@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 /// HTTP API client for making requests to a remote service.
 ///
@@ -31,7 +30,7 @@ impl std::fmt::Display for ApiError {
             ApiError::Timeout(d) => write!(f, "request timed out after {:?}", d),
             ApiError::HttpError { status, message } => {
                 write!(f, "HTTP {} error: {}", status, message)
-            }
+            },
             ApiError::NetworkError(msg) => write!(f, "network error: {}", msg),
             ApiError::ParseError(msg) => write!(f, "parse error: {}", msg),
             ApiError::Unauthorized => write!(f, "unauthorized"),

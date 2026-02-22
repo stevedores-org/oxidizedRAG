@@ -5,11 +5,11 @@
 
 use graphrag_core::{
     config::{
-        ZeroCostApproachConfig, LazyGraphRAGConfig, E2GraphRAGConfig,
-        PureAlgorithmicConfig, ConceptExtractionConfig, NERExtractionConfig
+        ConceptExtractionConfig, E2GraphRAGConfig, LazyGraphRAGConfig, NERExtractionConfig,
+        PureAlgorithmicConfig, ZeroCostApproachConfig,
     },
-    summarization::{HierarchicalConfig, LLMConfig, LLMStrategy},
     core::Result,
+    summarization::{HierarchicalConfig, LLMConfig, LLMStrategy},
 };
 
 #[cfg(test)]
@@ -48,14 +48,23 @@ mod tests {
 
         // Test NER extraction defaults
         assert_eq!(config.ner_extraction.entity_types.len(), 2);
-        assert!(config.ner_extraction.entity_types.contains(&"PERSON".to_string()));
-        assert!(config.ner_extraction.entity_types.contains(&"ORG".to_string()));
+        assert!(config
+            .ner_extraction
+            .entity_types
+            .contains(&"PERSON".to_string()));
+        assert!(config
+            .ner_extraction
+            .entity_types
+            .contains(&"ORG".to_string()));
         assert!(config.ner_extraction.use_capitalized_patterns);
         assert!(config.ner_extraction.use_title_case_patterns);
         assert_eq!(config.ner_extraction.min_confidence, 0.7);
 
         // Test keyword extraction defaults
-        assert!(config.keyword_extraction.algorithms.contains(&"tf_idf".to_string()));
+        assert!(config
+            .keyword_extraction
+            .algorithms
+            .contains(&"tf_idf".to_string()));
         assert_eq!(config.keyword_extraction.max_keywords_per_chunk, 15);
         assert_eq!(config.keyword_extraction.min_keyword_length, 3);
 
@@ -362,15 +371,19 @@ mod tests {
         let config: ZeroCostApproachConfig = parse_json5_str(json5_config).unwrap();
         assert_eq!(config.approach, "lazy_graphrag");
         assert!(config.lazy_graphrag.enabled);
-        assert_eq!(config.lazy_graphrag.concept_extraction.min_concept_length, 4);
+        assert_eq!(
+            config.lazy_graphrag.concept_extraction.min_concept_length,
+            4
+        );
         assert_eq!(config.lazy_graphrag.concept_extraction.max_concept_words, 6);
     }
 }
 
 #[cfg(test)]
 mod performance_tests {
-    use super::*;
     use std::time::Instant;
+
+    use super::*;
 
     #[test]
     fn test_config_creation_performance() {

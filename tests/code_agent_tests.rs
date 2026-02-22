@@ -5,8 +5,9 @@
 
 #[cfg(feature = "api")]
 mod code_agent_fixtures {
-    use graphrag_core::api::code_agent::*;
     use std::path::PathBuf;
+
+    use graphrag_core::api::code_agent::*;
 
     // ========================================================================
     // Fixture file paths

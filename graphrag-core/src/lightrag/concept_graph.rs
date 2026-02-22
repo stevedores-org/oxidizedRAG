@@ -1,8 +1,9 @@
 //! Concept Graph for LazyGraphRAG
 //!
-//! This module implements the concept graph construction approach from LazyGraphRAG
-//! (Microsoft Research, 2025), which eliminates the need for prior summarization
-//! by using lightweight noun phrase extraction instead of LLM-based entity extraction.
+//! This module implements the concept graph construction approach from
+//! LazyGraphRAG (Microsoft Research, 2025), which eliminates the need for prior
+//! summarization by using lightweight noun phrase extraction instead of
+//! LLM-based entity extraction.
 //!
 //! ## Key Features
 //!
@@ -37,11 +38,12 @@
 //! let graph = builder.build();
 //! ```
 
+use std::collections::{HashMap, HashSet};
+
 use indexmap::IndexMap;
 use petgraph::graph::{DiGraph, NodeIndex};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 
 /// A concept extracted from text (noun phrase or key term)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -142,12 +144,12 @@ impl ConceptExtractor {
     /// Create a concept extractor with custom configuration
     pub fn with_config(config: ConceptExtractorConfig) -> Self {
         // Simple noun phrase pattern: sequences of words
-        let noun_phrase_pattern = Regex::new(r"\b[A-Z][a-z]+(?:\s+[A-Z]?[a-z]+){1,4}\b")
-            .expect("Invalid regex pattern");
+        let noun_phrase_pattern =
+            Regex::new(r"\b[A-Z][a-z]+(?:\s+[A-Z]?[a-z]+){1,4}\b").expect("Invalid regex pattern");
 
         // Capitalized terms (potential named entities)
-        let capitalized_pattern = Regex::new(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")
-            .expect("Invalid regex pattern");
+        let capitalized_pattern =
+            Regex::new(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b").expect("Invalid regex pattern");
 
         Self {
             min_length: config.min_length,
@@ -208,7 +210,8 @@ impl ConceptExtractor {
 
         // Check if it's mostly stopwords
         let words: Vec<&str> = phrase.split_whitespace().collect();
-        let stopword_count = words.iter()
+        let stopword_count = words
+            .iter()
             .filter(|w| self.stopwords.contains(&w.to_lowercase()))
             .count();
 
@@ -225,7 +228,8 @@ impl ConceptExtractor {
 
         // Count word frequencies
         for word in text.split_whitespace() {
-            let normalized = word.to_lowercase()
+            let normalized = word
+                .to_lowercase()
                 .trim_matches(|c: char| !c.is_alphanumeric())
                 .to_string();
 
@@ -248,15 +252,13 @@ impl ConceptExtractor {
     /// Default stopwords (English)
     fn default_stopwords() -> HashSet<String> {
         vec![
-            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-            "of", "with", "by", "from", "as", "is", "was", "are", "were", "be",
-            "been", "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "should", "could", "may", "might", "must", "can", "this",
-            "that", "these", "those", "it", "its", "i", "you", "he", "she", "we",
-            "they", "them", "their", "what", "which", "who", "when", "where", "why",
-            "how", "all", "each", "every", "both", "few", "more", "most", "other",
-            "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than",
-            "too", "very", "just", "now",
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
+            "by", "from", "as", "is", "was", "are", "were", "be", "been", "being", "have", "has",
+            "had", "do", "does", "did", "will", "would", "should", "could", "may", "might", "must",
+            "can", "this", "that", "these", "those", "it", "its", "i", "you", "he", "she", "we",
+            "they", "them", "their", "what", "which", "who", "when", "where", "why", "how", "all",
+            "each", "every", "both", "few", "more", "most", "other", "some", "such", "no", "nor",
+            "not", "only", "own", "same", "so", "than", "too", "very", "just", "now",
         ]
         .into_iter()
         .map(String::from)
@@ -317,14 +319,13 @@ impl ConceptGraphBuilder {
 
     /// Add concepts from a document
     pub fn add_document_concepts(&mut self, document_id: &str, extracted_concepts: Vec<String>) {
-        self.document_concepts.insert(
-            document_id.to_string(),
-            extracted_concepts.clone(),
-        );
+        self.document_concepts
+            .insert(document_id.to_string(), extracted_concepts.clone());
 
         // Update concept frequencies
         for concept_text in extracted_concepts {
-            let concept = self.concepts
+            let concept = self
+                .concepts
                 .entry(concept_text.clone())
                 .or_insert_with(|| Concept {
                     text: concept_text.clone(),
@@ -341,10 +342,8 @@ impl ConceptGraphBuilder {
 
     /// Add concepts from a chunk
     pub fn add_chunk_concepts(&mut self, chunk_id: &str, extracted_concepts: Vec<String>) {
-        self.chunk_concepts.insert(
-            chunk_id.to_string(),
-            extracted_concepts.clone(),
-        );
+        self.chunk_concepts
+            .insert(chunk_id.to_string(), extracted_concepts.clone());
 
         // Update concept chunk IDs
         for concept_text in extracted_concepts {
@@ -398,10 +397,9 @@ impl ConceptGraphBuilder {
                 let concept_b = concept_list[j];
 
                 // Find shared chunks
-                if let (Some(concept_a_data), Some(concept_b_data)) = (
-                    self.concepts.get(concept_a),
-                    self.concepts.get(concept_b),
-                ) {
+                if let (Some(concept_a_data), Some(concept_b_data)) =
+                    (self.concepts.get(concept_a), self.concepts.get(concept_b))
+                {
                     let shared_chunks: Vec<String> = concept_a_data
                         .chunk_ids
                         .intersection(&concept_b_data.chunk_ids)
@@ -476,7 +474,8 @@ impl ConceptGraph {
             related.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
             // Return top results
-            related.into_iter()
+            related
+                .into_iter()
                 .take(max_results)
                 .map(|(c, _)| c)
                 .collect()
@@ -503,20 +502,30 @@ mod tests {
     #[test]
     fn test_concept_extraction() {
         let extractor = ConceptExtractor::new();
-        let text = "Machine Learning and Artificial Intelligence are transforming Natural Language Processing.";
+        let text = "Machine Learning and Artificial Intelligence are transforming Natural \
+                    Language Processing.";
         let concepts = extractor.extract_concepts(text);
 
         assert!(!concepts.is_empty());
-        // Should extract "Machine Learning", "Artificial Intelligence", "Natural Language Processing"
-        assert!(concepts.iter().any(|c| c.contains("Machine") || c.contains("Learning")));
+        // Should extract "Machine Learning", "Artificial Intelligence", "Natural
+        // Language Processing"
+        assert!(concepts
+            .iter()
+            .any(|c| c.contains("Machine") || c.contains("Learning")));
     }
 
     #[test]
     fn test_concept_graph_building() {
         let mut builder = ConceptGraphBuilder::new();
 
-        builder.add_document_concepts("doc1", vec!["concept_a".to_string(), "concept_b".to_string()]);
-        builder.add_chunk_concepts("chunk1", vec!["concept_a".to_string(), "concept_b".to_string()]);
+        builder.add_document_concepts(
+            "doc1",
+            vec!["concept_a".to_string(), "concept_b".to_string()],
+        );
+        builder.add_chunk_concepts(
+            "chunk1",
+            vec!["concept_a".to_string(), "concept_b".to_string()],
+        );
 
         let graph = builder.build();
 

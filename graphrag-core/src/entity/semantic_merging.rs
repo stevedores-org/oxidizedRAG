@@ -1,9 +1,11 @@
+use std::collections::HashSet;
+
+use serde::{Deserialize, Serialize};
+
 use crate::{
     core::{Entity, Result},
     ollama::OllamaClient,
 };
-use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 /// Decision about merging entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,7 +105,7 @@ impl SemanticEntityMerger {
                 Err(_) => {
                     tracing::warn!("LLM merge decision failed, falling back to heuristics");
                     Ok(self.heuristic_merge_decision(entity_group))
-                }
+                },
             }
         } else {
             Ok(self.heuristic_merge_decision(entity_group))
@@ -272,7 +274,8 @@ impl SemanticEntityMerger {
 
     fn build_merge_decision_prompt(&self, entities: &[Entity]) -> String {
         let mut prompt = String::from(
-            "Analyze the following entities and determine if they represent the same real-world entity:\n\n"
+            "Analyze the following entities and determine if they represent the same real-world \
+             entity:\n\n",
         );
 
         for (i, entity) in entities.iter().enumerate() {
@@ -293,12 +296,10 @@ impl SemanticEntityMerger {
         }
 
         prompt.push_str(
-            "Consider:\n\
-             1. Are these entities referring to the same real-world entity?\n\
-             2. Do they have compatible descriptions and contexts?\n\
-             3. If merged, what would be the best combined name and description?\n\n\
-             Respond with 'YES' if they should be merged, 'NO' if they should remain separate.\n\
-             Briefly explain your reasoning.",
+            "Consider:\n1. Are these entities referring to the same real-world entity?\n2. Do \
+             they have compatible descriptions and contexts?\n3. If merged, what would be the \
+             best combined name and description?\n\nRespond with 'YES' if they should be merged, \
+             'NO' if they should remain separate.\nBriefly explain your reasoning.",
         );
 
         prompt

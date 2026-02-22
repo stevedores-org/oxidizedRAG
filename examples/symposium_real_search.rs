@@ -2,7 +2,8 @@
 //!
 //! This demonstrates the REAL implementations (not placeholders):
 //! - Hash-based TF embeddings (same algorithm as graphrag-wasm/src/embedder.rs)
-//! - Cosine similarity vector search (same algorithm as graphrag-wasm/src/lib.rs)
+//! - Cosine similarity vector search (same algorithm as
+//!   graphrag-wasm/src/lib.rs)
 
 use std::fs;
 
@@ -43,7 +44,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for i in (0..words.len()).step_by(chunk_size - overlap) {
             let end = (i + chunk_size).min(words.len());
-            if end - i > 50 { // Minimum chunk size
+            if end - i > 50 {
+                // Minimum chunk size
                 let chunk_text = words[i..end].join(" ");
                 temp_chunks.push(chunk_text);
             }
@@ -61,11 +63,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Generate embeddings for all chunks
     println!("\n🧮 Generating embeddings (hash-based TF)...");
     let dimension = 384;
-    let embeddings: Vec<Vec<f32>> = chunks.iter()
+    let embeddings: Vec<Vec<f32>> = chunks
+        .iter()
         .map(|chunk| hash_embedding(chunk, dimension))
         .collect();
 
-    println!("  ✓ Generated {} embeddings (dimension: {})", embeddings.len(), dimension);
+    println!(
+        "  ✓ Generated {} embeddings (dimension: {})",
+        embeddings.len(),
+        dimension
+    );
 
     // Verify embeddings are normalized
     let sample_norm: f32 = embeddings[0].iter().map(|x| x * x).sum::<f32>().sqrt();
@@ -88,7 +95,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let query_emb = hash_embedding(query, dimension);
 
         // Compute similarities for all chunks
-        let mut results: Vec<(usize, f32)> = embeddings.iter()
+        let mut results: Vec<(usize, f32)> = embeddings
+            .iter()
             .enumerate()
             .map(|(idx, emb)| (idx, cosine_similarity(&query_emb, emb)))
             .collect();
@@ -106,7 +114,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 chunk.replace('\n', " ")
             };
 
-            println!("    {}. Chunk {} (similarity: {:.4})", rank + 1, chunk_idx, similarity);
+            println!(
+                "    {}. Chunk {} (similarity: {:.4})",
+                rank + 1,
+                chunk_idx,
+                similarity
+            );
             println!("       {}", preview);
         }
         println!();
@@ -140,18 +153,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("    - Total embeddings: {}", embeddings.len());
 
     println!("\n  Similarity Analysis (sample of 50 chunks):");
-    println!("    - Average self-similarity: {:.4} (should be ~1.0)", avg_self);
-    println!("    - Average cross-similarity: {:.4} (should be <0.5)", avg_cross);
-    println!("    - Similarity ratio: {:.2}x (higher = better separation)", avg_self / avg_cross);
+    println!(
+        "    - Average self-similarity: {:.4} (should be ~1.0)",
+        avg_self
+    );
+    println!(
+        "    - Average cross-similarity: {:.4} (should be <0.5)",
+        avg_cross
+    );
+    println!(
+        "    - Similarity ratio: {:.2}x (higher = better separation)",
+        avg_self / avg_cross
+    );
 
     println!("\n  Embedding Quality:");
-    let non_zero_counts: Vec<usize> = embeddings.iter()
+    let non_zero_counts: Vec<usize> = embeddings
+        .iter()
         .take(10)
         .map(|emb| emb.iter().filter(|&&x| x != 0.0).count())
         .collect();
     let avg_non_zero = non_zero_counts.iter().sum::<usize>() as f32 / non_zero_counts.len() as f32;
-    println!("    - Avg non-zero dimensions: {:.1}/{} ({:.1}%)",
-        avg_non_zero, dimension, (avg_non_zero / dimension as f32) * 100.0);
+    println!(
+        "    - Avg non-zero dimensions: {:.1}/{} ({:.1}%)",
+        avg_non_zero,
+        dimension,
+        (avg_non_zero / dimension as f32) * 100.0
+    );
 
     // Test specific text patterns
     println!("\n  Algorithm Verification:");
@@ -164,7 +191,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("    ✓ Test self-similarity: {:.6}", test_self_sim);
 
     assert!((test_norm - 1.0).abs() < 0.001, "L2 norm should be 1.0");
-    assert!((test_self_sim - 1.0).abs() < 0.001, "Self-similarity should be 1.0");
+    assert!(
+        (test_self_sim - 1.0).abs() < 0.001,
+        "Self-similarity should be 1.0"
+    );
 
     println!("\n{}", "=".repeat(70));
     println!("\n✅ All Tests Passed!\n");

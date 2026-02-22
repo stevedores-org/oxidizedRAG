@@ -14,8 +14,9 @@
 //! ## Example
 //!
 //! ```no_run
-//! use graphrag_core::persistence::{LanceVectorStore, LanceConfig};
 //! use std::path::PathBuf;
+//!
+//! use graphrag_core::persistence::{LanceConfig, LanceVectorStore};
 //!
 //! # async fn example() -> graphrag_core::Result<()> {
 //! let config = LanceConfig::default();
@@ -32,8 +33,9 @@
 //! # }
 //! ```
 
-use crate::core::{GraphRAGError, Result};
 use std::path::PathBuf;
+
+use crate::core::{GraphRAGError, Result};
 
 /// Configuration for LanceDB vector store
 #[derive(Debug, Clone)]
@@ -96,8 +98,9 @@ impl LanceVectorStore {
     ///
     /// # Example
     /// ```no_run
-    /// use graphrag_core::persistence::{LanceVectorStore, LanceConfig};
     /// use std::path::PathBuf;
+    ///
+    /// use graphrag_core::persistence::{LanceConfig, LanceVectorStore};
     ///
     /// # async fn example() -> graphrag_core::Result<()> {
     /// let config = LanceConfig::default();
@@ -139,10 +142,7 @@ impl LanceVectorStore {
 
     /// Batch store embeddings
     #[cfg(feature = "lance-storage")]
-    pub async fn store_embeddings_batch(
-        &self,
-        _embeddings: Vec<(String, Vec<f32>)>,
-    ) -> Result<()> {
+    pub async fn store_embeddings_batch(&self, _embeddings: Vec<(String, Vec<f32>)>) -> Result<()> {
         // TODO: Implement batch storage
         Err(GraphRAGError::Config {
             message: "LanceDB batch storage not yet implemented".to_string(),

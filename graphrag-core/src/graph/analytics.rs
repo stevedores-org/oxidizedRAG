@@ -8,6 +8,7 @@
 //! - Temporal graph analysis
 
 use std::collections::{HashMap, HashSet, VecDeque};
+
 use serde::{Deserialize, Serialize};
 
 /// Community detection result
@@ -90,7 +91,8 @@ impl GraphAnalytics {
 
     /// Detect communities using Louvain algorithm
     ///
-    /// This is a simplified implementation. Full Louvain requires iterative optimization.
+    /// This is a simplified implementation. Full Louvain requires iterative
+    /// optimization.
     ///
     /// # Returns
     /// List of detected communities
@@ -370,13 +372,7 @@ impl GraphAnalytics {
     }
 
     /// DFS helper for all_paths
-    fn dfs_paths(
-        &self,
-        current: &str,
-        end: &str,
-        state: &mut PathSearchState,
-        max_depth: usize,
-    ) {
+    fn dfs_paths(&self, current: &str, end: &str, state: &mut PathSearchState, max_depth: usize) {
         if state.path.len() >= max_depth {
             return;
         }

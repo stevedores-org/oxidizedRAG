@@ -1,11 +1,15 @@
 //! Concrete function implementations for GraphRAG
 
-use super::{CallableFunction, FunctionContext, FunctionDefinition};
-use crate::core::Entity;
-use crate::inference::{InferenceConfig, InferenceEngine};
-use crate::{GraphRAGError, Result};
-use json::JsonValue;
 use std::collections::HashSet;
+
+use json::JsonValue;
+
+use super::{CallableFunction, FunctionContext, FunctionDefinition};
+use crate::{
+    core::Entity,
+    inference::{InferenceConfig, InferenceEngine},
+    GraphRAGError, Result,
+};
 
 /// Enhanced entity resolution utilities
 struct EntityResolver;
@@ -443,7 +447,9 @@ impl CallableFunction for RelationshipTraverseFunction {
             || arguments["entity2_id"].is_string()
         {
             return Err(GraphRAGError::Generation {
-                message: "PARAMETER ERROR: Use 'source_entity' and 'target_entity' (not 'entity_id_1', 'entity1_id', etc.)".to_string(),
+                message: "PARAMETER ERROR: Use 'source_entity' and 'target_entity' (not \
+                          'entity_id_1', 'entity1_id', etc.)"
+                    .to_string(),
             });
         }
 
@@ -668,9 +674,9 @@ impl CallableFunction for GetEntityContextFunction {
     fn definition(&self) -> FunctionDefinition {
         FunctionDefinition {
             name: "get_entity_context".to_string(),
-            description:
-                "Get text chunks and mentions where an entity appears for detailed context"
-                    .to_string(),
+            description: "Get text chunks and mentions where an entity appears for detailed \
+                          context"
+                .to_string(),
             parameters: json::object! {
                 "type": "object",
                 "properties": {
@@ -808,7 +814,9 @@ impl CallableFunction for InferRelationshipsFunction {
     fn definition(&self) -> FunctionDefinition {
         FunctionDefinition {
             name: "infer_relationships".to_string(),
-            description: "Infer implicit relationships between entities based on context patterns, co-occurrence, and interaction indicators".to_string(),
+            description: "Infer implicit relationships between entities based on context \
+                          patterns, co-occurrence, and interaction indicators"
+                .to_string(),
             parameters: json::object! {
                 "type": "object",
                 "properties": {
@@ -840,7 +848,9 @@ impl CallableFunction for InferRelationshipsFunction {
             || arguments["entity1_id"].is_string()
         {
             return Err(GraphRAGError::Generation {
-                message: "PARAMETER ERROR: Use 'entity_name' (not 'entity_id', 'entity_id_1', or 'entity1_id')".to_string(),
+                message: "PARAMETER ERROR: Use 'entity_name' (not 'entity_id', 'entity_id_1', or \
+                          'entity1_id')"
+                    .to_string(),
             });
         }
 

@@ -69,7 +69,8 @@ fn benchmark_entity_extraction(c: &mut Criterion) {
     let generated_text_1000 = generate_entity_rich_text(1000);
     let test_texts = [
         "Dr. John Smith works at Microsoft Corporation in Seattle.",
-        "Alice Johnson is a professor at Stanford University. She conducts research on artificial intelligence and machine learning. The university is located in Palo Alto, California.",
+        "Alice Johnson is a professor at Stanford University. She conducts research on artificial \
+         intelligence and machine learning. The university is located in Palo Alto, California.",
         &generated_text_500,
         &generated_text_1000,
     ];
@@ -227,16 +228,16 @@ fn generate_entity_rich_text(word_count: usize) -> String {
                 0 => {
                     text.push_str(people[text.len() % people.len()]);
                     word_count_remaining = word_count_remaining.saturating_sub(2);
-                }
+                },
                 1 => {
                     text.push_str(organizations[text.len() % organizations.len()]);
                     word_count_remaining = word_count_remaining.saturating_sub(2);
-                }
+                },
                 2 => {
                     text.push_str(locations[text.len() % locations.len()]);
                     word_count_remaining = word_count_remaining.saturating_sub(2);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         } else {
             if !text.is_empty() {

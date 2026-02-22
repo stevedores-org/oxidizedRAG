@@ -4,11 +4,13 @@
 //! to graphs built from scratch, and that delete/rollback operations
 //! maintain consistency.
 
-use graphrag_core::core::{Entity, EntityId, KnowledgeGraph, Relationship};
-use graphrag_core::graph::incremental::{
-    ChangeData, ChangeRecord, ChangeType, ConflictResolver, ConflictStrategy, DeltaStatus,
-    GraphDelta, IncrementalConfig, IncrementalGraphStore, Operation, ProductionGraphStore,
-    UpdateId,
+use graphrag_core::{
+    core::{Entity, EntityId, KnowledgeGraph, Relationship},
+    graph::incremental::{
+        ChangeData, ChangeRecord, ChangeType, ConflictResolver, ConflictStrategy, DeltaStatus,
+        GraphDelta, IncrementalConfig, IncrementalGraphStore, Operation, ProductionGraphStore,
+        UpdateId,
+    },
 };
 
 fn create_test_entity(i: usize) -> Entity {

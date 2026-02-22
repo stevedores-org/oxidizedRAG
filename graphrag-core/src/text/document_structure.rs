@@ -3,13 +3,15 @@
 //! This module provides data structures to represent the hierarchical structure
 //! of documents, including headings, sections, and their relationships.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// A heading in a document (e.g., chapter, section, subsection)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Heading {
-    /// Hierarchical level (1 = chapter/h1, 2 = section/h2, 3 = subsection/h3, etc.)
+    /// Hierarchical level (1 = chapter/h1, 2 = section/h2, 3 = subsection/h3,
+    /// etc.)
     pub level: u8,
 
     /// Text content of the heading
@@ -72,7 +74,8 @@ pub struct Section {
     /// Starting offset of the section content (after the heading)
     pub content_start: usize,
 
-    /// Ending offset of the section content (before next heading or end of document)
+    /// Ending offset of the section content (before next heading or end of
+    /// document)
     pub content_end: usize,
 
     /// Index of parent section in the sections array (None if root level)
@@ -416,9 +419,15 @@ mod tests {
     fn test_structure_statistics() {
         let mut structure = DocumentStructure::new();
 
-        structure.headings.push(Heading::new(1, "H1".to_string(), 0, 2));
-        structure.headings.push(Heading::new(2, "H2".to_string(), 10, 12));
-        structure.headings.push(Heading::new(2, "H2b".to_string(), 20, 23));
+        structure
+            .headings
+            .push(Heading::new(1, "H1".to_string(), 0, 2));
+        structure
+            .headings
+            .push(Heading::new(2, "H2".to_string(), 10, 12));
+        structure
+            .headings
+            .push(Heading::new(2, "H2b".to_string(), 20, 23));
 
         let stats = structure.get_statistics();
         assert_eq!(stats.total_headings, 3);

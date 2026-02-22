@@ -1,6 +1,5 @@
 //! Info panel component showing stats and query history
 
-use crate::{action::Action, handlers::graphrag::GraphStats, theme::Theme};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Style,
@@ -8,6 +7,8 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame,
 };
+
+use crate::{action::Action, handlers::graphrag::GraphStats, theme::Theme};
 
 /// Query history entry
 #[derive(Debug, Clone)]
@@ -87,11 +88,11 @@ impl super::Component for InfoPanel {
             Action::RefreshStats => {
                 // Stats will be updated by app
                 None
-            }
+            },
             Action::FocusInfoPanel => {
                 self.set_focused(true);
                 None
-            }
+            },
             _ => None,
         }
     }
@@ -152,10 +153,7 @@ impl InfoPanel {
                 Line::from(vec![
                     Span::styled("Workspace: ", self.theme.dimmed()),
                     Span::styled(
-                        self.workspace
-                            .as_deref()
-                            .unwrap_or("default")
-                            .to_string(),
+                        self.workspace.as_deref().unwrap_or("default").to_string(),
                         self.theme.info(),
                     ),
                 ]),
@@ -178,11 +176,8 @@ impl InfoPanel {
             .border_style(self.theme.border());
 
         if self.history.is_empty() {
-            let paragraph = Paragraph::new(Span::styled(
-                "No queries yet",
-                self.theme.dimmed(),
-            ))
-            .block(block);
+            let paragraph =
+                Paragraph::new(Span::styled("No queries yet", self.theme.dimmed())).block(block);
             f.render_widget(paragraph, area);
             return;
         }
@@ -217,9 +212,7 @@ impl InfoPanel {
             })
             .collect();
 
-        let list = List::new(items)
-            .block(block)
-            .style(self.theme.text());
+        let list = List::new(items).block(block).style(self.theme.text());
 
         f.render_widget(list, area);
     }

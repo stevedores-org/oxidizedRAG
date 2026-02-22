@@ -1,6 +1,7 @@
 //! Color themes and styling for the TUI
 //!
-//! Provides consistent color schemes and style utilities across the application.
+//! Provides consistent color schemes and style utilities across the
+//! application.
 
 use ratatui::style::{Color, Modifier, Style};
 
@@ -99,9 +100,7 @@ impl Theme {
 
     /// Get style for error messages
     pub fn error(&self) -> Style {
-        Style::default()
-            .fg(self.error)
-            .add_modifier(Modifier::BOLD)
+        Style::default().fg(self.error).add_modifier(Modifier::BOLD)
     }
 
     /// Get style for warning messages

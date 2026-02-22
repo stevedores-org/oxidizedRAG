@@ -6,8 +6,8 @@
 //! - Query execution
 //! - Entity retrieval
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use graphrag_rs::{GraphRAG, Config};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use graphrag_rs::{Config, GraphRAG};
 
 /// Benchmark document upload
 fn bench_document_upload(c: &mut Criterion) {
@@ -20,19 +20,15 @@ fn bench_document_upload(c: &mut Criterion) {
     ];
 
     for (i, doc) in documents.iter().enumerate() {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(i),
-            doc,
-            |b, &doc| {
-                b.iter(|| {
-                    let config = Config::default();
-                    let mut graphrag = GraphRAG::new(config).unwrap();
-                    graphrag.initialize().unwrap();
-                    graphrag.add_document_from_text(doc).unwrap();
-                    black_box(());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(i), doc, |b, &doc| {
+            b.iter(|| {
+                let config = Config::default();
+                let mut graphrag = GraphRAG::new(config).unwrap();
+                graphrag.initialize().unwrap();
+                graphrag.add_document_from_text(doc).unwrap();
+                black_box(());
+            });
+        });
     }
 
     group.finish();
@@ -44,8 +40,17 @@ fn bench_graph_build(c: &mut Criterion) {
 
     let test_cases = vec![
         ("small", 1, "Short test document."),
-        ("medium", 3, "This is a longer document with more content about various topics."),
-        ("large", 5, "This is a comprehensive document discussing multiple entities and relationships in detail."),
+        (
+            "medium",
+            3,
+            "This is a longer document with more content about various topics.",
+        ),
+        (
+            "large",
+            5,
+            "This is a comprehensive document discussing multiple entities and relationships in \
+             detail.",
+        ),
     ];
 
     for (name, doc_count, content) in test_cases {
@@ -81,9 +86,11 @@ fn bench_query_execution(c: &mut Criterion) {
     let mut graphrag = GraphRAG::new(config).unwrap();
     graphrag.initialize().unwrap();
 
-    graphrag.add_document_from_text(
-        "GraphRAG is a powerful system for knowledge graph construction and semantic search."
-    ).unwrap();
+    graphrag
+        .add_document_from_text(
+            "GraphRAG is a powerful system for knowledge graph construction and semantic search.",
+        )
+        .unwrap();
     graphrag.build_graph().unwrap();
 
     let mut group = c.benchmark_group("query_execution");
@@ -95,15 +102,11 @@ fn bench_query_execution(c: &mut Criterion) {
     ];
 
     for (i, query) in queries.iter().enumerate() {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(i),
-            query,
-            |b, &q| {
-                b.iter(|| {
-                    black_box(graphrag.query(q).unwrap());
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(i), query, |b, &q| {
+            b.iter(|| {
+                black_box(graphrag.query(q).unwrap());
+            });
+        });
     }
 
     group.finish();
@@ -116,9 +119,12 @@ fn bench_entity_retrieval(c: &mut Criterion) {
     let mut graphrag = GraphRAG::new(config).unwrap();
     graphrag.initialize().unwrap();
 
-    graphrag.add_document_from_text(
-        "Alice works at TechCorp. Bob is the CEO of DataSystems. Charlie collaborates with Alice on AI projects."
-    ).unwrap();
+    graphrag
+        .add_document_from_text(
+            "Alice works at TechCorp. Bob is the CEO of DataSystems. Charlie collaborates with \
+             Alice on AI projects.",
+        )
+        .unwrap();
     graphrag.build_graph().unwrap();
 
     c.bench_function("entity_retrieval", |b| {
@@ -134,6 +140,7 @@ fn bench_entity_retrieval(c: &mut Criterion) {
 /// Benchmark concurrent queries
 fn bench_concurrent_queries(c: &mut Criterion) {
     use std::sync::Arc;
+
     use parking_lot::RwLock;
 
     // Set up GraphRAG with some data
@@ -141,9 +148,11 @@ fn bench_concurrent_queries(c: &mut Criterion) {
     let mut graphrag = GraphRAG::new(config).unwrap();
     graphrag.initialize().unwrap();
 
-    graphrag.add_document_from_text(
-        "Concurrent processing enables multiple queries to be executed simultaneously."
-    ).unwrap();
+    graphrag
+        .add_document_from_text(
+            "Concurrent processing enables multiple queries to be executed simultaneously.",
+        )
+        .unwrap();
     graphrag.build_graph().unwrap();
 
     let graphrag = Arc::new(RwLock::new(graphrag));

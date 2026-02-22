@@ -1,8 +1,9 @@
 //! Agent module for orchestrating function calls in GraphRAG
 
+use std::collections::HashMap;
+
 use super::{FunctionCall, FunctionCaller, FunctionContext, FunctionResult};
 use crate::{core::KnowledgeGraph, Result};
-use std::collections::HashMap;
 
 /// Query planning strategy
 #[derive(Debug, Clone)]
@@ -150,7 +151,7 @@ impl GraphRAGAgent {
             QueryStrategy::EntitySearch => self.plan_entity_search(&potential_entities),
             QueryStrategy::RelationshipExploration => {
                 self.plan_relationship_exploration(&potential_entities)
-            }
+            },
             QueryStrategy::ContextualAnalysis => self.plan_contextual_analysis(&potential_entities),
             QueryStrategy::Adaptive => self.plan_adaptive_search(query, &potential_entities),
         };
@@ -264,8 +265,9 @@ impl GraphRAGAgent {
                 },
             });
 
-            // Get context for the entity (will need entity ID from search results)
-            // This would be handled in a multi-step execution
+            // Get context for the entity (will need entity ID from search
+            // results) This would be handled in a multi-step
+            // execution
         }
 
         calls
@@ -334,7 +336,7 @@ impl GraphRAGAgent {
                             ));
                         }
                     }
-                }
+                },
                 "entity_expand" => {
                     if result.result["relationships"].is_array() {
                         let relationships: Vec<_> =
@@ -346,7 +348,7 @@ impl GraphRAGAgent {
                             ));
                         }
                     }
-                }
+                },
                 "relationship_traverse" => {
                     if result.result["paths"].is_array() {
                         let paths: Vec<_> = result.result["paths"].members().collect();
@@ -361,7 +363,7 @@ impl GraphRAGAgent {
                             );
                         }
                     }
-                }
+                },
                 "get_entity_context" => {
                     if result.result["context_chunks"].is_array() {
                         let chunks: Vec<_> = result.result["context_chunks"].members().collect();
@@ -372,8 +374,8 @@ impl GraphRAGAgent {
                             ));
                         }
                     }
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
 

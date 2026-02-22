@@ -1,10 +1,16 @@
 //! Configuration loading and management
 
-use color_eyre::eyre::{eyre, Result};
-use graphrag_core::Config as GraphRAGConfig;
-use graphrag_core::config::setconfig::SetConfig;
-use graphrag_core::config::json5_loader::{detect_config_format, ConfigFormat};
 use std::path::Path;
+
+use color_eyre::eyre::{eyre, Result};
+use graphrag_core::{
+    config::{
+        json5_loader::{detect_config_format, ConfigFormat},
+        setconfig::SetConfig,
+    },
+    Config as GraphRAGConfig,
+};
+
 use crate::handlers::FileOperations;
 
 /// Load GraphRAG configuration from file (supports JSON5, JSON, TOML)
@@ -19,7 +25,8 @@ pub async fn load_config(path: &Path) -> Result<GraphRAGConfig> {
     let format = detect_config_format(path)
         .ok_or_else(|| eyre!("Unsupported config file format: {:?}", path.extension()))?;
 
-    // Parse based on detected format - always parse as SetConfig first, then convert
+    // Parse based on detected format - always parse as SetConfig first, then
+    // convert
     let set_config: SetConfig = match format {
         ConfigFormat::Json5 => {
             #[cfg(feature = "json5-support")]
@@ -29,17 +36,16 @@ pub async fn load_config(path: &Path) -> Result<GraphRAGConfig> {
             }
             #[cfg(not(feature = "json5-support"))]
             {
-                return Err(eyre!("JSON5 support not enabled. Recompile with json5-support feature."));
+                return Err(eyre!(
+                    "JSON5 support not enabled. Recompile with json5-support feature."
+                ));
             }
-        }
-        ConfigFormat::Json => {
-            serde_json::from_str(&content)
-                .map_err(|e| eyre!("Failed to parse JSON config: {}", e))?
-        }
+        },
+        ConfigFormat::Json => serde_json::from_str(&content)
+            .map_err(|e| eyre!("Failed to parse JSON config: {}", e))?,
         ConfigFormat::Toml => {
-            toml::from_str(&content)
-                .map_err(|e| eyre!("Failed to parse TOML config: {}", e))?
-        }
+            toml::from_str(&content).map_err(|e| eyre!("Failed to parse TOML config: {}", e))?
+        },
         ConfigFormat::Yaml => {
             #[cfg(feature = "yaml-support")]
             {
@@ -48,9 +54,11 @@ pub async fn load_config(path: &Path) -> Result<GraphRAGConfig> {
             }
             #[cfg(not(feature = "yaml-support"))]
             {
-                return Err(eyre!("YAML support not enabled. Recompile with yaml-support feature."));
+                return Err(eyre!(
+                    "YAML support not enabled. Recompile with yaml-support feature."
+                ));
             }
-        }
+        },
     };
 
     // Convert SetConfig to Config
@@ -59,8 +67,14 @@ pub async fn load_config(path: &Path) -> Result<GraphRAGConfig> {
     // Log configuration details for debugging
     tracing::info!("Loaded {:?} configuration from: {}", format, path.display());
     tracing::info!("Mode approach: {}", set_config.mode.approach);
-    tracing::info!("Entity extraction use_gleaning: {}", config.entities.use_gleaning);
-    tracing::info!("Entity extraction max_gleaning_rounds: {}", config.entities.max_gleaning_rounds);
+    tracing::info!(
+        "Entity extraction use_gleaning: {}",
+        config.entities.use_gleaning
+    );
+    tracing::info!(
+        "Entity extraction max_gleaning_rounds: {}",
+        config.entities.max_gleaning_rounds
+    );
     tracing::info!("Ollama enabled: {}", config.ollama.enabled);
     tracing::info!("Ollama chat_model: {}", config.ollama.chat_model);
 
@@ -75,10 +89,12 @@ pub fn default_config() -> GraphRAGConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::io::Write;
+
     use tempfile::NamedTempFile;
     use tokio;
-    use std::io::Write;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_load_valid_toml_config() {
@@ -102,7 +118,11 @@ mod tests {
         writeln!(temp_file, "}}").unwrap();
 
         let result = load_config(temp_file.path()).await;
-        assert!(result.is_ok(), "Failed to load JSON5 config: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Failed to load JSON5 config: {:?}",
+            result.err()
+        );
     }
 
     #[tokio::test]

@@ -4,15 +4,16 @@
 //! quality, safety, and appropriateness.
 
 #[cfg(feature = "rograg")]
-use crate::Result;
-#[cfg(feature = "rograg")]
-use crate::rograg::RogragResponse;
-#[cfg(feature = "rograg")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "rograg")]
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::rograg::RogragResponse;
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Error types for validation
 #[cfg(feature = "rograg")]
@@ -22,21 +23,21 @@ pub enum ValidationError {
     #[error("Query validation failed: {reason}")]
     QueryValidationFailed {
         /// Description of the validation failure.
-        reason: String
+        reason: String,
     },
 
     /// Generated response failed validation checks.
     #[error("Response validation failed: {reason}")]
     ResponseValidationFailed {
         /// Description of the validation failure.
-        reason: String
+        reason: String,
     },
 
     /// Content violates safety guidelines.
     #[error("Content safety violation: {violation_type}")]
     SafetyViolation {
         /// Type of safety violation detected.
-        violation_type: String
+        violation_type: String,
     },
 
     /// Response quality metrics below acceptable thresholds.
@@ -47,7 +48,7 @@ pub enum ValidationError {
         /// Actual value of the metric.
         value: f32,
         /// Required minimum threshold.
-        threshold: f32
+        threshold: f32,
     },
 }
 
@@ -286,7 +287,8 @@ impl QueryValidator {
             self.quality_checks.push(Box::new(ConfidenceCheck::new(
                 self.config.min_confidence_threshold,
             )));
-            self.quality_checks.push(Box::new(SourceCredibilityCheck::new()));
+            self.quality_checks
+                .push(Box::new(SourceCredibilityCheck::new()));
             self.quality_checks.push(Box::new(CompletenessCheck::new()));
         }
     }
@@ -318,7 +320,9 @@ impl QueryValidator {
                 issue_type: IssueType::Length,
                 severity: IssueSeverity::Medium,
                 description: "Query is very long".to_string(),
-                recommendation: Some("Consider shortening your query for better results".to_string()),
+                recommendation: Some(
+                    "Consider shortening your query for better results".to_string(),
+                ),
             });
         } else {
             // Query length is acceptable
@@ -332,7 +336,9 @@ impl QueryValidator {
                         issue_type: IssueType::Safety,
                         severity: IssueSeverity::High,
                         description: "Query contains potentially inappropriate content".to_string(),
-                        recommendation: Some("Please rephrase your query appropriately".to_string()),
+                        recommendation: Some(
+                            "Please rephrase your query appropriately".to_string(),
+                        ),
                     });
                     break;
                 }
@@ -349,7 +355,9 @@ impl QueryValidator {
             });
         }
 
-        let has_critical_issues = issues.iter().any(|i| matches!(i.severity, IssueSeverity::Critical));
+        let has_critical_issues = issues
+            .iter()
+            .any(|i| matches!(i.severity, IssueSeverity::Critical));
         let validation_score = if has_critical_issues {
             0.0
         } else {
@@ -421,8 +429,11 @@ impl QueryValidator {
                     issues.push(ValidationIssue {
                         issue_type: IssueType::Safety,
                         severity: IssueSeverity::High,
-                        description: "Response contains potentially inappropriate content".to_string(),
-                        recommendation: Some("Response should be reviewed before delivery".to_string()),
+                        description: "Response contains potentially inappropriate content"
+                            .to_string(),
+                        recommendation: Some(
+                            "Response should be reviewed before delivery".to_string(),
+                        ),
                     });
                     break;
                 }
@@ -432,12 +443,15 @@ impl QueryValidator {
         // Calculate overall quality metrics
         quality_metrics.completeness_score = self.calculate_completeness_score(response);
         quality_metrics.readability_score = self.calculate_readability_score(response);
-        quality_metrics.source_credibility_score = self.calculate_source_credibility_score(response);
+        quality_metrics.source_credibility_score =
+            self.calculate_source_credibility_score(response);
 
         // Create validation result
         let validation_score = 1.0 - (issues.len() as f32 * 0.1).min(0.8);
         let validation_result = ValidationResult {
-            is_valid: !issues.iter().any(|i| matches!(i.severity, IssueSeverity::Critical)),
+            is_valid: !issues
+                .iter()
+                .any(|i| matches!(i.severity, IssueSeverity::Critical)),
             validation_score,
             issues: issues.clone(),
             recommendations: vec![],
@@ -449,9 +463,14 @@ impl QueryValidator {
         validated_response.validation_result = Some(validation_result);
 
         // Apply any necessary modifications based on validation results
-        if issues.iter().any(|i| matches!(i.severity, IssueSeverity::Critical)) {
+        if issues
+            .iter()
+            .any(|i| matches!(i.severity, IssueSeverity::Critical))
+        {
             // For critical issues, modify the response
-            validated_response.content = "I apologize, but I cannot provide a response to this query due to safety or quality concerns.".to_string();
+            validated_response.content = "I apologize, but I cannot provide a response to this \
+                                          query due to safety or quality concerns."
+                .to_string();
             validated_response.confidence = 0.0;
             validated_response.is_refusal = true;
         }
@@ -484,7 +503,8 @@ impl QueryValidator {
 
         // Simple scoring based on contradiction density
         let max_contradictions = sentences.len().max(1);
-        let consistency_score = 1.0 - (contradiction_count as f32 / max_contradictions as f32).min(1.0);
+        let consistency_score =
+            1.0 - (contradiction_count as f32 / max_contradictions as f32).min(1.0);
 
         Ok(consistency_score)
     }
@@ -492,9 +512,21 @@ impl QueryValidator {
     /// Calculate completeness score
     fn calculate_completeness_score(&self, response: &RogragResponse) -> f32 {
         // Heuristic based on response length, source count, and subquery coverage
-        let length_score = if response.content.len() > 100 { 1.0 } else { response.content.len() as f32 / 100.0 };
-        let source_score = if response.sources.len() > 2 { 1.0 } else { response.sources.len() as f32 / 2.0 };
-        let subquery_score = if response.subquery_results.len() > 1 { 1.0 } else { response.subquery_results.len() as f32 };
+        let length_score = if response.content.len() > 100 {
+            1.0
+        } else {
+            response.content.len() as f32 / 100.0
+        };
+        let source_score = if response.sources.len() > 2 {
+            1.0
+        } else {
+            response.sources.len() as f32 / 2.0
+        };
+        let subquery_score = if response.subquery_results.len() > 1 {
+            1.0
+        } else {
+            response.subquery_results.len() as f32
+        };
 
         (length_score + source_score + subquery_score) / 3.0
     }
@@ -503,14 +535,23 @@ impl QueryValidator {
     fn calculate_readability_score(&self, response: &RogragResponse) -> f32 {
         let text = &response.content;
         let word_count = text.split_whitespace().count();
-        let sentence_count = text.chars().filter(|&c| c == '.' || c == '!' || c == '?').count().max(1);
+        let sentence_count = text
+            .chars()
+            .filter(|&c| c == '.' || c == '!' || c == '?')
+            .count()
+            .max(1);
 
         // Simple readability heuristic
         let avg_words_per_sentence = word_count as f32 / sentence_count as f32;
-        let avg_word_length = text.chars().filter(|c| c.is_alphabetic()).count() as f32 / word_count.max(1) as f32;
+        let avg_word_length =
+            text.chars().filter(|c| c.is_alphabetic()).count() as f32 / word_count.max(1) as f32;
 
         // Score based on reasonable sentence and word lengths
-        let sentence_score = if avg_words_per_sentence > 30.0 { 0.5 } else { 1.0 };
+        let sentence_score = if avg_words_per_sentence > 30.0 {
+            0.5
+        } else {
+            1.0
+        };
         let word_score = if avg_word_length > 8.0 { 0.7 } else { 1.0 };
 
         (sentence_score + word_score) / 2.0
@@ -526,7 +567,9 @@ impl QueryValidator {
         let source_count_score = (response.sources.len() as f32 / 5.0).min(1.0);
 
         // Check for source diversity (simple heuristic)
-        let unique_source_prefixes: std::collections::HashSet<String> = response.sources.iter()
+        let unique_source_prefixes: std::collections::HashSet<String> = response
+            .sources
+            .iter()
             .map(|s| s.chars().take(10).collect())
             .collect();
         let diversity_score = unique_source_prefixes.len() as f32 / response.sources.len() as f32;
@@ -565,7 +608,10 @@ impl LengthCheck {
     /// * `min_length` - Minimum acceptable response length in characters
     /// * `max_length` - Maximum acceptable response length in characters
     pub fn new(min_length: usize, max_length: usize) -> Self {
-        Self { min_length, max_length }
+        Self {
+            min_length,
+            max_length,
+        }
     }
 }
 
@@ -619,7 +665,8 @@ impl ConfidenceCheck {
     ///
     /// # Arguments
     ///
-    /// * `min_confidence` - Minimum acceptable confidence score (range: 0.0-1.0)
+    /// * `min_confidence` - Minimum acceptable confidence score (range:
+    ///   0.0-1.0)
     pub fn new(min_confidence: f32) -> Self {
         Self { min_confidence }
     }
@@ -684,7 +731,11 @@ impl QualityCheck for SourceCredibilityCheck {
             });
         }
 
-        let score = if response.sources.is_empty() { 0.0 } else { 0.8 };
+        let score = if response.sources.is_empty() {
+            0.0
+        } else {
+            0.8
+        };
 
         Ok(QualityCheckResult {
             passed: !response.sources.is_empty(),
@@ -731,12 +782,15 @@ impl QualityCheck for CompletenessCheck {
             .filter(|w| w.len() > 3) // Filter out short words
             .collect();
 
-        let answer_words: std::collections::HashSet<&str> = answer_lower
-            .split_whitespace()
-            .collect();
+        let answer_words: std::collections::HashSet<&str> =
+            answer_lower.split_whitespace().collect();
 
         let overlap = query_words.intersection(&answer_words).count();
-        let relevance = if query_words.is_empty() { 1.0 } else { overlap as f32 / query_words.len() as f32 };
+        let relevance = if query_words.is_empty() {
+            1.0
+        } else {
+            overlap as f32 / query_words.len() as f32
+        };
 
         if relevance < 0.3 {
             issues.push(ValidationIssue {
@@ -800,8 +854,16 @@ impl CoherenceChecker {
 
         if sentences.len() > 1 {
             // Look for connecting words that indicate good flow
-            let connectors = ["however", "therefore", "furthermore", "additionally", "meanwhile", "consequently"];
-            let connector_count = sentences.iter()
+            let connectors = [
+                "however",
+                "therefore",
+                "furthermore",
+                "additionally",
+                "meanwhile",
+                "consequently",
+            ];
+            let connector_count = sentences
+                .iter()
                 .filter(|s| connectors.iter().any(|c| s.to_lowercase().contains(c)))
                 .count();
 
@@ -812,7 +874,9 @@ impl CoherenceChecker {
                     issue_type: IssueType::Coherence,
                     severity: IssueSeverity::Low,
                     description: "Response may lack logical flow".to_string(),
-                    recommendation: Some("Consider improving transitions between ideas".to_string()),
+                    recommendation: Some(
+                        "Consider improving transitions between ideas".to_string(),
+                    ),
                 });
             }
         }
@@ -898,24 +962,26 @@ impl RelevanceChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rograg::{IntentResult, QueryIntent, ProcessingStats, SubqueryResult, SubqueryResultType};
+    use crate::rograg::{
+        IntentResult, ProcessingStats, QueryIntent, SubqueryResult, SubqueryResultType,
+    };
 
     #[cfg(feature = "rograg")]
     fn create_test_response() -> RogragResponse {
         RogragResponse {
             query: "What is Entity Name?".to_string(),
-            content: "Entity Name is a young boy character in Mark Twain's novels. He is adventurous and mischievous.".to_string(),
+            content: "Entity Name is a young boy character in Mark Twain's novels. He is \
+                      adventurous and mischievous."
+                .to_string(),
             confidence: 0.8,
             sources: vec!["source1".to_string(), "source2".to_string()],
-            subquery_results: vec![
-                SubqueryResult {
-                    subquery: "What is Entity Name?".to_string(),
-                    result_type: SubqueryResultType::LogicForm,
-                    confidence: 0.8,
-                    content: "Entity Name character info".to_string(),
-                    sources: vec!["source1".to_string()],
-                }
-            ],
+            subquery_results: vec![SubqueryResult {
+                subquery: "What is Entity Name?".to_string(),
+                result_type: SubqueryResultType::LogicForm,
+                confidence: 0.8,
+                content: "Entity Name character info".to_string(),
+                sources: vec!["source1".to_string()],
+            }],
             intent_result: IntentResult {
                 primary_intent: QueryIntent::Factual,
                 secondary_intents: vec![],
@@ -973,7 +1039,8 @@ mod tests {
         let response = create_test_response();
 
         let result = check.check(&response).unwrap();
-        assert!(result.passed); // Should pass as the response is reasonable length
+        assert!(result.passed); // Should pass as the response is reasonable
+                                // length
     }
 
     #[cfg(feature = "rograg")]

@@ -43,7 +43,8 @@ pub struct ChunkMetadata {
     /// Typically 1-3 sentences capturing the main points
     pub summary: Option<String>,
 
-    /// Hierarchical level in document structure (0 = root/chapter, 1 = section, 2 = subsection, etc.)
+    /// Hierarchical level in document structure (0 = root/chapter, 1 = section,
+    /// 2 = subsection, etc.)
     ///
     /// Used to understand the depth of this chunk in the document hierarchy
     pub structural_level: Option<u8>,
@@ -132,7 +133,8 @@ impl ChunkMetadata {
         self
     }
 
-    /// Check if metadata has any structural information (chapter, section, or subsection)
+    /// Check if metadata has any structural information (chapter, section, or
+    /// subsection)
     pub fn has_structure_info(&self) -> bool {
         self.chapter.is_some() || self.section.is_some() || self.subsection.is_some()
     }
@@ -246,7 +248,10 @@ mod tests {
         assert!(metadata.get_deepest_heading().is_none());
 
         metadata.chapter = Some("Chapter 1".to_string());
-        assert_eq!(metadata.get_deepest_heading(), Some(&"Chapter 1".to_string()));
+        assert_eq!(
+            metadata.get_deepest_heading(),
+            Some(&"Chapter 1".to_string())
+        );
 
         metadata.section = Some("Section 1.1".to_string());
         assert_eq!(
@@ -290,10 +295,7 @@ mod tests {
             .add_custom("date".to_string(), "2024-01-01".to_string());
 
         assert_eq!(metadata.custom.len(), 2);
-        assert_eq!(
-            metadata.custom.get("author"),
-            Some(&"John Doe".to_string())
-        );
+        assert_eq!(metadata.custom.get("author"), Some(&"John Doe".to_string()));
     }
 
     #[test]

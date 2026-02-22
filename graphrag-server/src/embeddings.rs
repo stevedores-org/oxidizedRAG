@@ -1,13 +1,14 @@
 //! Embeddings module for GraphRAG Server
 //!
-//! Provides a unified interface for generating embeddings using various backends:
+//! Provides a unified interface for generating embeddings using various
+//! backends:
 //! - Ollama (local LLM service)
 //! - Hash-based fallback (deterministic, no external dependencies)
 //!
 //! ## Usage
 //!
 //! ```rust
-//! use graphrag_server::embeddings::{EmbeddingService, EmbeddingConfig};
+//! use graphrag_server::embeddings::{EmbeddingConfig, EmbeddingService};
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,17 +18,14 @@
 //! # }
 //! ```
 
-use graphrag_core::vector::EmbeddingGenerator;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+use graphrag_core::vector::EmbeddingGenerator;
+#[cfg(feature = "ollama")]
+use ollama_rs::{generation::embeddings::request::GenerateEmbeddingsRequest, Ollama};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::{info, warn};
-
-#[cfg(feature = "ollama")]
-use ollama_rs::{
-    Ollama,
-    generation::embeddings::request::GenerateEmbeddingsRequest,
-};
 
 /// Embedding service configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,11 +131,14 @@ impl EmbeddingService {
                         );
                         None
                     }
-                }
+                },
                 Err(e) => {
-                    warn!("⚠ Ollama service not available: {}. Using fallback embeddings.", e);
+                    warn!(
+                        "⚠ Ollama service not available: {}. Using fallback embeddings.",
+                        e
+                    );
                     None
-                }
+                },
             }
         } else {
             info!("Using hash-based fallback embeddings (no Ollama)");
@@ -146,7 +147,10 @@ impl EmbeddingService {
 
         #[cfg(not(feature = "ollama"))]
         if config.backend == "ollama" {
-            warn!("⚠ Ollama support not compiled in. Using fallback embeddings. Rebuild with --features ollama");
+            warn!(
+                "⚠ Ollama support not compiled in. Using fallback embeddings. Rebuild with \
+                 --features ollama"
+            );
         }
 
         // Always create fallback generator
@@ -175,12 +179,12 @@ impl EmbeddingService {
                     let mut stats = self.stats.write().await;
                     stats.ollama_success += texts.len();
                     return Ok(embeddings);
-                }
+                },
                 Err(e) => {
                     warn!("Ollama embedding failed: {}. Using fallback.", e);
                     let mut stats = self.stats.write().await;
                     stats.ollama_failures += texts.len();
-                }
+                },
             }
         }
 
@@ -203,7 +207,11 @@ impl EmbeddingService {
 
     /// Generate embeddings using Ollama
     #[cfg(feature = "ollama")]
-    async fn generate_with_ollama(&self, ollama: &Ollama, texts: &[&str]) -> Result<Vec<Vec<f32>>, EmbeddingError> {
+    async fn generate_with_ollama(
+        &self,
+        ollama: &Ollama,
+        texts: &[&str],
+    ) -> Result<Vec<Vec<f32>>, EmbeddingError> {
         let mut results = Vec::with_capacity(texts.len());
 
         for text in texts {
@@ -214,11 +222,9 @@ impl EmbeddingService {
 
             let response = ollama.generate_embeddings(request).await?;
 
-            let embedding = response
-                .embeddings
-                .into_iter()
-                .next()
-                .ok_or_else(|| EmbeddingError::GenerationFailed("No embedding in response".to_string()))?;
+            let embedding = response.embeddings.into_iter().next().ok_or_else(|| {
+                EmbeddingError::GenerationFailed("No embedding in response".to_string())
+            })?;
 
             // Validate dimension
             if embedding.len() != self.config.dimension {
@@ -235,7 +241,10 @@ impl EmbeddingService {
     }
 
     /// Generate embeddings using hash-based fallback
-    async fn generate_with_fallback(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>, EmbeddingError> {
+    async fn generate_with_fallback(
+        &self,
+        texts: &[&str],
+    ) -> Result<Vec<Vec<f32>>, EmbeddingError> {
         let mut generator = self.fallback_generator.write().await;
         let results = generator.batch_generate(texts);
         Ok(results)

@@ -3,8 +3,9 @@
 //! These types define the contracts between pipeline stages,
 //! enabling type-safe composition and explicit data flow.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// A batch of document chunks ready for processing.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

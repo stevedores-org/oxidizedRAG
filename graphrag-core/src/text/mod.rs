@@ -1,50 +1,47 @@
-/// Text chunking utilities module
-pub mod chunking;
-/// Semantic chunking based on embedding similarity
-pub mod semantic_chunking;
-/// Document structure representation
-pub mod document_structure;
 /// Text analysis utilities
 pub mod analysis;
-/// TF-IDF keyword extraction
-pub mod keyword_extraction;
+/// Chunk enrichment pipeline
+pub mod chunk_enricher;
+/// Text chunking utilities module
+pub mod chunking;
+/// Trait-based chunking strategies
+pub mod chunking_strategies;
+/// Document structure representation
+pub mod document_structure;
 /// Extractive summarization
 pub mod extractive_summarizer;
+/// TF-IDF keyword extraction
+pub mod keyword_extraction;
 /// Layout parser trait
 pub mod layout_parser;
 /// Document layout parsers
 pub mod parsers;
-/// Chunk enrichment pipeline
-pub mod chunk_enricher;
-/// Trait-based chunking strategies
-pub mod chunking_strategies;
+/// Semantic chunking based on embedding similarity
+pub mod semantic_chunking;
 
-pub use semantic_chunking::{
-    SemanticChunk, SemanticChunker, SemanticChunkerConfig, BreakpointStrategy,
-};
-pub use document_structure::{
-    DocumentStructure, Heading, Section, HeadingHierarchy, SectionNumber,
-    SectionNumberFormat, StructureStatistics,
-};
 pub use analysis::{TextAnalyzer, TextStats};
-pub use keyword_extraction::TfIdfKeywordExtractor;
-pub use extractive_summarizer::ExtractiveSummarizer;
-pub use layout_parser::{LayoutParser, LayoutParserFactory};
 pub use chunk_enricher::{ChunkEnricher, EnrichmentStatistics};
-pub use chunking_strategies::{
-    HierarchicalChunkingStrategy, SemanticChunkingStrategy,
-};
-
+use chunking::HierarchicalChunker;
 #[cfg(feature = "code-chunking")]
 pub use chunking_strategies::RustCodeChunkingStrategy;
-
-use crate::{
-    core::{ChunkId, Document, TextChunk, ChunkingStrategy},
-    Result,
+pub use chunking_strategies::{HierarchicalChunkingStrategy, SemanticChunkingStrategy};
+pub use document_structure::{
+    DocumentStructure, Heading, HeadingHierarchy, Section, SectionNumber, SectionNumberFormat,
+    StructureStatistics,
 };
+pub use extractive_summarizer::ExtractiveSummarizer;
+pub use keyword_extraction::TfIdfKeywordExtractor;
+pub use layout_parser::{LayoutParser, LayoutParserFactory};
+pub use semantic_chunking::{
+    BreakpointStrategy, SemanticChunk, SemanticChunker, SemanticChunkerConfig,
+};
+
 #[cfg(feature = "parallel-processing")]
 use crate::parallel::{ParallelProcessor, PerformanceMonitor};
-use chunking::HierarchicalChunker;
+use crate::{
+    core::{ChunkId, ChunkingStrategy, Document, TextChunk},
+    Result,
+};
 
 /// Text processing utilities for chunking and preprocessing
 #[derive(Debug)]
@@ -85,10 +82,12 @@ impl TextProcessor {
         })
     }
 
-    /// Split text into chunks with overlap using hierarchical boundary preservation
+    /// Split text into chunks with overlap using hierarchical boundary
+    /// preservation
     pub fn chunk_text_hierarchical(&self, document: &Document) -> Result<Vec<TextChunk>> {
         let chunker = HierarchicalChunker::new().with_min_size(50);
-        let chunks_text = chunker.chunk_text(&document.content, self.chunk_size, self.chunk_overlap);
+        let chunks_text =
+            chunker.chunk_text(&document.content, self.chunk_size, self.chunk_overlap);
 
         let mut chunks = Vec::new();
         let mut chunk_counter = 0;
@@ -209,7 +208,8 @@ impl TextProcessor {
         self.chunk_text_with_enrichment(document, &mut enricher)
     }
 
-    /// Convenience method: chunk hierarchically and enrich with auto-detected format
+    /// Convenience method: chunk hierarchically and enrich with auto-detected
+    /// format
     pub fn chunk_hierarchical_and_enrich(&self, document: &Document) -> Result<Vec<TextChunk>> {
         let mut enricher = Self::create_default_enricher(document);
         self.chunk_text_hierarchical_with_enrichment(document, &mut enricher)
@@ -232,17 +232,27 @@ impl TextProcessor {
     /// ```rust
     /// # use std::error::Error;
     /// # fn main() -> Result<(), Box<dyn Error>> {
-    /// use graphrag_core::text::{TextProcessor, HierarchicalChunkingStrategy};
-    /// use graphrag_core::core::{Document, DocumentId};
+    /// use graphrag_core::{
+    ///     core::{Document, DocumentId},
+    ///     text::{HierarchicalChunkingStrategy, TextProcessor},
+    /// };
     ///
-    /// let document = Document::new(DocumentId::new("doc1".to_string()), "Title".to_string(), "Content".to_string());
+    /// let document = Document::new(
+    ///     DocumentId::new("doc1".to_string()),
+    ///     "Title".to_string(),
+    ///     "Content".to_string(),
+    /// );
     /// let processor = TextProcessor::new(1000, 100)?;
     /// let strategy = HierarchicalChunkingStrategy::new(500, 50, document.id.clone());
     /// let chunks = processor.chunk_with_strategy(&document, &strategy)?;
     /// # Ok(())
     /// # }
     /// ```
-    pub fn chunk_with_strategy(&self, document: &Document, strategy: &dyn ChunkingStrategy) -> Result<Vec<TextChunk>> {
+    pub fn chunk_with_strategy(
+        &self,
+        document: &Document,
+        strategy: &dyn ChunkingStrategy,
+    ) -> Result<Vec<TextChunk>> {
         let chunks = strategy.chunk(&document.content);
         Ok(chunks)
     }
@@ -256,7 +266,8 @@ impl TextProcessor {
         pos
     }
 
-    /// Find a safe character boundary within a slice at or before the given position
+    /// Find a safe character boundary within a slice at or before the given
+    /// position
     fn find_char_boundary_in_slice(&self, text: &str, mut pos: usize) -> usize {
         pos = pos.min(text.len());
         while pos > 0 && !text.is_char_boundary(pos) {
@@ -390,10 +401,7 @@ impl TextProcessor {
         }
 
         // Sequential fallback
-        documents
-            .iter()
-            .map(|doc| self.chunk_text(doc))
-            .collect()
+        documents.iter().map(|doc| self.chunk_text(doc)).collect()
     }
 
     /// Parallel extraction of keywords from multiple texts
@@ -532,7 +540,8 @@ pub struct LanguageDetector;
 
 impl LanguageDetector {
     /// Simple language detection based on character patterns
-    /// This is a very basic implementation - in practice you'd want a proper library
+    /// This is a very basic implementation - in practice you'd want a proper
+    /// library
     pub fn detect_language(text: &str) -> String {
         // Very basic detection - in practice use a proper language detection library
         if text
@@ -561,7 +570,9 @@ mod tests {
         let document = Document::new(
             DocumentId::new("test".to_string()),
             "Test Document".to_string(),
-            "This is a test document. It has multiple sentences. Each sentence should be processed correctly.".to_string(),
+            "This is a test document. It has multiple sentences. Each sentence should be \
+             processed correctly."
+                .to_string(),
         );
 
         let chunks = processor.chunk_text(&document).unwrap();
@@ -572,7 +583,8 @@ mod tests {
     #[test]
     fn test_keyword_extraction() {
         let processor = TextProcessor::new(1000, 100).unwrap();
-        let text = "machine learning artificial intelligence data science computer vision natural language processing";
+        let text = "machine learning artificial intelligence data science computer vision natural \
+                    language processing";
         let keywords = processor.extract_keywords(text, 3);
 
         assert!(!keywords.is_empty());
@@ -597,14 +609,18 @@ mod tests {
         let document = Document::new(
             DocumentId::new("test".to_string()),
             "test.md".to_string(),
-            "# Chapter 1\n\nThis document discusses machine learning and artificial intelligence.\n\n## Section 1.1\n\nDeep learning is important.".to_string(),
+            "# Chapter 1\n\nThis document discusses machine learning and artificial \
+             intelligence.\n\n## Section 1.1\n\nDeep learning is important."
+                .to_string(),
         );
 
         let chunks = processor.chunk_and_enrich(&document).unwrap();
 
         assert!(!chunks.is_empty());
         // At least some chunks should have enriched metadata
-        let has_metadata = chunks.iter().any(|c| c.metadata.chapter.is_some() || !c.metadata.keywords.is_empty());
+        let has_metadata = chunks
+            .iter()
+            .any(|c| c.metadata.chapter.is_some() || !c.metadata.keywords.is_empty());
         assert!(has_metadata, "Chunks should have enriched metadata");
     }
 
@@ -620,7 +636,9 @@ mod tests {
         let parser = Box::new(crate::text::parsers::MarkdownLayoutParser::new());
         let mut enricher = ChunkEnricher::new_default(parser);
 
-        let chunks = processor.chunk_text_with_enrichment(&document, &mut enricher).unwrap();
+        let chunks = processor
+            .chunk_text_with_enrichment(&document, &mut enricher)
+            .unwrap();
 
         assert!(!chunks.is_empty());
         // Verify metadata is present

@@ -1,10 +1,11 @@
 //! Dual-mode cache supporting both in-memory and persistent backends.
 //!
-//! Enables seamless switching between in-memory (fast) and disk-based (persistent) caching.
+//! Enables seamless switching between in-memory (fast) and disk-based
+//! (persistent) caching.
+
+use std::{collections::HashMap, sync::Mutex};
 
 use super::persistent_cache::{CacheStats, PersistentCacheBackend};
-use std::collections::HashMap;
-use std::sync::Mutex;
 
 /// Dual-mode cache that can operate in-memory or persistent mode.
 pub struct DualModeCache {
@@ -41,9 +42,7 @@ impl DualModeCache {
 
     /// Create a new persistent cache backed by RocksDB.
     #[cfg(feature = "persistent-cache")]
-    pub fn new_persistent<P: AsRef<std::path::Path>>(
-        path: P,
-    ) -> Result<Self, String> {
+    pub fn new_persistent<P: AsRef<std::path::Path>>(path: P) -> Result<Self, String> {
         use crate::pipeline::RocksDBCache;
         let db = RocksDBCache::new(path)?;
         Ok(Self {
@@ -58,27 +57,33 @@ impl DualModeCache {
             CacheMode::InMemory(map) => {
                 let map = map.lock().unwrap();
                 if let Some(value) = map.get(key) {
-                    self.stats.hits.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.stats
+                        .hits
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     Ok(Some(value.clone()))
                 } else {
-                    self.stats.misses.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.stats
+                        .misses
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     Ok(None)
                 }
-            }
+            },
             #[cfg(feature = "persistent-cache")]
-            CacheMode::Persistent(backend) => {
-                match backend.get(key) {
-                    Ok(Some(value)) => {
-                        self.stats.hits.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                        Ok(Some(value))
-                    }
-                    Ok(None) => {
-                        self.stats.misses.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                        Ok(None)
-                    }
-                    Err(e) => Err(e),
-                }
-            }
+            CacheMode::Persistent(backend) => match backend.get(key) {
+                Ok(Some(value)) => {
+                    self.stats
+                        .hits
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    Ok(Some(value))
+                },
+                Ok(None) => {
+                    self.stats
+                        .misses
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    Ok(None)
+                },
+                Err(e) => Err(e),
+            },
         }
     }
 
@@ -89,7 +94,7 @@ impl DualModeCache {
                 let mut map = map.lock().unwrap();
                 map.insert(key, value);
                 Ok(())
-            }
+            },
             #[cfg(feature = "persistent-cache")]
             CacheMode::Persistent(backend) => backend.set(key, value),
         }
@@ -102,7 +107,7 @@ impl DualModeCache {
                 let mut map = map.lock().unwrap();
                 map.remove(key);
                 Ok(())
-            }
+            },
             #[cfg(feature = "persistent-cache")]
             CacheMode::Persistent(backend) => backend.delete(key),
         }
@@ -114,7 +119,7 @@ impl DualModeCache {
             CacheMode::InMemory(map) => {
                 let map = map.lock().unwrap();
                 Ok(map.contains_key(key))
-            }
+            },
             #[cfg(feature = "persistent-cache")]
             CacheMode::Persistent(backend) => backend.contains(key),
         }
@@ -126,12 +131,12 @@ impl DualModeCache {
             CacheMode::InMemory(map) => {
                 let map = map.lock().unwrap();
                 Ok(map.len())
-            }
+            },
             #[cfg(feature = "persistent-cache")]
             CacheMode::Persistent(backend) => {
                 // RocksDB doesn't efficiently support len(), so estimate or return error
                 backend.len()
-            }
+            },
         }
     }
 
@@ -148,7 +153,10 @@ impl DualModeCache {
                 size_bytes: 0,
                 hits: self.stats.hits.load(std::sync::atomic::Ordering::Relaxed),
                 misses: self.stats.misses.load(std::sync::atomic::Ordering::Relaxed),
-                evictions: self.stats.evictions.load(std::sync::atomic::Ordering::Relaxed),
+                evictions: self
+                    .stats
+                    .evictions
+                    .load(std::sync::atomic::Ordering::Relaxed),
             },
             #[cfg(feature = "persistent-cache")]
             CacheMode::Persistent(backend) => {
@@ -156,9 +164,12 @@ impl DualModeCache {
                 // Merge our tracked stats
                 stats.hits += self.stats.hits.load(std::sync::atomic::Ordering::Relaxed);
                 stats.misses += self.stats.misses.load(std::sync::atomic::Ordering::Relaxed);
-                stats.evictions += self.stats.evictions.load(std::sync::atomic::Ordering::Relaxed);
+                stats.evictions += self
+                    .stats
+                    .evictions
+                    .load(std::sync::atomic::Ordering::Relaxed);
                 stats
-            }
+            },
         };
         Ok(base_stats)
     }
@@ -170,7 +181,7 @@ impl DualModeCache {
                 let mut map = map.lock().unwrap();
                 map.clear();
                 Ok(())
-            }
+            },
             #[cfg(feature = "persistent-cache")]
             CacheMode::Persistent(backend) => backend.clear(),
         }

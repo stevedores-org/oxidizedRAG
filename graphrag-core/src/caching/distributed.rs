@@ -5,11 +5,13 @@
 //! - L2: Redis cache (distributed)
 //! - L3: Persistent storage (fallback)
 
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-use std::collections::HashMap;
-use parking_lot::RwLock;
+use std::{
+    collections::HashMap,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
+use parking_lot::RwLock;
 #[cfg(feature = "redis_storage")]
 use redis::{Commands, Connection};
 
@@ -54,7 +56,8 @@ impl<T: Clone> CacheEntry<T> {
         }
     }
 
-    /// Access the entry, updating access time and count, and return a clone of the value
+    /// Access the entry, updating access time and count, and return a clone of
+    /// the value
     pub fn access(&mut self) -> T {
         self.last_accessed = Instant::now();
         self.access_count += 1;
@@ -74,7 +77,8 @@ where
     K: Eq + std::hash::Hash + Clone,
     V: Clone,
 {
-    /// Create a new L1 (in-memory) cache with the given maximum size and default TTL
+    /// Create a new L1 (in-memory) cache with the given maximum size and
+    /// default TTL
     pub fn new(max_size: usize, default_ttl: Option<Duration>) -> Self {
         Self {
             cache: Arc::new(RwLock::new(HashMap::with_capacity(max_size))),
@@ -153,7 +157,8 @@ pub struct L2Cache {
 
 #[cfg(feature = "redis_storage")]
 impl L2Cache {
-    /// Create a new L2 (Redis) cache with the given connection URL, key prefix, and default TTL
+    /// Create a new L2 (Redis) cache with the given connection URL, key prefix,
+    /// and default TTL
     pub fn new(url: &str, key_prefix: String, default_ttl: Option<Duration>) -> Result<Self> {
         let client = redis::Client::open(url).map_err(|e| GraphRAGError::Storage {
             message: format!("Failed to connect to Redis: {}", e),
@@ -192,9 +197,10 @@ impl L2Cache {
                     message: format!("Redis SETEX failed: {}", e),
                 })?;
         } else {
-            conn.set::<_, _, ()>(&prefixed, value).map_err(|e| GraphRAGError::Storage {
-                message: format!("Redis SET failed: {}", e),
-            })?;
+            conn.set::<_, _, ()>(&prefixed, value)
+                .map_err(|e| GraphRAGError::Storage {
+                    message: format!("Redis SET failed: {}", e),
+                })?;
         }
 
         Ok(())
@@ -205,9 +211,10 @@ impl L2Cache {
         let mut conn = self.get_connection()?;
         let prefixed = self.prefixed_key(key);
 
-        conn.del::<_, ()>(&prefixed).map_err(|e| GraphRAGError::Storage {
-            message: format!("Redis DEL failed: {}", e),
-        })?;
+        conn.del::<_, ()>(&prefixed)
+            .map_err(|e| GraphRAGError::Storage {
+                message: format!("Redis DEL failed: {}", e),
+            })?;
 
         Ok(())
     }
@@ -224,9 +231,10 @@ impl L2Cache {
 
         // Delete all keys
         if !keys.is_empty() {
-            conn.del::<_, ()>(&keys).map_err(|e| GraphRAGError::Storage {
-                message: format!("Redis DEL failed: {}", e),
-            })?;
+            conn.del::<_, ()>(&keys)
+                .map_err(|e| GraphRAGError::Storage {
+                    message: format!("Redis DEL failed: {}", e),
+                })?;
         }
 
         Ok(())
@@ -234,9 +242,11 @@ impl L2Cache {
 
     /// Get a connection to the Redis server
     fn get_connection(&self) -> Result<Connection> {
-        self.client.get_connection().map_err(|e| GraphRAGError::Storage {
-            message: format!("Failed to get Redis connection: {}", e),
-        })
+        self.client
+            .get_connection()
+            .map_err(|e| GraphRAGError::Storage {
+                message: format!("Failed to get Redis connection: {}", e),
+            })
     }
 }
 
@@ -261,7 +271,8 @@ where
     K: Eq + std::hash::Hash + Clone + ToString,
     V: Clone + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-    /// Create a new distributed cache with L1 (memory) and optional L2 (Redis) tiers
+    /// Create a new distributed cache with L1 (memory) and optional L2 (Redis)
+    /// tiers
     pub fn new(
         l1_size: usize,
         l1_ttl: Option<Duration>,

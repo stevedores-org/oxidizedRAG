@@ -1,7 +1,7 @@
 //! Symposium GraphRAG with Zero-Cost Approach
 //!
-//! This example demonstrates the complete workflow using the convenient GraphRAG API
-//! with a zero-cost algorithmic pipeline:
+//! This example demonstrates the complete workflow using the convenient
+//! GraphRAG API with a zero-cost algorithmic pipeline:
 //! 1. Loading configuration from JSON5
 //! 2. Processing Plato's Symposium with pattern-based extraction
 //! 3. Co-occurrence relationship discovery (no LLM)
@@ -24,8 +24,9 @@
 //! - Query cost: ~$0.05 per query (only final LLM generation)
 //! - Quality: ~85-90% (excellent for zero-cost)
 
-use graphrag_core::GraphRAG;
 use std::time::Instant;
+
+use graphrag_core::GraphRAG;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -43,16 +44,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let start_time = Instant::now();
 
-    // Use the convenient API: load config + process document + build graph in one call
+    // Use the convenient API: load config + process document + build graph in one
+    // call
     let mut graphrag = GraphRAG::from_config_and_document(
         "config/templates/symposium_zero_cost.graphrag.json5",
-        "docs-example/Symposium.txt"
-    ).await?;
+        "docs-example/Symposium.txt",
+    )
+    .await?;
 
     let processing_time = start_time.elapsed();
 
     println!("\n   ✅ Knowledge graph built successfully!");
-    println!("   ⏱️ Processing time: {:.1}s", processing_time.as_secs_f64());
+    println!(
+        "   ⏱️ Processing time: {:.1}s",
+        processing_time.as_secs_f64()
+    );
 
     // === PHASE 2: Knowledge Graph Statistics ===
     println!("\n📊 Phase 2: Knowledge Graph Statistics");
@@ -66,7 +72,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("   - Documents: {}", doc_count);
         println!("   - Chunks: {}", chunk_count);
         println!("   - Entities: {} (pattern-based extraction)", entity_count);
-        println!("   - Relationships: {} (co-occurrence analysis)", relationship_count);
+        println!(
+            "   - Relationships: {} (co-occurrence analysis)",
+            relationship_count
+        );
 
         // Show sample entities
         println!("\n   📝 Sample Entities:");
@@ -128,11 +137,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("      {}\n", answer);
                 println!("   ⏱️ Query time: {:.2}s", query_time.as_secs_f64());
                 println!("   💰 Estimated query cost: ~$0.05 (only LLM generation)");
-            }
+            },
             Err(e) => {
                 eprintln!("\n   ❌ Query failed: {}", e);
                 eprintln!("   💡 Make sure Ollama is running with: ollama run qwen3:8b-q4_k_m");
-            }
+            },
         }
 
         if i < queries.len() - 1 {
@@ -159,9 +168,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Grand Total (indexing + 4 queries): ~$0.20\n");
 
     println!("⏱️ Performance:");
-    println!("   - Indexing: {:.1}s (actual)", processing_time.as_secs_f64());
+    println!(
+        "   - Indexing: {:.1}s (actual)",
+        processing_time.as_secs_f64()
+    );
     println!("   - Query: <1 second each");
-    println!("   - Total session: ~{:.1} seconds\n", processing_time.as_secs_f64());
+    println!(
+        "   - Total session: ~{:.1} seconds\n",
+        processing_time.as_secs_f64()
+    );
 
     println!("🎯 Quality Metrics:");
     println!("   - Entity accuracy: ~85-90% (pattern-based)");

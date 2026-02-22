@@ -19,9 +19,9 @@ fn test_end_to_end_workflow() -> Result<()> {
         Document::new(
             DocumentId::new("doc1".to_string()),
             "Machine Learning Basics".to_string(),
-            "Machine learning is a subset of artificial intelligence. \
-             John Smith is a researcher at MIT who works on neural networks. \
-             The university is located in Cambridge, Massachusetts."
+            "Machine learning is a subset of artificial intelligence. John Smith is a researcher \
+             at MIT who works on neural networks. The university is located in Cambridge, \
+             Massachusetts."
                 .to_string(),
         ),
         Document::new(
@@ -56,15 +56,15 @@ fn test_graph_construction() -> Result<()> {
         Document::new(
             DocumentId::new("doc1".to_string()),
             "Research Paper".to_string(),
-            "Dr. Alice Johnson conducted research at Stanford University. \
-             Her work focuses on natural language processing and machine learning."
+            "Dr. Alice Johnson conducted research at Stanford University. Her work focuses on \
+             natural language processing and machine learning."
                 .to_string(),
         ),
         Document::new(
             DocumentId::new("doc2".to_string()),
             "Company Profile".to_string(),
-            "OpenAI is an artificial intelligence company founded by Sam Altman. \
-             The organization is based in San Francisco, California."
+            "OpenAI is an artificial intelligence company founded by Sam Altman. The organization \
+             is based in San Francisco, California."
                 .to_string(),
         ),
     ];
@@ -115,9 +115,9 @@ fn test_document_processing_pipeline() -> Result<()> {
     let document = Document::new(
         DocumentId::new("test_doc".to_string()),
         "Test Document".to_string(),
-        "This is the first sentence. This is the second sentence. \
-         This is a longer sentence that should demonstrate the chunking behavior. \
-         Finally, this is the last sentence in our test document."
+        "This is the first sentence. This is the second sentence. This is a longer sentence that \
+         should demonstrate the chunking behavior. Finally, this is the last sentence in our test \
+         document."
             .to_string(),
     );
 
@@ -158,8 +158,8 @@ fn test_entity_extraction() -> Result<()> {
     let chunk = TextChunk::new(
         ChunkId::new("test_chunk".to_string()),
         DocumentId::new("test_doc".to_string()),
-        "Dr. John Smith works at Microsoft Corporation in Seattle, Washington. \
-         The company was founded by Bill Gates and Paul Allen."
+        "Dr. John Smith works at Microsoft Corporation in Seattle, Washington. The company was \
+         founded by Bill Gates and Paul Allen."
             .to_string(),
         0,
         97,

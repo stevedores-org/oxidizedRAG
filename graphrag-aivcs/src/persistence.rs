@@ -1,18 +1,23 @@
-//! SurrealDB Persistence Layer - bridges RAG runs to AIVCS for persistent storage
+//! SurrealDB Persistence Layer - bridges RAG runs to AIVCS for persistent
+//! storage
 //!
-//! This module integrates GraphRAG execution tracking with AIVCS for full version control:
+//! This module integrates GraphRAG execution tracking with AIVCS for full
+//! version control:
 //! - Records RAG runs to SurrealDB via AIVCS GraphRunRecorder
 //! - Enables comparing RAG executions across experiments
 //! - Supports evaluation and replay of RAG agent behavior
 
-use crate::run_recorder::RagRunRecorder;
-use aivcs_core::domain::run::{Event, EventKind};
-use aivcs_core::GraphRunRecorder;
+use std::{convert::TryFrom, sync::Arc};
+
+use aivcs_core::{
+    domain::run::{Event, EventKind},
+    GraphRunRecorder,
+};
 use oxidized_state::{ContentDigest, RunLedger, RunMetadata, RunSummary, StorageResult};
 use serde_json::json;
-use std::convert::TryFrom;
-use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::run_recorder::RagRunRecorder;
 
 /// Persists a RAG run to SurrealDB via AIVCS GraphRunRecorder
 ///
@@ -75,12 +80,8 @@ impl RagRunPersister {
 
         // Start the run with the config digest as the spec
         let content_digest = ContentDigest::try_from(config_digest.to_string())?;
-        let graph_recorder = GraphRunRecorder::start(
-            ledger.clone(),
-            &content_digest,
-            metadata,
-        )
-        .await?;
+        let graph_recorder =
+            GraphRunRecorder::start(ledger.clone(), &content_digest, metadata).await?;
 
         // Convert each RAG event to AIVCS events
         let mut event_seq = 0u64;
@@ -143,8 +144,8 @@ impl RagRunPersister {
     ) -> StorageResult<Vec<PersistedRagRun>> {
         let mut results = Vec::new();
         for recorder in runs {
-            let result = Self::persist_run(recorder, config_digest, agent_name, ledger.clone())
-                .await?;
+            let result =
+                Self::persist_run(recorder, config_digest, agent_name, ledger.clone()).await?;
             results.push(result);
         }
         Ok(results)

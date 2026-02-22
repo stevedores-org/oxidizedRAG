@@ -1,16 +1,15 @@
-///! Hugging Face Hub integration for downloading and using embedding models
-///!
-///! This module provides functionality to:
-///! - Download embedding models from Hugging Face Hub
-///! - Cache models locally to avoid re-downloading
-///! - Load models with Candle framework
-///! - Generate embeddings using downloaded models
-
-use crate::core::error::{GraphRAGError, Result};
-use crate::embeddings::{EmbeddingConfig, EmbeddingProvider};
-
 #[cfg(feature = "huggingface-hub")]
 use hf_hub::api::sync::{Api, ApiBuilder};
+
+/// ! Hugging Face Hub integration for downloading and using embedding models
+/// !
+/// ! This module provides functionality to:
+/// ! - Download embedding models from Hugging Face Hub
+/// ! - Cache models locally to avoid re-downloading
+/// ! - Load models with Candle framework
+/// ! - Generate embeddings using downloaded models
+use crate::core::error::{GraphRAGError, Result};
+use crate::embeddings::{EmbeddingConfig, EmbeddingProvider};
 
 /// Hugging Face Hub embedding provider
 pub struct HuggingFaceEmbeddings {
@@ -30,7 +29,8 @@ impl HuggingFaceEmbeddings {
     /// Create a new Hugging Face embeddings provider
     ///
     /// # Arguments
-    /// * `model_id` - Hugging Face model identifier (e.g., "sentence-transformers/all-MiniLM-L6-v2")
+    /// * `model_id` - Hugging Face model identifier (e.g.,
+    ///   "sentence-transformers/all-MiniLM-L6-v2")
     /// * `cache_dir` - Optional cache directory for downloaded models
     ///
     /// # Example
@@ -135,36 +135,16 @@ impl HuggingFaceEmbeddings {
                 "Balanced size and performance",
                 768,
             ),
-            (
-                "BAAI/bge-large-en-v1.5",
-                "Best quality, larger size",
-                1024,
-            ),
+            ("BAAI/bge-large-en-v1.5", "Best quality, larger size", 1024),
             (
                 "thenlper/gte-small",
                 "Small, efficient, trained on diverse data",
                 384,
             ),
-            (
-                "thenlper/gte-base",
-                "Balanced performance",
-                768,
-            ),
-            (
-                "intfloat/e5-small-v2",
-                "E5 model, small size",
-                384,
-            ),
-            (
-                "intfloat/e5-base-v2",
-                "E5 model, base size",
-                768,
-            ),
-            (
-                "intfloat/e5-large-v2",
-                "E5 model, best quality",
-                1024,
-            ),
+            ("thenlper/gte-base", "Balanced performance", 768),
+            ("intfloat/e5-small-v2", "E5 model, small size", 384),
+            ("intfloat/e5-base-v2", "E5 model, base size", 768),
+            ("intfloat/e5-large-v2", "E5 model, best quality", 1024),
             (
                 "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
                 "Multilingual support, 50+ languages",
@@ -259,12 +239,12 @@ mod tests {
 
     #[test]
     fn test_new_embeddings() {
-        let embeddings = HuggingFaceEmbeddings::new(
-            "sentence-transformers/all-MiniLM-L6-v2",
-            None,
-        );
+        let embeddings = HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
 
-        assert_eq!(embeddings.model_id, "sentence-transformers/all-MiniLM-L6-v2");
+        assert_eq!(
+            embeddings.model_id,
+            "sentence-transformers/all-MiniLM-L6-v2"
+        );
         assert_eq!(embeddings.dimensions, 384);
         assert!(!embeddings.initialized);
     }
@@ -285,10 +265,8 @@ mod tests {
             return;
         }
 
-        let mut embeddings = HuggingFaceEmbeddings::new(
-            "sentence-transformers/all-MiniLM-L6-v2",
-            None,
-        );
+        let mut embeddings =
+            HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
 
         let result = embeddings.initialize().await;
         assert!(result.is_ok(), "Failed to download model: {:?}", result);

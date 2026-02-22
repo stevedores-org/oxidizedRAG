@@ -7,19 +7,25 @@
 //! # Providers
 //!
 //! - [`DeterministicEmbedder`] — Hash-based embedding that maps text to
-//!   consistent vectors using SHA-256. Same input always yields the same output.
+//!   consistent vectors using SHA-256. Same input always yields the same
+//!   output.
 //! - [`MockLanguageModel`] — Returns canned responses keyed by prompt prefix,
 //!   with a configurable fallback.
 
-use crate::core::traits::{
-    AsyncEmbedder, AsyncLanguageModel, Embedder, GenerationParams, LanguageModel, ModelInfo,
-};
-use crate::core::Result;
-use async_trait::async_trait;
-use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
-/// A deterministic embedder that produces consistent vectors from text via SHA-256.
+use async_trait::async_trait;
+use sha2::{Digest, Sha256};
+
+use crate::core::{
+    traits::{
+        AsyncEmbedder, AsyncLanguageModel, Embedder, GenerationParams, LanguageModel, ModelInfo,
+    },
+    Result,
+};
+
+/// A deterministic embedder that produces consistent vectors from text via
+/// SHA-256.
 ///
 /// The hash is expanded to fill the requested dimension by repeatedly hashing
 /// with an incrementing counter, then each byte is mapped to `[-1.0, 1.0]`
@@ -27,7 +33,8 @@ use std::collections::HashMap;
 ///
 /// - **Determinism**: identical text always yields the identical vector.
 /// - **Offline**: no network calls, no GPU, no model weights.
-/// - **Similarity**: different texts produce different vectors (collision-resistant).
+/// - **Similarity**: different texts produce different vectors
+///   (collision-resistant).
 #[derive(Debug, Clone)]
 pub struct DeterministicEmbedder {
     dimension: usize,
@@ -336,8 +343,7 @@ mod tests {
 
     #[tokio::test]
     async fn async_mock_llm_prefix_match() {
-        let llm =
-            MockLanguageModel::new("default").with_response("summarize", "summary");
+        let llm = MockLanguageModel::new("default").with_response("summarize", "summary");
         let result = AsyncLanguageModel::complete(&llm, "summarize this")
             .await
             .unwrap();

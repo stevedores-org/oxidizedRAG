@@ -4,17 +4,19 @@
 //! and perform precise retrieval based on semantic relationships.
 
 #[cfg(feature = "rograg")]
-use crate::core::{Entity, KnowledgeGraph};
-#[cfg(feature = "rograg")]
-use crate::Result;
+use std::collections::HashSet;
+
 #[cfg(feature = "rograg")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "rograg")]
-use std::collections::HashSet;
 #[cfg(feature = "rograg")]
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::core::{Entity, KnowledgeGraph};
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Errors that can occur during logic form operations.
 #[cfg(feature = "rograg")]
@@ -27,7 +29,7 @@ pub enum LogicFormError {
     #[error("Cannot parse query into logic form: {query}")]
     ParseError {
         /// The query text that could not be parsed.
-        query: String
+        query: String,
     },
 
     /// The logic form structure is malformed or invalid.
@@ -37,7 +39,7 @@ pub enum LogicFormError {
     #[error("Invalid logic form structure: {reason}")]
     InvalidStructure {
         /// Description of what makes the structure invalid.
-        reason: String
+        reason: String,
     },
 
     /// Execution of the logic form against the graph failed.
@@ -47,7 +49,7 @@ pub enum LogicFormError {
     #[error("Logic form execution failed: {reason}")]
     ExecutionFailed {
         /// Reason why execution failed.
-        reason: String
+        reason: String,
     },
 
     /// No results found matching the logic form query.
@@ -399,7 +401,8 @@ impl PatternBasedParser {
     ///
     /// # Errors
     ///
-    /// Returns an error if any regex pattern fails to compile during initialization.
+    /// Returns an error if any regex pattern fails to compile during
+    /// initialization.
     pub fn new() -> Result<Self> {
         let patterns = vec![
             // "What is X?" pattern
@@ -574,7 +577,8 @@ impl Default for LogicFormExecutor {
 impl LogicFormExecutor {
     /// Create a new logic form executor.
     ///
-    /// Initializes the executor for processing logic forms against a knowledge graph.
+    /// Initializes the executor for processing logic forms against a knowledge
+    /// graph.
     ///
     /// # Returns
     ///
@@ -752,8 +756,10 @@ impl LogicFormExecutor {
         }
 
         // Try partial match
-        graph.entities().find(|&entity| entity.name.to_lowercase().contains(&name_lower)
-                || name_lower.contains(&entity.name.to_lowercase()))
+        graph.entities().find(|&entity| {
+            entity.name.to_lowercase().contains(&name_lower)
+                || name_lower.contains(&entity.name.to_lowercase())
+        })
     }
 
     /// Calculate name similarity
@@ -797,7 +803,8 @@ impl LogicFormRetriever {
     ///
     /// Returns a `LogicFormRetriever` ready for query processing.
     pub fn new() -> Self {
-        let parsers: Vec<Box<dyn LogicFormParser>> = vec![Box::new(PatternBasedParser::new().unwrap())];
+        let parsers: Vec<Box<dyn LogicFormParser>> =
+            vec![Box::new(PatternBasedParser::new().unwrap())];
 
         Self {
             parsers,
@@ -889,25 +896,25 @@ impl LogicFormRetriever {
                 } else {
                     "No information found.".to_string()
                 }
-            }
+            },
             Predicate::Related => {
                 if let Some(binding) = bindings.first() {
                     binding.value.clone()
                 } else {
                     "No relationship found.".to_string()
                 }
-            }
+            },
             Predicate::Compare => {
                 if let Some(binding) = bindings.first() {
                     binding.value.clone()
                 } else {
                     "Cannot compare the specified entities.".to_string()
                 }
-            }
+            },
             _ => {
                 let values: Vec<String> = bindings.iter().map(|b| b.value.clone()).collect();
                 values.join("; ")
-            }
+            },
         }
     }
 

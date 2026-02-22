@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+
 use graphrag_rs::{
     config::Config,
     core::{ChunkId, Document, DocumentId, Entity, EntityId, KnowledgeGraph, TextChunk},
     retrieval::{QueryIntent, QueryType, ResultType, RetrievalSystem},
     summarization::{DocumentTree, HierarchicalConfig},
 };
-use std::collections::HashMap;
 
 #[cfg(test)]
 mod tests {
@@ -252,7 +253,8 @@ mod tests {
             .hybrid_query_with_trees("Tom character", &knowledge_graph, &document_trees)
             .unwrap();
 
-        // Each result set should have unique IDs within itself (or very close due to ranking/fusion)
+        // Each result set should have unique IDs within itself (or very close due to
+        // ranking/fusion)
         let mut ids1: Vec<_> = results1.iter().map(|r| &r.id).collect();
         ids1.sort();
         let orig_len1 = ids1.len();
@@ -263,7 +265,8 @@ mod tests {
         ids2.sort();
         let orig_len2 = ids2.len();
         ids2.dedup();
-        assert!(ids2.len() >= orig_len2 - 2); // Allow for some potential duplicates from fusion
+        assert!(ids2.len() >= orig_len2 - 2); // Allow for some potential
+                                              // duplicates from fusion
     }
 
     #[test]

@@ -2,10 +2,14 @@
 //!
 //! This module provides TOML-based configuration for all embedding providers.
 
-use crate::core::error::{GraphRAGError, Result};
-use crate::embeddings::{EmbeddingConfig, EmbeddingProviderType};
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    core::error::{GraphRAGError, Result},
+    embeddings::{EmbeddingConfig, EmbeddingProviderType},
+};
 
 /// TOML configuration for embeddings
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,7 +22,8 @@ pub struct EmbeddingsTomlConfig {
 /// Embedding provider configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingProviderConfig {
-    /// Provider type: "huggingface", "openai", "voyage", "cohere", "jina", "mistral", "together"
+    /// Provider type: "huggingface", "openai", "voyage", "cohere", "jina",
+    /// "mistral", "together"
     #[serde(default = "default_provider")]
     pub provider: String,
 

@@ -37,9 +37,12 @@
 //! - Query latency: < 100ms
 //! - Memory usage: < 500MB
 
-use std::collections::HashMap;
-use std::fs;
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashMap,
+    fs,
+    time::{Duration, Instant},
+};
+
 use rayon::prelude::*;
 
 // ============================================================================
@@ -176,8 +179,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .collect();
 
-    println!("  ✓ Generated embeddings: {:.2}s (Rayon parallel)",
-        embedding_start.elapsed().as_secs_f64());
+    println!(
+        "  ✓ Generated embeddings: {:.2}s (Rayon parallel)",
+        embedding_start.elapsed().as_secs_f64()
+    );
 
     // Add to graph
     graph.add_document(symposium_doc)?;
@@ -186,7 +191,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Extract entities (simple keyword extraction)
     let entities_start = Instant::now();
     extract_entities(&mut graph, "symposium")?;
-    println!("  ✓ Extracted entities: {:.2}s", entities_start.elapsed().as_secs_f64());
+    println!(
+        "  ✓ Extracted entities: {:.2}s",
+        entities_start.elapsed().as_secs_f64()
+    );
 
     let phase1_elapsed = phase1_start.elapsed();
     let phase1_stats = PipelineStats {
@@ -237,7 +245,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         text: tom_sawyer_text.clone(),
         metadata: {
             let mut m = HashMap::new();
-            m.insert("title".to_string(), "The Adventures of Tom Sawyer".to_string());
+            m.insert(
+                "title".to_string(),
+                "The Adventures of Tom Sawyer".to_string(),
+            );
             m.insert("author".to_string(), "Mark Twain".to_string());
             m.insert("genre".to_string(), "Fiction".to_string());
             m
@@ -266,8 +277,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .collect();
 
-    println!("  ✓ Generated embeddings: {:.2}s (Rayon parallel)",
-        embedding_start.elapsed().as_secs_f64());
+    println!(
+        "  ✓ Generated embeddings: {:.2}s (Rayon parallel)",
+        embedding_start.elapsed().as_secs_f64()
+    );
 
     // Incremental merge
     let merge_start = Instant::now();
@@ -277,9 +290,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         tom_sawyer_chunks_with_embeddings,
     )?;
 
-    println!("  ✓ Incremental merge: {:.2}s", merge_start.elapsed().as_secs_f64());
+    println!(
+        "  ✓ Incremental merge: {:.2}s",
+        merge_start.elapsed().as_secs_f64()
+    );
     println!("    - New entities: {}", merge_stats.new_entities);
-    println!("    - Merged entities: {} (duplicates resolved)", merge_stats.merged_entities);
+    println!(
+        "    - Merged entities: {} (duplicates resolved)",
+        merge_stats.merged_entities
+    );
     println!("    - New relationships: {}", merge_stats.new_relationships);
 
     let phase2_elapsed = phase2_start.elapsed();
@@ -346,13 +365,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let total_elapsed = total_start.elapsed();
 
     println!("\n  Overall Performance:");
-    println!("    Total pipeline time: {:.2}s", total_elapsed.as_secs_f64());
-    println!("    Phase 1 (Symposium): {:.2}s ({:.1}%)",
+    println!(
+        "    Total pipeline time: {:.2}s",
+        total_elapsed.as_secs_f64()
+    );
+    println!(
+        "    Phase 1 (Symposium): {:.2}s ({:.1}%)",
         all_stats[0].elapsed.as_secs_f64(),
-        (all_stats[0].elapsed.as_secs_f64() / total_elapsed.as_secs_f64()) * 100.0);
-    println!("    Phase 2 (Tom Sawyer): {:.2}s ({:.1}%)",
+        (all_stats[0].elapsed.as_secs_f64() / total_elapsed.as_secs_f64()) * 100.0
+    );
+    println!(
+        "    Phase 2 (Tom Sawyer): {:.2}s ({:.1}%)",
         all_stats[1].elapsed.as_secs_f64(),
-        (all_stats[1].elapsed.as_secs_f64() / total_elapsed.as_secs_f64()) * 100.0);
+        (all_stats[1].elapsed.as_secs_f64() / total_elapsed.as_secs_f64()) * 100.0
+    );
 
     println!("\n  Final Graph State:");
     println!("    Documents: {}", graph.documents.len());
@@ -513,7 +539,9 @@ fn extract_entities(
     doc_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Simple entity extraction: find capitalized words
-    let doc = graph.documents.iter()
+    let doc = graph
+        .documents
+        .iter()
         .find(|d| d.id == doc_id)
         .ok_or("Document not found")?;
 
@@ -530,13 +558,16 @@ fn extract_entities(
     for (name, count) in entity_counts {
         if count > 1 {
             let entity_id = format!("{}:{}", doc_id, name.to_lowercase());
-            graph.entities.insert(entity_id.clone(), Entity {
-                id: entity_id,
-                name,
-                entity_type: "PERSON".to_string(), // Simplified
-                source_docs: vec![doc_id.to_string()],
-                mentions: count,
-            });
+            graph.entities.insert(
+                entity_id.clone(),
+                Entity {
+                    id: entity_id,
+                    name,
+                    entity_type: "PERSON".to_string(), // Simplified
+                    source_docs: vec![doc_id.to_string()],
+                    mentions: count,
+                },
+            );
         }
     }
 
@@ -551,7 +582,8 @@ fn query_graph(
 ) -> Result<Vec<QueryResult>, Box<dyn std::error::Error>> {
     let query_embedding = hash_embedding(query, 384);
 
-    let mut results: Vec<QueryResult> = graph.chunks
+    let mut results: Vec<QueryResult> = graph
+        .chunks
         .iter()
         .map(|chunk| {
             let similarity = cosine_similarity(&query_embedding, &chunk.embedding);
@@ -569,7 +601,10 @@ fn query_graph(
     results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
 
     // Assign ranks and take top-k
-    results.iter_mut().enumerate().for_each(|(i, r)| r.rank = i + 1);
+    results
+        .iter_mut()
+        .enumerate()
+        .for_each(|(i, r)| r.rank = i + 1);
     results.truncate(top_k);
 
     Ok(results)
@@ -584,7 +619,8 @@ fn query_graph_filtered(
 ) -> Result<Vec<QueryResult>, Box<dyn std::error::Error>> {
     let query_embedding = hash_embedding(query, 384);
 
-    let mut results: Vec<QueryResult> = graph.chunks
+    let mut results: Vec<QueryResult> = graph
+        .chunks
         .iter()
         .filter(|chunk| chunk.doc_id == doc_filter)
         .map(|chunk| {
@@ -600,17 +636,17 @@ fn query_graph_filtered(
         .collect();
 
     results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
-    results.iter_mut().enumerate().for_each(|(i, r)| r.rank = i + 1);
+    results
+        .iter_mut()
+        .enumerate()
+        .for_each(|(i, r)| r.rank = i + 1);
     results.truncate(top_k);
 
     Ok(results)
 }
 
 /// Apply Reciprocal Rank Fusion (RRF) to merge multiple result sets
-fn apply_rrf(
-    result_sets: Vec<Vec<QueryResult>>,
-    top_k: usize,
-) -> Vec<QueryResult> {
+fn apply_rrf(result_sets: Vec<Vec<QueryResult>>, top_k: usize) -> Vec<QueryResult> {
     const K: f32 = 60.0; // RRF constant
 
     let mut rrf_scores: HashMap<String, f32> = HashMap::new();
@@ -679,7 +715,8 @@ fn incremental_merge(
             if let (Some(e1), Some(e2)) = (graph.entities.get(id1), graph.entities.get(id2)) {
                 // Check if same entity name from different documents
                 if e1.name.to_lowercase() == e2.name.to_lowercase()
-                    && e1.source_docs != e2.source_docs {
+                    && e1.source_docs != e2.source_docs
+                {
                     merged_count += 1;
                     // In a real implementation, we would merge these entities
                 }
@@ -725,10 +762,10 @@ fn print_query_results(results: &[QueryResult]) {
             result.text.clone()
         };
 
-        println!("      {}. [{}] (sim: {:.4})",
-            result.rank,
-            result.doc_id,
-            result.similarity);
+        println!(
+            "      {}. [{}] (sim: {:.4})",
+            result.rank, result.doc_id, result.similarity
+        );
         println!("         {}", preview.replace('\n', " "));
     }
 }

@@ -1,18 +1,20 @@
 //! Shared test fixtures and helpers for RAG agent tests
 
-pub use graphrag_core::core::{Document, DocumentId, KnowledgeGraph};
-use graphrag_core::graph::GraphBuilder;
-pub use graphrag_core::text::TextProcessor;
-pub use graphrag_core::Result;
 use std::fs;
+
+use graphrag_core::graph::GraphBuilder;
+pub use graphrag_core::{
+    core::{Document, DocumentId, KnowledgeGraph},
+    text::TextProcessor,
+    Result,
+};
 
 pub const FIXTURE_DIR: &str = "tests/fixtures/code_samples";
 
 /// Load a fixture file by name
 pub fn load_fixture(name: &str) -> String {
     let path = format!("{}/{}", FIXTURE_DIR, name);
-    fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("Failed to load fixture '{}': {}", path, e))
+    fs::read_to_string(&path).unwrap_or_else(|e| panic!("Failed to load fixture '{}': {}", path, e))
 }
 
 /// Create a Document from a fixture file
@@ -30,10 +32,7 @@ pub fn index_fixtures(filenames: &[&str], chunk_size: usize) -> Result<Knowledge
     for filename in filenames {
         let doc = fixture_document(filename);
         let chunks = processor.chunk_text(&doc)?;
-        let doc_with_chunks = Document {
-            chunks,
-            ..doc
-        };
+        let doc_with_chunks = Document { chunks, ..doc };
         graph.add_document(doc_with_chunks)?;
     }
 
@@ -176,4 +175,3 @@ impl ConversationContext {
         self.turns.iter()
     }
 }
-

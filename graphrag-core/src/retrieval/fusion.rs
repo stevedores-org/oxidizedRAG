@@ -1,8 +1,10 @@
 //! Pluggable fusion policies for hybrid retrieval ranking.
 
-use crate::config::HybridFusionConfig;
-use async_trait::async_trait;
 use std::collections::{HashMap, HashSet};
+
+use async_trait::async_trait;
+
+use crate::config::HybridFusionConfig;
 
 /// Source channel that produced a ranked retrieval candidate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]

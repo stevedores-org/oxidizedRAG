@@ -1,13 +1,13 @@
 //! Concurrent document processing pipeline for parallel GraphRAG operations.
 //!
-//! This module provides the [`ConcurrentProcessor`] for processing multiple documents
-//! in parallel while respecting concurrency limits and coordinating with rate limiters
-//! and metrics tracking.
+//! This module provides the [`ConcurrentProcessor`] for processing multiple
+//! documents in parallel while respecting concurrency limits and coordinating
+//! with rate limiters and metrics tracking.
 //!
 //! # Main Types
 //!
-//! - [`ConcurrentProcessor`]: Manages concurrent document processing with configurable
-//!   parallelism limits
+//! - [`ConcurrentProcessor`]: Manages concurrent document processing with
+//!   configurable parallelism limits
 //!
 //! # Features
 //!
@@ -41,13 +41,12 @@
 //! }
 //! ```
 
+use std::{sync::Arc, time::Instant};
+
 use futures::future::join_all;
-use std::sync::Arc;
-use std::time::Instant;
 use tokio::sync::RwLock;
 
-use super::ProcessingResult;
-use super::{ProcessingMetrics, RateLimiter};
+use super::{ProcessingMetrics, ProcessingResult, RateLimiter};
 use crate::core::{Document, GraphRAGError, KnowledgeGraph};
 
 /// Concurrent document processor for parallel GraphRAG operations
@@ -64,18 +63,20 @@ impl ConcurrentProcessor {
     /// Creates a new concurrent processor with specified concurrency limit
     ///
     /// # Parameters
-    /// - `max_concurrent_documents`: Maximum number of documents to process in parallel
+    /// - `max_concurrent_documents`: Maximum number of documents to process in
+    ///   parallel
     pub fn new(max_concurrent_documents: usize) -> Self {
         Self {
             max_concurrent_documents,
         }
     }
 
-    /// Processes a batch of documents concurrently with rate limiting and metrics tracking
+    /// Processes a batch of documents concurrently with rate limiting and
+    /// metrics tracking
     ///
-    /// Documents are processed in chunks according to the concurrency limit. Each chunk
-    /// is fully processed before moving to the next, with a small delay between chunks
-    /// to prevent system overload.
+    /// Documents are processed in chunks according to the concurrency limit.
+    /// Each chunk is fully processed before moving to the next, with a
+    /// small delay between chunks to prevent system overload.
     ///
     /// # Parameters
     /// - `documents`: Collection of documents to process
@@ -84,7 +85,8 @@ impl ConcurrentProcessor {
     /// - `metrics`: Metrics collector for tracking processing statistics
     ///
     /// # Returns
-    /// Vector of processing results for successfully processed documents, or an error
+    /// Vector of processing results for successfully processed documents, or an
+    /// error
     pub async fn process_batch(
         &self,
         documents: Vec<Document>,
@@ -170,7 +172,7 @@ impl ConcurrentProcessor {
                     Ok(Ok(processing_result)) => {
                         all_results.push(processing_result);
                         metrics.increment_document_processing_success();
-                    }
+                    },
                     Ok(Err(processing_error)) => {
                         total_errors += 1;
                         tracing::error!(
@@ -179,7 +181,7 @@ impl ConcurrentProcessor {
                             error = %processing_error,
                             "Processing error"
                         );
-                    }
+                    },
                     Err(join_error) => {
                         total_errors += 1;
                         tracing::error!(
@@ -188,7 +190,7 @@ impl ConcurrentProcessor {
                             error = %join_error,
                             "Task join error"
                         );
-                    }
+                    },
                 }
             }
 
@@ -220,9 +222,9 @@ impl ConcurrentProcessor {
 
     /// Processes a single document internally with graph access
     ///
-    /// This is the core document processing logic executed within concurrent tasks.
-    /// Currently implements a basic placeholder that will be replaced with full
-    /// entity extraction in production.
+    /// This is the core document processing logic executed within concurrent
+    /// tasks. Currently implements a basic placeholder that will be
+    /// replaced with full entity extraction in production.
     ///
     /// # Parameters
     /// - `graph`: Shared knowledge graph for entity storage

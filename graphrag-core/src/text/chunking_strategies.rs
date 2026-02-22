@@ -1,15 +1,18 @@
 //! Trait-based chunking strategy implementations
 //!
 //! This module provides concrete implementations of the ChunkingStrategy trait
-//! that wrap existing chunking logic while maintaining a clean, minimal interface.
+//! that wrap existing chunking logic while maintaining a clean, minimal
+//! interface.
 
-use crate::{
-    core::{ChunkId, DocumentId, TextChunk, ChunkingStrategy},
-    text::{HierarchicalChunker, SemanticChunker},
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Mutex,
 };
 
-use std::sync::Mutex;
-use std::sync::atomic::{AtomicU64, Ordering};
+use crate::{
+    core::{ChunkId, ChunkingStrategy, DocumentId, TextChunk},
+    text::{HierarchicalChunker, SemanticChunker},
+};
 
 /// Global counter for generating unique chunk IDs
 static CHUNK_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -51,8 +54,11 @@ impl ChunkingStrategy for HierarchicalChunkingStrategy {
 
         for chunk_content in chunks_text {
             if !chunk_content.trim().is_empty() {
-                let chunk_id = ChunkId::new(format!("{}_{}", self.document_id,
-                    CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)));
+                let chunk_id = ChunkId::new(format!(
+                    "{}_{}",
+                    self.document_id,
+                    CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)
+                ));
                 let chunk_start = current_pos;
                 let chunk_end = chunk_start + chunk_content.len();
 
@@ -105,8 +111,11 @@ impl ChunkingStrategy for SemanticChunkingStrategy {
         let mut current_pos = 0;
 
         for semantic_chunk in semantic_chunks {
-            let chunk_id = ChunkId::new(format!("{}_{}", self.document_id,
-                CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)));
+            let chunk_id = ChunkId::new(format!(
+                "{}_{}",
+                self.document_id,
+                CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)
+            ));
 
             // Note: SemanticChunk doesn't provide byte offsets, so we estimate
             // In a production environment, we'd track offsets during splitting
@@ -131,8 +140,9 @@ impl ChunkingStrategy for SemanticChunkingStrategy {
 
 /// Rust code chunking strategy using tree-sitter
 ///
-/// Parses Rust code using tree-sitter and creates chunks at function/method boundaries.
-/// This ensures that code chunks are syntactically complete and meaningful.
+/// Parses Rust code using tree-sitter and creates chunks at function/method
+/// boundaries. This ensures that code chunks are syntactically complete and
+/// meaningful.
 #[cfg(feature = "code-chunking")]
 pub struct RustCodeChunkingStrategy {
     min_chunk_size: usize,
@@ -157,7 +167,9 @@ impl ChunkingStrategy for RustCodeChunkingStrategy {
 
         let mut parser = Parser::new();
         let language = tree_sitter_rust::language();
-        parser.set_language(&language).expect("Error loading Rust grammar");
+        parser
+            .set_language(&language)
+            .expect("Error loading Rust grammar");
 
         let tree = parser.parse(text, None).expect("Error parsing Rust code");
         let root_node = tree.root_node();
@@ -169,8 +181,11 @@ impl ChunkingStrategy for RustCodeChunkingStrategy {
 
         // If no chunks found (e.g., just expressions), create a single chunk
         if chunks.is_empty() && !text.trim().is_empty() {
-            let chunk_id = ChunkId::new(format!("{}_{}", self.document_id,
-                CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)));
+            let chunk_id = ChunkId::new(format!(
+                "{}_{}",
+                self.document_id,
+                CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)
+            ));
             let chunk = TextChunk::new(
                 chunk_id,
                 self.document_id.clone(),
@@ -191,7 +206,8 @@ impl RustCodeChunkingStrategy {
     fn extract_chunks(&self, node: &tree_sitter::Node, source: &str, chunks: &mut Vec<TextChunk>) {
         match node.kind() {
             // Top-level items that should become chunks
-            "function_item" | "impl_item" | "struct_item" | "enum_item" | "mod_item" | "trait_item" => {
+            "function_item" | "impl_item" | "struct_item" | "enum_item" | "mod_item"
+            | "trait_item" => {
                 let start_byte = node.start_byte();
                 let end_byte = node.end_byte();
 
@@ -202,8 +218,11 @@ impl RustCodeChunkingStrategy {
                 let chunk_content = &source[start_pos..end_pos];
 
                 if chunk_content.len() >= self.min_chunk_size {
-                    let chunk_id = ChunkId::new(format!("{}_{}", self.document_id,
-                        CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)));
+                    let chunk_id = ChunkId::new(format!(
+                        "{}_{}",
+                        self.document_id,
+                        CHUNK_COUNTER.fetch_add(1, Ordering::SeqCst)
+                    ));
 
                     let chunk = TextChunk::new(
                         chunk_id,
@@ -214,7 +233,7 @@ impl RustCodeChunkingStrategy {
                     );
                     chunks.push(chunk);
                 }
-            }
+            },
 
             // Source file (root) - process children
             "source_file" => {
@@ -223,7 +242,7 @@ impl RustCodeChunkingStrategy {
                     self.extract_chunks(&current, source, chunks);
                     child = current.next_sibling();
                 }
-            }
+            },
 
             // Other nodes - recurse into children
             _ => {
@@ -232,7 +251,7 @@ impl RustCodeChunkingStrategy {
                     self.extract_chunks(&current, source, chunks);
                     child = current.next_sibling();
                 }
-            }
+            },
         }
     }
 }
@@ -246,7 +265,8 @@ mod tests {
         let document_id = DocumentId::new("test_doc".to_string());
         let strategy = HierarchicalChunkingStrategy::new(100, 20, document_id);
 
-        let text = "This is paragraph one.\n\nThis is paragraph two with more content to test chunking behavior.";
+        let text = "This is paragraph one.\n\nThis is paragraph two with more content to test \
+                    chunking behavior.";
         let chunks = strategy.chunk(text);
 
         assert!(!chunks.is_empty());
@@ -262,13 +282,15 @@ mod tests {
         // Note: In a real test, you would create a proper SemanticChunker
         // For now, we'll use a mock approach
         let _config = crate::text::semantic_chunking::SemanticChunkerConfig::default();
-        // We can't easily create a mock embedding generator here, so skip the test
-        // let embedding_gen = crate::vector::EmbeddingGenerator::mock();
-        // let chunker = SemanticChunker::new(config, embedding_gen);
-        // let strategy = SemanticChunkingStrategy::new(chunker, document_id);
+        // We can't easily create a mock embedding generator here, so skip the
+        // test let embedding_gen =
+        // crate::vector::EmbeddingGenerator::mock(); let chunker =
+        // SemanticChunker::new(config, embedding_gen); let strategy =
+        // SemanticChunkingStrategy::new(chunker, document_id);
         //
-        // let text = "First sentence. Second sentence. Third sentence. Fourth sentence. Fifth sentence. Sixth sentence.";
-        // let chunks = strategy.chunk(text);
+        // let text = "First sentence. Second sentence. Third sentence. Fourth
+        // sentence. Fifth sentence. Sixth sentence."; let chunks =
+        // strategy.chunk(text);
         //
         // assert!(!chunks.is_empty());
         // for chunk in &chunks {

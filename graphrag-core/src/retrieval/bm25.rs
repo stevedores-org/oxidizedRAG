@@ -1,5 +1,6 @@
-use crate::Result;
 use std::collections::HashMap;
+
+use crate::Result;
 
 /// Document ID type for BM25 indexing
 pub type DocumentId = String;

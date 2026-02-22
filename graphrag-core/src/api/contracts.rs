@@ -3,8 +3,9 @@
 //! These types define the wire format for GraphRAG API requests and responses,
 //! ensuring consistent serialization between server and client implementations.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Options controlling query behavior.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,7 +73,8 @@ pub struct HealthResponse {
 mod tests {
     use super::*;
 
-    /// Helper: serialize to JSON and deserialize back, asserting round-trip equality.
+    /// Helper: serialize to JSON and deserialize back, asserting round-trip
+    /// equality.
     fn roundtrip<T>(value: &T) -> T
     where
         T: Serialize + for<'de> Deserialize<'de> + std::fmt::Debug,

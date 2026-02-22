@@ -1,13 +1,16 @@
 //! Iterative Deepening Search for LazyGraphRAG
 //!
-//! This module implements iterative deepening search that progressively explores
-//! the concept graph to find relevant information without requiring full graph traversal.
+//! This module implements iterative deepening search that progressively
+//! explores the concept graph to find relevant information without requiring
+//! full graph traversal.
 //!
 //! ## Key Features
 //!
-//! - **Progressive Exploration**: Start with high-confidence results, deepen if needed
+//! - **Progressive Exploration**: Start with high-confidence results, deepen if
+//!   needed
 //! - **Early Termination**: Stop when sufficient relevant chunks are found
-//! - **Depth-Limited**: Control exploration depth to balance speed vs completeness
+//! - **Depth-Limited**: Control exploration depth to balance speed vs
+//!   completeness
 //! - **Relevance-Guided**: Use query refinement to guide exploration
 //!
 //! ## Algorithm
@@ -33,15 +36,25 @@
 //! let search = IterativeDeepeningSearch::new(config);
 //! let results = search.search("machine learning", &concept_graph, &bidirectional_index);
 //!
-//! println!("Found {} chunks at depth {}", results.chunk_count(), results.depth_reached);
+//! println!(
+//!     "Found {} chunks at depth {}",
+//!     results.chunk_count(),
+//!     results.depth_reached
+//! );
 //! ```
 
-use crate::core::ChunkId;
-use crate::entity::BidirectionalIndex;
-use crate::lightrag::concept_graph::ConceptGraph;
-use crate::lightrag::query_refinement::{QueryRefiner, QueryRefinementConfig, RefinedQuery};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    core::ChunkId,
+    entity::BidirectionalIndex,
+    lightrag::{
+        concept_graph::ConceptGraph,
+        query_refinement::{QueryRefinementConfig, QueryRefiner, RefinedQuery},
+    },
+};
 
 /// Configuration for iterative deepening search
 #[derive(Debug, Clone)]
@@ -120,11 +133,9 @@ impl IterativeDeepeningSearch {
         let mut visited_chunks: HashSet<ChunkId> = HashSet::new();
 
         // Perform query refinement to get initial concepts
-        let refined_query = self.query_refiner.refine_query(
-            query,
-            concept_graph,
-            bidirectional_index,
-        );
+        let refined_query =
+            self.query_refiner
+                .refine_query(query, concept_graph, bidirectional_index);
 
         if refined_query.initial_concepts.is_empty() {
             return results;
@@ -238,7 +249,8 @@ impl IterativeDeepeningSearch {
             for related_concept in related {
                 if !current_concepts.contains(&related_concept) {
                     // Score based on connectivity
-                    let score = self.score_concept(&related_concept, current_concepts, concept_graph);
+                    let score =
+                        self.score_concept(&related_concept, current_concepts, concept_graph);
                     *related_concepts.entry(related_concept).or_insert(0.0) += score;
                 }
             }
@@ -405,7 +417,7 @@ pub enum StopReason {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lightrag::concept_graph::{ConceptGraphBuilder, ConceptExtractor};
+    use crate::lightrag::concept_graph::{ConceptExtractor, ConceptGraphBuilder};
 
     #[test]
     fn test_iterative_deepening_basic() {
@@ -422,10 +434,7 @@ mod tests {
 
         // Create test data
         let mut builder = ConceptGraphBuilder::new();
-        builder.add_document_concepts("doc1", vec![
-            "machine".to_string(),
-            "learning".to_string(),
-        ]);
+        builder.add_document_concepts("doc1", vec!["machine".to_string(), "learning".to_string()]);
         builder.add_chunk_concepts("chunk1", vec!["machine".to_string()]);
 
         let concept_graph = builder.build();

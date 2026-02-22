@@ -3,22 +3,21 @@
 //! `CachedStage<I,O>` wraps any `Stage<I,O>` with content-hash caching
 //! using sha2 for cache keys and moka for in-memory TTL-based caching.
 
-use crate::core::Result;
-use crate::pipeline::stage::Stage;
-use async_trait::async_trait;
-use serde::{de::DeserializeOwned, Serialize};
-use sha2::{Digest, Sha256};
-use std::hash::Hash;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{hash::Hash, sync::Arc, time::Duration};
 
+use async_trait::async_trait;
 #[cfg(feature = "caching")]
 use moka::future::Cache;
+use serde::{de::DeserializeOwned, Serialize};
+use sha2::{Digest, Sha256};
+
+use crate::{core::Result, pipeline::stage::Stage};
 
 /// A cached wrapper around any `Stage<I,O>`.
 ///
 /// Caches stage outputs based on a content hash of the input.
-/// Requires `I: Serialize + Hash` and `O: Serialize + DeserializeOwned + Clone`.
+/// Requires `I: Serialize + Hash` and `O: Serialize + DeserializeOwned +
+/// Clone`.
 pub struct CachedStage<I, O>
 where
     I: Send + 'static,
@@ -124,9 +123,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::{AtomicU64, Ordering};
+
     use super::*;
     use crate::core::Result;
-    use std::sync::atomic::{AtomicU64, Ordering};
 
     /// A counting stage that tracks how many times process() is called.
     struct CountingStage {
@@ -159,11 +159,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_miss() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         let result = cached.process("hello".to_string()).await.unwrap();
         assert_eq!(result, "processed:hello");
@@ -174,11 +170,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_hit() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         // First call — miss
         let r1 = cached.process("hello".to_string()).await.unwrap();

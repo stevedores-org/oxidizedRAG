@@ -1,16 +1,18 @@
 //! LLM-based entity and relationship extraction
 //!
-//! This module provides TRUE LLM-based extraction using Ollama or any other LLM service.
-//! Unlike pattern-based extraction, this uses actual language model inference to extract
-//! entities and relationships from text with deep semantic understanding.
+//! This module provides TRUE LLM-based extraction using Ollama or any other LLM
+//! service. Unlike pattern-based extraction, this uses actual language model
+//! inference to extract entities and relationships from text with deep semantic
+//! understanding.
+
+use serde_json;
 
 use crate::{
     core::{ChunkId, Entity, EntityId, EntityMention, Relationship, TextChunk},
     entity::prompts::{EntityData, ExtractionOutput, PromptBuilder, RelationshipData},
     ollama::OllamaClient,
-    Result, GraphRAGError,
+    GraphRAGError, Result,
 };
-use serde_json;
 
 /// LLM-based entity extractor that uses actual language model calls
 pub struct LLMEntityExtractor {
@@ -25,7 +27,8 @@ impl LLMEntityExtractor {
     ///
     /// # Arguments
     /// * `ollama_client` - Ollama client for LLM inference
-    /// * `entity_types` - List of entity types to extract (e.g., ["PERSON", "LOCATION", "ORGANIZATION"])
+    /// * `entity_types` - List of entity types to extract (e.g., ["PERSON",
+    ///   "LOCATION", "ORGANIZATION"])
     pub fn new(ollama_client: OllamaClient, entity_types: Vec<String>) -> Self {
         Self {
             ollama_client,
@@ -50,13 +53,18 @@ impl LLMEntityExtractor {
     /// Extract entities and relationships from a text chunk using LLM
     ///
     /// This is the REAL extraction that makes actual LLM API calls.
-    /// Expected time: 15-30 seconds per chunk depending on chunk size and model.
+    /// Expected time: 15-30 seconds per chunk depending on chunk size and
+    /// model.
     #[cfg(feature = "async")]
     pub async fn extract_from_chunk(
         &self,
         chunk: &TextChunk,
     ) -> Result<(Vec<Entity>, Vec<Relationship>)> {
-        tracing::debug!("LLM extraction for chunk: {} (size: {} chars)", chunk.id, chunk.content.len());
+        tracing::debug!(
+            "LLM extraction for chunk: {} (size: {} chars)",
+            chunk.id,
+            chunk.content.len()
+        );
 
         // Build extraction prompt
         let prompt = self.prompt_builder.build_extraction_prompt(&chunk.content);
@@ -68,8 +76,10 @@ impl LLMEntityExtractor {
         let extraction_output = self.parse_extraction_response(&llm_response)?;
 
         // Convert to domain entities and relationships
-        let entities = self.convert_to_entities(&extraction_output.entities, &chunk.id, &chunk.content)?;
-        let relationships = self.convert_to_relationships(&extraction_output.relationships, &entities)?;
+        let entities =
+            self.convert_to_entities(&extraction_output.entities, &chunk.id, &chunk.content)?;
+        let relationships =
+            self.convert_to_relationships(&extraction_output.relationships, &entities)?;
 
         tracing::info!(
             "LLM extracted {} entities and {} relationships from chunk {}",
@@ -107,8 +117,10 @@ impl LLMEntityExtractor {
         let extraction_output = self.parse_extraction_response(&llm_response)?;
 
         // Convert to domain entities
-        let entities = self.convert_to_entities(&extraction_output.entities, &chunk.id, &chunk.content)?;
-        let relationships = self.convert_to_relationships(&extraction_output.relationships, &entities)?;
+        let entities =
+            self.convert_to_entities(&extraction_output.entities, &chunk.id, &chunk.content)?;
+        let relationships =
+            self.convert_to_relationships(&extraction_output.relationships, &entities)?;
 
         tracing::info!(
             "LLM gleaning extracted {} additional entities and {} relationships",
@@ -121,7 +133,8 @@ impl LLMEntityExtractor {
 
     /// Check if extraction is complete using LLM judgment
     ///
-    /// Uses the LLM to determine if all significant entities have been extracted.
+    /// Uses the LLM to determine if all significant entities have been
+    /// extracted.
     #[cfg(feature = "async")]
     pub async fn check_completion(
         &self,
@@ -132,11 +145,9 @@ impl LLMEntityExtractor {
         tracing::debug!("LLM completion check for chunk: {}", chunk.id);
 
         // Build completion check prompt
-        let prompt = self.prompt_builder.build_completion_prompt(
-            &chunk.content,
-            entities,
-            relationships,
-        );
+        let prompt =
+            self.prompt_builder
+                .build_completion_prompt(&chunk.content, entities, relationships);
 
         // Call LLM with logit bias for YES/NO response
         let llm_response = self.call_llm_completion_check(&prompt).await?;
@@ -147,7 +158,11 @@ impl LLMEntityExtractor {
 
         tracing::debug!(
             "LLM completion check result: {} (response: {})",
-            if is_complete { "COMPLETE" } else { "INCOMPLETE" },
+            if is_complete {
+                "COMPLETE"
+            } else {
+                "INCOMPLETE"
+            },
             llm_response.trim()
         );
 
@@ -166,7 +181,7 @@ impl LLMEntityExtractor {
                 // Retry once
                 tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
                 self.ollama_client.generate(prompt).await
-            }
+            },
         }
     }
 
@@ -199,7 +214,7 @@ impl LLMEntityExtractor {
             Ok(output) => return Ok(output),
             Err(e) => {
                 tracing::warn!("JSON repair failed: {}", e);
-            }
+            },
         }
 
         // Strategy 4: Look for JSON anywhere in the response
@@ -215,7 +230,10 @@ impl LLMEntityExtractor {
         }
 
         // If all strategies fail, return empty extraction
-        tracing::error!("Failed to parse LLM response as JSON. Response preview: {}", &response.chars().take(200).collect::<String>());
+        tracing::error!(
+            "Failed to parse LLM response as JSON. Response preview: {}",
+            &response.chars().take(200).collect::<String>()
+        );
         Ok(ExtractionOutput {
             entities: vec![],
             relationships: vec![],
@@ -263,15 +281,16 @@ impl LLMEntityExtractor {
     fn repair_and_parse_json(&self, json_str: &str) -> Result<ExtractionOutput> {
         // jsonfixer::repair_json returns Result<String, Error>
         let options = jsonfixer::JsonRepairOptions::default();
-        let fixed_json = jsonfixer::repair_json(json_str, options)
-            .map_err(|e| GraphRAGError::Generation {
+        let fixed_json =
+            jsonfixer::repair_json(json_str, options).map_err(|e| GraphRAGError::Generation {
                 message: format!("JSON repair failed: {:?}", e),
             })?;
 
-        serde_json::from_str::<ExtractionOutput>(&fixed_json)
-            .map_err(|e| GraphRAGError::Generation {
+        serde_json::from_str::<ExtractionOutput>(&fixed_json).map_err(|e| {
+            GraphRAGError::Generation {
                 message: format!("Failed to parse repaired JSON: {}", e),
-            })
+            }
+        })
     }
 
     /// Convert EntityData to domain Entity objects
@@ -295,8 +314,9 @@ impl LLMEntityExtractor {
             let mentions = self.find_mentions(&data.name, chunk_id, chunk_text);
 
             // Create entity with mentions
-            // Note: Description is stored in the entity but not used in current Entity struct
-            // We store it in the entity name or as a separate field if needed
+            // Note: Description is stored in the entity but not used in current Entity
+            // struct We store it in the entity name or as a separate field if
+            // needed
             let entity = Entity::new(
                 entity_id,
                 data.name.clone(),
@@ -357,7 +377,8 @@ impl LLMEntityExtractor {
         let mut relationships = Vec::new();
 
         // Build entity name to ID mapping
-        let mut name_to_entity: std::collections::HashMap<String, &Entity> = std::collections::HashMap::new();
+        let mut name_to_entity: std::collections::HashMap<String, &Entity> =
+            std::collections::HashMap::new();
         for entity in entities {
             name_to_entity.insert(entity.name.to_lowercase(), entity);
         }
@@ -412,8 +433,8 @@ mod tests {
         TextChunk::new(
             ChunkId::new("chunk_001".to_string()),
             DocumentId::new("doc_001".to_string()),
-            "Tom Sawyer is a young boy who lives in St. Petersburg with his Aunt Polly. \
-             Tom is best friends with Huckleberry Finn. They often go on adventures together."
+            "Tom Sawyer is a young boy who lives in St. Petersburg with his Aunt Polly. Tom is \
+             best friends with Huckleberry Finn. They often go on adventures together."
                 .to_string(),
             0,
             150,
@@ -477,10 +498,7 @@ Here's the extraction:
     fn test_convert_to_entities() {
         let ollama_config = OllamaConfig::default();
         let ollama_client = OllamaClient::new(ollama_config);
-        let extractor = LLMEntityExtractor::new(
-            ollama_client,
-            vec!["PERSON".to_string()],
-        );
+        let extractor = LLMEntityExtractor::new(ollama_client, vec!["PERSON".to_string()]);
 
         let chunk = create_test_chunk();
         let entity_data = vec![EntityData {
@@ -525,13 +543,17 @@ Here's the extraction:
 
     #[test]
     fn test_normalize_name_multi_word_regression() {
-        // Regression test for multi-word normalization ensuring underscores are preserved
+        // Regression test for multi-word normalization ensuring underscores are
+        // preserved
         let ollama_config = OllamaConfig::default();
         let ollama_client = OllamaClient::new(ollama_config);
         let extractor = LLMEntityExtractor::new(ollama_client, vec!["PERSON".to_string()]);
 
         assert_eq!(extractor.normalize_name("San Francisco"), "san_francisco");
         assert_eq!(extractor.normalize_name("A B C"), "a_b_c");
-        assert_eq!(extractor.normalize_name("Multiple   Spaces"), "multiple_spaces");
+        assert_eq!(
+            extractor.normalize_name("Multiple   Spaces"),
+            "multiple_spaces"
+        );
     }
 }

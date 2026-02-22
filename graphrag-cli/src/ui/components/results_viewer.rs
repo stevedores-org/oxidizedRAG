@@ -1,11 +1,12 @@
 //! Results viewer component with scrolling support
 
-use crate::{action::Action, theme::Theme};
 use ratatui::{
     layout::{Margin, Rect},
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap},
     Frame,
 };
+
+use crate::{action::Action, theme::Theme};
 
 /// Results viewer with vim-style scrolling
 pub struct ResultsViewer {
@@ -125,41 +126,41 @@ impl super::Component for ResultsViewer {
                     self.scroll_up();
                 }
                 None
-            }
+            },
             Action::ScrollDown => {
                 if self.focused {
                     self.scroll_down();
                 }
                 None
-            }
+            },
             Action::ScrollPageUp => {
                 if self.focused {
                     self.scroll_page_up(10);
                 }
                 None
-            }
+            },
             Action::ScrollPageDown => {
                 if self.focused {
                     self.scroll_page_down(10);
                 }
                 None
-            }
+            },
             Action::ScrollToTop => {
                 if self.focused {
                     self.scroll_to_top();
                 }
                 None
-            }
+            },
             Action::ScrollToBottom => {
                 if self.focused {
                     self.scroll_to_bottom();
                 }
                 None
-            }
+            },
             Action::FocusResultsViewer => {
                 self.set_focused(true);
                 None
-            }
+            },
             Action::QuerySuccess(result) => {
                 self.set_content(vec![
                     "Query Result:".to_string(),
@@ -167,7 +168,7 @@ impl super::Component for ResultsViewer {
                     result.clone(),
                 ]);
                 None
-            }
+            },
             Action::QueryError(error) => {
                 self.set_content(vec![
                     "Query Error:".to_string(),
@@ -175,7 +176,7 @@ impl super::Component for ResultsViewer {
                     error.clone(),
                 ]);
                 None
-            }
+            },
             _ => None,
         }
     }

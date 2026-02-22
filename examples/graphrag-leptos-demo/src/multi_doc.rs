@@ -89,7 +89,13 @@ pub fn MultiDocumentManager() -> impl IntoView {
 
     // Auto-load documents on mount
     Effect::new(move |_| {
-        if !state.get().is_loading && state.get().documents.iter().all(|d| matches!(d.status, DocumentStatus::NotLoaded)) {
+        if !state.get().is_loading
+            && state
+                .get()
+                .documents
+                .iter()
+                .all(|d| matches!(d.status, DocumentStatus::NotLoaded))
+        {
             spawn_local(async move {
                 auto_load_documents(set_state).await;
             });
@@ -293,14 +299,14 @@ async fn auto_load_documents(set_state: WriteSignal<MultiDocState>) {
                 s.stats.total_chunks += chunks;
                 s.stats.total_entities += entities;
             });
-        }
+        },
         Err(e) => {
             set_state.update(|s| {
                 if let Some(doc) = s.documents.iter_mut().find(|d| d.id == "symposium") {
                     doc.status = DocumentStatus::Error(e.to_string());
                 }
             });
-        }
+        },
     }
 
     // Small delay before loading Tom Sawyer
@@ -311,7 +317,12 @@ async fn auto_load_documents(set_state: WriteSignal<MultiDocState>) {
     }
 
     // Load Tom Sawyer incrementally
-    match load_document_from_url("../../docs-example/The Adventures of Tom Sawyer.txt", "tom_sawyer").await {
+    match load_document_from_url(
+        "../../docs-example/The Adventures of Tom Sawyer.txt",
+        "tom_sawyer",
+    )
+    .await
+    {
         Ok((new_chunks, new_entities, elapsed_ms)) => {
             // Simulate duplicate detection (10-15% duplicates)
             let merged_entities = (new_entities as f32 * 0.12) as usize;
@@ -337,14 +348,14 @@ async fn auto_load_documents(set_state: WriteSignal<MultiDocState>) {
                     merged_entities,
                 });
             });
-        }
+        },
         Err(e) => {
             set_state.update(|s| {
                 if let Some(doc) = s.documents.iter_mut().find(|d| d.id == "tom_sawyer") {
                     doc.status = DocumentStatus::Error(e.to_string());
                 }
             });
-        }
+        },
     }
 
     set_state.update(|s| s.is_loading = false);
@@ -404,17 +415,20 @@ fn estimate_entities(text: &str) -> usize {
     text.split_whitespace()
         .filter(|w| w.len() > 3 && w.chars().next().unwrap().is_uppercase())
         .collect::<std::collections::HashSet<_>>()
-        .len() / 2
+        .len()
+        / 2
 }
 
 fn format_timestamp(ts: u64) -> String {
     #[cfg(target_arch = "wasm32")]
     {
         let date = js_sys::Date::new(&wasm_bindgen::JsValue::from_f64(ts as f64));
-        format!("{:02}:{:02}:{:02}",
+        format!(
+            "{:02}:{:02}:{:02}",
             date.get_hours(),
             date.get_minutes(),
-            date.get_seconds())
+            date.get_seconds()
+        )
     }
 
     #[cfg(not(target_arch = "wasm32"))]

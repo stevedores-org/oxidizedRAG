@@ -19,15 +19,15 @@
 
 pub mod pipeline_validation;
 
-pub use pipeline_validation::{
-    PhaseValidation, ValidationCheck, PipelineValidationReport,
-    DocumentProcessingValidator, EntityExtractionValidator,
-    RelationshipExtractionValidator, GraphConstructionValidator,
-};
-
-use crate::{Entity, Relationship, Result, GraphRAGError};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+pub use pipeline_validation::{
+    DocumentProcessingValidator, EntityExtractionValidator, GraphConstructionValidator,
+    PhaseValidation, PipelineValidationReport, RelationshipExtractionValidator, ValidationCheck,
+};
+use serde::{Deserialize, Serialize};
+
+use crate::{Entity, GraphRAGError, Relationship, Result};
 
 /// A query result from GraphRAG that can be evaluated
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -169,8 +169,14 @@ Evaluate now:"#.to_string()
         self.template
             .replace("{query}", &result.query)
             .replace("{answer}", &result.answer)
-            .replace("{entities_count}", &result.metadata.entities_count.to_string())
-            .replace("{relationships_count}", &result.metadata.relationships_count.to_string())
+            .replace(
+                "{entities_count}",
+                &result.metadata.entities_count.to_string(),
+            )
+            .replace(
+                "{relationships_count}",
+                &result.metadata.relationships_count.to_string(),
+            )
             .replace("{chunks_count}", &result.metadata.chunks_count.to_string())
             .replace("{entities}", &entities_str)
             .replace("{relationships}", &relationships_str)
@@ -305,11 +311,16 @@ impl LLMEvaluation {
 {}: {} (score {}/5)
 "#,
             self.overall_score,
-            self.relevance.score, self.relevance.reasoning,
-            self.faithfulness.score, self.faithfulness.reasoning,
-            self.completeness.score, self.completeness.reasoning,
-            self.coherence.score, self.coherence.reasoning,
-            self.groundedness.score, self.groundedness.reasoning,
+            self.relevance.score,
+            self.relevance.reasoning,
+            self.faithfulness.score,
+            self.faithfulness.reasoning,
+            self.completeness.score,
+            self.completeness.reasoning,
+            self.coherence.score,
+            self.coherence.reasoning,
+            self.groundedness.score,
+            self.groundedness.reasoning,
             self.summary,
             self.weakest_dimension().0,
             self.weakest_dimension().1.reasoning,
@@ -528,10 +539,15 @@ mod tests {
         let report = eval.report();
 
         // Check for numeric score (format may vary: 4.40 or 4.4)
-        assert!(report.contains("4.4") || report.contains("4.40"),
-                "Expected score 4.4 not found in report: {}", report);
-        assert!(report.contains("5/5") && report.contains("Relevance"),
-                "Expected 'Relevance: 5/5' not found");
+        assert!(
+            report.contains("4.4") || report.contains("4.40"),
+            "Expected score 4.4 not found in report: {}",
+            report
+        );
+        assert!(
+            report.contains("5/5") && report.contains("Relevance"),
+            "Expected 'Relevance: 5/5' not found"
+        );
         assert!(report.contains("Excellent answer"));
 
         // Verify the actual overall_score value

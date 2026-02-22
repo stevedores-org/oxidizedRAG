@@ -8,9 +8,12 @@
 //! - Exact match with normalization
 //! - Phonetic matching (Soundex, Metaphone)
 
-use crate::core::{Entity, EntityId, KnowledgeGraph};
-use crate::Result;
 use std::collections::{HashMap, HashSet};
+
+use crate::{
+    core::{Entity, EntityId, KnowledgeGraph},
+    Result,
+};
 
 /// Configuration for string similarity-based entity linking
 #[derive(Debug, Clone)]
@@ -65,10 +68,7 @@ impl StringSimilarityLinker {
     /// Link entities in a knowledge graph based on string similarity
     ///
     /// Returns a mapping from entity IDs to their canonical entity ID
-    pub fn link_entities(
-        &self,
-        graph: &KnowledgeGraph,
-    ) -> Result<HashMap<EntityId, EntityId>> {
+    pub fn link_entities(&self, graph: &KnowledgeGraph) -> Result<HashMap<EntityId, EntityId>> {
         let mut links: HashMap<EntityId, EntityId> = HashMap::new();
         let entities: Vec<Entity> = graph.entities().cloned().collect();
 
@@ -183,10 +183,7 @@ impl StringSimilarityLinker {
         }
 
         // Normalize whitespace
-        normalized
-            .split_whitespace()
-            .collect::<Vec<_>>()
-            .join(" ")
+        normalized.split_whitespace().collect::<Vec<_>>().join(" ")
     }
 
     /// Compute Levenshtein edit distance-based similarity
@@ -435,7 +432,8 @@ impl StringSimilarityLinker {
             let mut scores = Vec::new();
 
             if self.config.fuzzy_matching {
-                let lev_sim = self.levenshtein_similarity(&normalized_mention, &normalized_candidate);
+                let lev_sim =
+                    self.levenshtein_similarity(&normalized_mention, &normalized_candidate);
                 scores.push(lev_sim);
             }
 
@@ -523,14 +521,8 @@ mod tests {
     fn test_entity_normalization() {
         let linker = StringSimilarityLinker::new(EntityLinkingConfig::default());
 
-        assert_eq!(
-            linker.normalize_string("John  Smith!"),
-            "john smith"
-        );
-        assert_eq!(
-            linker.normalize_string("ACME Corp."),
-            "acme corp"
-        );
+        assert_eq!(linker.normalize_string("John  Smith!"), "john smith");
+        assert_eq!(linker.normalize_string("ACME Corp."), "acme corp");
     }
 
     #[test]

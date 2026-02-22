@@ -1,10 +1,12 @@
 //! Tool utilities for function calling
 
-use super::functions::{
-    EntityExpandFunction, GetEntityContextFunction, GraphSearchFunction,
-    InferRelationshipsFunction, RelationshipTraverseFunction,
+use super::{
+    functions::{
+        EntityExpandFunction, GetEntityContextFunction, GraphSearchFunction,
+        InferRelationshipsFunction, RelationshipTraverseFunction,
+    },
+    FunctionCaller,
 };
-use super::FunctionCaller;
 use crate::Result;
 
 /// Tool registry for managing available functions
@@ -171,7 +173,8 @@ Always explain your reasoning and cite the function call results in your answers
 pub struct PromptBuilder;
 
 impl PromptBuilder {
-    /// Build a complete prompt with system message, user query, and function definitions
+    /// Build a complete prompt with system message, user query, and function
+    /// definitions
     pub fn build_function_calling_prompt(
         user_query: &str,
         function_caller: &FunctionCaller,
@@ -205,7 +208,10 @@ impl PromptBuilder {
         // User query
         prompt.push_str(&format!("User query: {user_query}\n\n"));
 
-        prompt.push_str("Please analyze the query and make appropriate function calls to gather information from the knowledge graph, then provide a comprehensive answer based on the results.");
+        prompt.push_str(
+            "Please analyze the query and make appropriate function calls to gather information \
+             from the knowledge graph, then provide a comprehensive answer based on the results.",
+        );
 
         prompt
     }
@@ -217,7 +223,10 @@ impl PromptBuilder {
     ) -> String {
         let mut prompt = String::new();
 
-        prompt.push_str("Based on the following function call results, provide a comprehensive answer to the user's query.\n\n");
+        prompt.push_str(
+            "Based on the following function call results, provide a comprehensive answer to the \
+             user's query.\n\n",
+        );
 
         prompt.push_str(&format!("User query: {user_query}\n\n"));
 
@@ -225,9 +234,18 @@ impl PromptBuilder {
             function_results,
         ));
 
-        prompt.push_str("\nPlease synthesize this information into a clear, comprehensive answer that directly addresses the user's question. ");
-        prompt.push_str("Include specific details from the function results and explain any relationships or connections found. ");
-        prompt.push_str("If insufficient information was found, state that clearly and suggest what additional information might be helpful.");
+        prompt.push_str(
+            "\nPlease synthesize this information into a clear, comprehensive answer that \
+             directly addresses the user's question. ",
+        );
+        prompt.push_str(
+            "Include specific details from the function results and explain any relationships or \
+             connections found. ",
+        );
+        prompt.push_str(
+            "If insufficient information was found, state that clearly and suggest what \
+             additional information might be helpful.",
+        );
 
         prompt
     }
@@ -290,11 +308,11 @@ impl QueryAnalyzer {
                         current_entity.clear();
                     }
                     in_quotes = !in_quotes;
-                }
+                },
                 _ if in_quotes => {
                     current_entity.push(ch);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
 
@@ -308,7 +326,8 @@ impl QueryAnalyzer {
             .filter(|word| {
                 word.len() > 2
                     && word.chars().next().unwrap().is_uppercase()
-                    && !word.chars().all(|c| c.is_uppercase()) // Skip all-caps words
+                    && !word.chars().all(|c| c.is_uppercase()) // Skip all-caps
+                                                               // words
             })
             .map(|word| {
                 word.trim_matches(|c: char| !c.is_alphanumeric())

@@ -2,11 +2,12 @@
 
 #[cfg(feature = "caching")]
 mod caching_tests {
-    use graphrag_rs::{
-        CachedLLMClient, CacheConfig, CacheKeyGenerator, EvictionPolicy, KeyStrategy,
-        WarmingConfig, WarmingStrategy, MockLLM, LanguageModel, GenerationParams, Result,
-    };
     use std::time::{Duration, Instant};
+
+    use graphrag_rs::{
+        CacheConfig, CacheKeyGenerator, CachedLLMClient, EvictionPolicy, GenerationParams,
+        KeyStrategy, LanguageModel, MockLLM, Result, WarmingConfig, WarmingStrategy,
+    };
 
     #[tokio::test]
     async fn test_basic_cache_functionality() -> Result<()> {
@@ -67,7 +68,9 @@ mod caching_tests {
         };
 
         // Calls with different parameters should create separate cache entries
-        let response1 = client.complete_with_params_async(prompt, params1.clone()).await?;
+        let response1 = client
+            .complete_with_params_async(prompt, params1.clone())
+            .await?;
         let _response2 = client.complete_with_params_async(prompt, params2).await?;
 
         let stats = client.cache_statistics();
@@ -211,9 +214,7 @@ mod caching_tests {
             let client_clone = client.clone();
             let query = format!("Concurrent query {}", i % 3); // Some overlap
 
-            let handle = tokio::spawn(async move {
-                client_clone.complete_async(&query).await
-            });
+            let handle = tokio::spawn(async move { client_clone.complete_async(&query).await });
             handles.push(handle);
         }
 
@@ -271,11 +272,8 @@ mod caching_tests {
         let client = CachedLLMClient::new(mock_llm, cache_config).await?;
 
         let queries = vec![
-            "Query 1",
-            "Query 2",
-            "Query 1", // Repeat
-            "Query 3",
-            "Query 2", // Repeat
+            "Query 1", "Query 2", "Query 1", // Repeat
+            "Query 3", "Query 2", // Repeat
             "Query 1", // Repeat
         ];
 
@@ -288,7 +286,7 @@ mod caching_tests {
         // 6 total requests, 3 unique queries, 3 repeats (hits)
         assert_eq!(stats.total_requests, 6);
         assert_eq!(stats.cache_misses, 3); // Unique queries
-        assert_eq!(stats.cache_hits, 3);   // Repeated queries
+        assert_eq!(stats.cache_hits, 3); // Repeated queries
         assert_eq!(stats.current_size, 3); // Unique entries
 
         // Hit rate should be 50%

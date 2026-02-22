@@ -1,5 +1,7 @@
-use std::collections::{HashMap, HashSet, VecDeque, BinaryHeap};
-use std::cmp::Reverse;
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap, HashSet, VecDeque},
+};
 
 /// A node identifier in the graph.
 pub type NodeId = usize;
@@ -93,8 +95,8 @@ pub fn dfs(graph: &Graph, start: NodeId) -> Vec<NodeId> {
 
 /// Compute shortest paths from a starting node using Dijkstra's algorithm.
 ///
-/// Returns a map from each reachable node to its shortest distance from `start`.
-/// Uses a min-heap priority queue for O((V + E) log V) complexity.
+/// Returns a map from each reachable node to its shortest distance from
+/// `start`. Uses a min-heap priority queue for O((V + E) log V) complexity.
 pub fn dijkstra(graph: &Graph, start: NodeId) -> HashMap<NodeId, u32> {
     let mut distances: HashMap<NodeId, u32> = HashMap::new();
     let mut heap = BinaryHeap::new();

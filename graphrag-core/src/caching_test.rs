@@ -3,13 +3,14 @@
 #[cfg(feature = "caching")]
 mod test_caching {
     #[allow(unused_imports)]
-    use crate::{MockLLM, CacheConfig, CachedLLMClient};
+    use crate::{CacheConfig, CachedLLMClient, MockLLM};
 
     #[tokio::test]
     async fn test_basic_caching() -> crate::core::Result<()> {
         let mock_llm = MockLLM::new()?;
         let cache_config = CacheConfig::development();
-        let client = CachedLLMClient::new(mock_llm, cache_config).await
+        let client = CachedLLMClient::new(mock_llm, cache_config)
+            .await
             .map_err(|e| crate::core::GraphRAGError::Generation {
                 message: format!("Cache error: {e:?}"),
             })?;

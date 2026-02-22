@@ -10,8 +10,9 @@
 //! - Ollama running: `ollama serve`
 //! - Models pulled: `ollama pull llama3.1:8b && ollama pull nomic-embed-text`
 
-use graphrag_rs::ollama::{OllamaClient, OllamaConfig, OllamaEmbeddings};
 use std::error::Error;
+
+use graphrag_rs::ollama::{OllamaClient, OllamaConfig, OllamaEmbeddings};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

@@ -40,17 +40,17 @@
 //! - `COLLECTION_NAME` - Collection name (default: graphrag)
 //! - `EMBEDDING_DIM` - Embedding dimension (default: 384 for MiniLM)
 
+use std::{collections::HashMap, sync::Arc};
+
 use axum::{
     extract::{Path, State},
-    http::{StatusCode, Method},
+    http::{Method, StatusCode},
     response::{IntoResponse, Json},
-    routing::{get, post, delete},
+    routing::{delete, get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::sync::Arc;
-use std::collections::HashMap;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber;
@@ -59,7 +59,7 @@ use tracing_subscriber;
 mod qdrant_store;
 
 #[cfg(feature = "qdrant")]
-use qdrant_store::{QdrantStore, DocumentMetadata, Entity, Relationship};
+use qdrant_store::{DocumentMetadata, Entity, QdrantStore, Relationship};
 
 /// Application state shared across handlers
 #[derive(Clone)]
@@ -214,7 +214,7 @@ async fn health(State(state): State<AppState>) -> impl IntoResponse {
             "document_count": doc_count,
             "graph_built": graph_built,
             "total_queries": query_count
-        }))
+        })),
     )
 }
 
@@ -248,11 +248,12 @@ async fn query(
             let content_lower = doc.content.to_lowercase();
             let title_lower = doc.title.to_lowercase();
 
-            let similarity = if content_lower.contains(&query_lower) || title_lower.contains(&query_lower) {
-                0.85
-            } else {
-                0.1
-            };
+            let similarity =
+                if content_lower.contains(&query_lower) || title_lower.contains(&query_lower) {
+                    0.85
+                } else {
+                    0.1
+                };
 
             let excerpt = if doc.content.len() > 200 {
                 format!("{}...", &doc.content[..200])
@@ -314,19 +315,19 @@ async fn add_document(
 }
 
 /// List all documents
-async fn list_documents(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+async fn list_documents(State(state): State<AppState>) -> Json<serde_json::Value> {
     let documents = state.documents.read().await;
 
     let doc_list: Vec<_> = documents
         .iter()
-        .map(|doc| json!({
-            "id": doc.id,
-            "title": doc.title,
-            "content_length": doc.content.len(),
-            "added_at": doc.added_at
-        }))
+        .map(|doc| {
+            json!({
+                "id": doc.id,
+                "title": doc.title,
+                "content_length": doc.content.len(),
+                "added_at": doc.added_at
+            })
+        })
         .collect();
 
     Json(json!({
@@ -385,7 +386,11 @@ async fn build_graph(
 
     let processing_time = start.elapsed().as_millis() as u64;
 
-    tracing::info!("Built knowledge graph from {} documents in {}ms", doc_count, processing_time);
+    tracing::info!(
+        "Built knowledge graph from {} documents in {}ms",
+        doc_count,
+        processing_time
+    );
 
     Ok(Json(json!({
         "success": true,
@@ -396,9 +401,7 @@ async fn build_graph(
 }
 
 /// Get graph statistics
-async fn graph_stats(
-    State(state): State<AppState>,
-) -> Json<GraphStatsResponse> {
+async fn graph_stats(State(state): State<AppState>) -> Json<GraphStatsResponse> {
     let doc_count = state.documents.read().await.len();
     let graph_built = *state.graph_built.read().await;
 

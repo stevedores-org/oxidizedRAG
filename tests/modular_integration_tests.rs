@@ -5,16 +5,13 @@
 
 #![cfg(feature = "test-utils")]
 
-use graphrag_rs::{
-    core::traits::*,
-    core::{ChunkId, Document, DocumentId, Entity, EntityId, TextChunk},
-    RegistryBuilder, ServiceRegistry,
-};
-
-use graphrag_rs::test_utils::*;
-
 #[cfg(feature = "memory-storage")]
 use graphrag_rs::MemoryStorage;
+use graphrag_rs::{
+    core::{traits::*, ChunkId, Document, DocumentId, Entity, EntityId, TextChunk},
+    test_utils::*,
+    RegistryBuilder, ServiceRegistry,
+};
 
 #[test]
 fn test_service_registry_integration() {
@@ -238,7 +235,7 @@ fn test_error_handling_across_components() {
     match result {
         Err(graphrag_rs::GraphRAGError::LanguageModel { message }) => {
             assert!(message.contains("not available"));
-        }
+        },
         _ => panic!("Expected LanguageModel error"),
     }
 }

@@ -5,17 +5,16 @@
 //! - Incremental document merging
 //! - Cross-document queries with RRF ranking
 
+use std::{collections::HashMap, sync::Arc, time::Instant};
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Json},
 };
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Instant;
-use tokio::sync::RwLock;
 use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 // ============================================================================
 // Request/Response Types
@@ -317,7 +316,9 @@ pub async fn incremental_merge(
         }
 
         if !is_duplicate {
-            collection.entities.insert(new_id.clone(), new_entity.clone());
+            collection
+                .entities
+                .insert(new_id.clone(), new_entity.clone());
         }
     }
 
@@ -390,7 +391,9 @@ pub async fn cross_document_query(
     // Calculate source distribution
     let mut source_distribution: HashMap<String, usize> = HashMap::new();
     for result in &merged_results {
-        *source_distribution.entry(result.source.clone()).or_insert(0) += 1;
+        *source_distribution
+            .entry(result.source.clone())
+            .or_insert(0) += 1;
     }
 
     let elapsed_ms = start.elapsed().as_millis() as u64;
@@ -583,7 +586,10 @@ fn query_collection(
         .collect();
 
     results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
-    results.iter_mut().enumerate().for_each(|(i, r)| r.rank = i + 1);
+    results
+        .iter_mut()
+        .enumerate()
+        .for_each(|(i, r)| r.rank = i + 1);
     results.truncate(top_k);
 
     results
@@ -627,7 +633,10 @@ fn concat_results(result_sets: Vec<Vec<QueryResult>>, top_k: usize) -> Vec<Query
     let mut all_results: Vec<QueryResult> = result_sets.into_iter().flatten().collect();
 
     all_results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap());
-    all_results.iter_mut().enumerate().for_each(|(i, r)| r.rank = i + 1);
+    all_results
+        .iter_mut()
+        .enumerate()
+        .for_each(|(i, r)| r.rank = i + 1);
     all_results.truncate(top_k);
 
     all_results

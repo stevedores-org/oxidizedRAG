@@ -1,11 +1,12 @@
 //! Trait testing suite for modular architecture validation
 //!
-//! This module provides reusable test suites that can be applied to any implementation
-//! of the core traits, ensuring that all implementations behave consistently and correctly.
+//! This module provides reusable test suites that can be applied to any
+//! implementation of the core traits, ensuring that all implementations behave
+//! consistently and correctly.
 
-use crate::core::traits::*;
-use crate::core::{Document, Entity, EntityId, Result, TextChunk};
 use std::collections::HashMap;
+
+use crate::core::{traits::*, Document, Entity, EntityId, Result, TextChunk};
 
 /// Test suite for Storage trait implementations
 ///
@@ -322,7 +323,9 @@ where
     assert!(!completion.is_empty());
 
     // Should respect max_tokens limit (approximately)
-    assert!(completion.split_whitespace().count() <= 15); // Some buffer for tokenization differences
+    assert!(completion.split_whitespace().count() <= 15); // Some buffer for
+                                                          // tokenization
+                                                          // differences
 }
 
 /// Test ConfigProvider trait implementations

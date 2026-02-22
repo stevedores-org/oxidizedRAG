@@ -1,20 +1,26 @@
 //! ROGRAG (Robustly Optimized GraphRAG) module - Reasoning on Graphs for RAG
 //!
 //! This module implements a sophisticated query processing system that combines
-//! structured reasoning with graph-based retrieval for enhanced accuracy and robustness.
+//! structured reasoning with graph-based retrieval for enhanced accuracy and
+//! robustness.
 //!
 //! # Architecture
 //!
 //! ROGRAG introduces three primary retrieval strategies:
 //!
-//! 1. **Logic Form Retrieval** - Parses queries into structured logic forms for precise graph traversal
-//! 2. **Fuzzy Matching** - Provides semantic similarity-based fallback when logic forms fail
-//! 3. **Query Decomposition** - Breaks complex queries into manageable subqueries
+//! 1. **Logic Form Retrieval** - Parses queries into structured logic forms for
+//!    precise graph traversal
+//! 2. **Fuzzy Matching** - Provides semantic similarity-based fallback when
+//!    logic forms fail
+//! 3. **Query Decomposition** - Breaks complex queries into manageable
+//!    subqueries
 //!
 //! # Key Components
 //!
-//! - [`decomposer`] - Query decomposition using semantic/syntactic/hybrid strategies
-//! - [`fuzzy_matcher`] - Semantic similarity matching for entities and content chunks
+//! - [`decomposer`] - Query decomposition using semantic/syntactic/hybrid
+//!   strategies
+//! - [`fuzzy_matcher`] - Semantic similarity matching for entities and content
+//!   chunks
 //! - [`intent_classifier`] - Query intent detection with refusal capabilities
 //! - [`logic_form`] - Structured query representation and execution
 //! - [`processor`] - Main ROGRAG processing pipeline orchestration
@@ -40,7 +46,8 @@
 //! # Quality Assurance
 //!
 //! The ROGRAG module includes built-in validation, quality metrics, and intent
-//! classification to ensure reliable operation and prevent inappropriate responses.
+//! classification to ensure reliable operation and prevent inappropriate
+//! responses.
 
 #[cfg(feature = "rograg")]
 pub mod decomposer;
@@ -72,23 +79,15 @@ pub use logic_form::*;
 pub use processor::*;
 #[cfg(feature = "rograg")]
 pub use quality_metrics::{
-    QualityMetrics as QualityMetricsConfig, 
-    QualityMetricsConfig as QualityMetricsOptions,
-    QueryMetrics, 
-    ResponseQuality, 
-    PerformanceStatistics,
-    ComparativeAnalysis
+    ComparativeAnalysis, PerformanceStatistics, QualityMetrics as QualityMetricsConfig,
+    QualityMetricsConfig as QualityMetricsOptions, QueryMetrics, ResponseQuality,
 };
 #[cfg(feature = "rograg")]
 pub use streaming::*;
 #[cfg(feature = "rograg")]
 pub use validator::{
-    QueryValidator, 
-    ValidationResult, 
-    ValidationIssue, 
-    IssueType, 
-    IssueSeverity,
-    ResponseValidationMetrics as ValidatorQualityMetrics
+    IssueSeverity, IssueType, QueryValidator, ResponseValidationMetrics as ValidatorQualityMetrics,
+    ValidationIssue, ValidationResult,
 };
 
 #[cfg(feature = "rograg")]

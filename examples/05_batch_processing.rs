@@ -3,8 +3,9 @@
 //! This example demonstrates how to process multiple documents in batch
 //! and query across all of them.
 
-use graphrag_rs::{GraphRAG, Document, DocumentId};
 use std::error::Error;
+
+use graphrag_rs::{Document, DocumentId, GraphRAG};
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("GraphRAG-rs Batch Processing Example\n");
@@ -123,10 +124,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let document = Document::new(
             DocumentId::new(doc_id.to_string()),
             doc_id.to_string(),
-            content.to_string()
+            content.to_string(),
         )
-            .with_metadata("category".to_string(), category.to_string())
-            .with_metadata("doc_id".to_string(), doc_id.to_string());
+        .with_metadata("category".to_string(), category.to_string())
+        .with_metadata("doc_id".to_string(), doc_id.to_string());
 
         graphrag.add_document(document)?;
     }
@@ -208,8 +209,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("\nProcessing Statistics:");
     println!("----------------------");
     println!("Documents processed: {}", documents.len());
-    println!("Total text size: {} characters",
-             documents.iter().map(|(_, content, _)| content.len()).sum::<usize>());
+    println!(
+        "Total text size: {} characters",
+        documents
+            .iter()
+            .map(|(_, content, _)| content.len())
+            .sum::<usize>()
+    );
     println!("Queries executed: {}", cross_document_queries.len() + 3);
 
     Ok(())

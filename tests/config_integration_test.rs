@@ -10,8 +10,8 @@
 mod tests {
     use graphrag_core::{
         config::{Config, ZeroCostApproachConfig},
-        summarization::{HierarchicalConfig, LLMConfig, LLMStrategy},
         core::Result,
+        summarization::{HierarchicalConfig, LLMConfig, LLMStrategy},
     };
 
     #[test]
@@ -52,7 +52,10 @@ mod tests {
         // Verify custom values
         assert!(custom_summarization.llm_config.enabled);
         assert_eq!(custom_summarization.llm_config.model_name, "gpt-4");
-        assert!(matches!(custom_summarization.llm_config.strategy, LLMStrategy::Progressive));
+        assert!(matches!(
+            custom_summarization.llm_config.strategy,
+            LLMStrategy::Progressive
+        ));
         assert_eq!(custom_summarization.merge_size, 5);
         assert_eq!(custom_summarization.max_summary_length, 300);
 
@@ -67,11 +70,7 @@ mod tests {
         let mut config = ZeroCostApproachConfig::default();
 
         // Test each approach selection
-        let approaches = vec![
-            "pure_algorithmic",
-            "lazy_graphrag",
-            "e2_graphrag",
-        ];
+        let approaches = vec!["pure_algorithmic", "lazy_graphrag", "e2_graphrag"];
 
         for approach in approaches {
             config.approach = approach.to_string();
@@ -86,7 +85,7 @@ mod tests {
                 "e2_graphrag" => {
                     assert!(config.e2_graphrag.enabled);
                 },
-                _ => {}
+                _ => {},
             }
         }
 
@@ -142,9 +141,18 @@ mod tests {
         let parsed_config: Config = serde_json::from_str(&json5_str)?;
 
         // Verify key fields match
-        assert_eq!(original_config.summarization.merge_size, parsed_config.summarization.merge_size);
-        assert_eq!(original_config.zero_cost_approach.approach, parsed_config.zero_cost_approach.approach);
-        assert_eq!(original_config.summarization.llm_config.enabled, parsed_config.summarization.llm_config.enabled);
+        assert_eq!(
+            original_config.summarization.merge_size,
+            parsed_config.summarization.merge_size
+        );
+        assert_eq!(
+            original_config.zero_cost_approach.approach,
+            parsed_config.zero_cost_approach.approach
+        );
+        assert_eq!(
+            original_config.summarization.llm_config.enabled,
+            parsed_config.summarization.llm_config.enabled
+        );
 
         Ok(())
     }
@@ -192,8 +200,11 @@ mod tests {
                 config.approach = "lazy_graphrag".to_string();
             }
 
-            assert_eq!(config.approach, expected_approach,
-                "Failed for {} tier with budget ${}", name, budget);
+            assert_eq!(
+                config.approach, expected_approach,
+                "Failed for {} tier with budget ${}",
+                name, budget
+            );
         }
 
         Ok(())
@@ -252,7 +263,14 @@ mod tests {
         assert!(config.summarization.min_node_size > 0);
 
         assert!(!config.zero_cost_approach.approach.is_empty());
-        assert!(config.zero_cost_approach.pure_algorithmic.search_ranking.keyword_search.enabled);
+        assert!(
+            config
+                .zero_cost_approach
+                .pure_algorithmic
+                .search_ranking
+                .keyword_search
+                .enabled
+        );
 
         // Validate LLM configuration constraints
         assert!(config.summarization.llm_config.temperature >= 0.0);

@@ -1,11 +1,12 @@
 //! Raw results viewer component - shows search results before LLM processing
 
-use crate::{action::Action, theme::Theme};
 use ratatui::{
     layout::{Margin, Rect},
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap},
     Frame,
 };
+
+use crate::{action::Action, theme::Theme};
 
 /// Raw results viewer with scrolling support
 pub struct RawResultsViewer {
@@ -113,41 +114,41 @@ impl super::Component for RawResultsViewer {
                     self.scroll_up();
                 }
                 None
-            }
+            },
             Action::ScrollDown => {
                 if self.focused {
                     self.scroll_down();
                 }
                 None
-            }
+            },
             Action::ScrollPageUp => {
                 if self.focused {
                     self.scroll_page_up(10);
                 }
                 None
-            }
+            },
             Action::ScrollPageDown => {
                 if self.focused {
                     self.scroll_page_down(10);
                 }
                 None
-            }
+            },
             Action::ScrollToTop => {
                 if self.focused {
                     self.scroll_to_top();
                 }
                 None
-            }
+            },
             Action::ScrollToBottom => {
                 if self.focused {
                     self.scroll_to_bottom();
                 }
                 None
-            }
+            },
             Action::FocusRawResultsViewer => {
                 self.set_focused(true);
                 None
-            }
+            },
             _ => None,
         }
     }
@@ -176,7 +177,7 @@ impl super::Component for RawResultsViewer {
             .block(block)
             .wrap(Wrap { trim: false })
             .scroll((self.scroll_offset as u16, 0))
-            .style(self.theme.text_dim());  // Use dimmed text for raw results
+            .style(self.theme.text_dim()); // Use dimmed text for raw results
 
         f.render_widget(paragraph, area);
 

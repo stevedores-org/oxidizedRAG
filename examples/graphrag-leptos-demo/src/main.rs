@@ -1,7 +1,7 @@
 //! GraphRAG Leptos Demo - ONNX Embeddings Integration
 //!
-//! This demo shows how to integrate the Leptos UI components with ONNX Runtime Web
-//! for GPU-accelerated embeddings in the browser.
+//! This demo shows how to integrate the Leptos UI components with ONNX Runtime
+//! Web for GPU-accelerated embeddings in the browser.
 //!
 //! ## Features
 //! - Interactive chat interface with GraphRAG
@@ -10,13 +10,16 @@
 //! - Document upload and indexing
 //! - Semantic search with embeddings
 
-use leptos::prelude::*;
-use leptos::prelude::{signal, Effect};
-use leptos::task::spawn_local;
-use leptos_meta::*;
 use graphrag_leptos::*;
-use graphrag_wasm::GraphRAG;
-use graphrag_wasm::onnx_embedder::{WasmOnnxEmbedder, check_onnx_runtime};
+use graphrag_wasm::{
+    onnx_embedder::{check_onnx_runtime, WasmOnnxEmbedder},
+    GraphRAG,
+};
+use leptos::{
+    prelude::{signal, Effect, *},
+    task::spawn_local,
+};
+use leptos_meta::*;
 
 /// Main application component
 #[component]
@@ -45,7 +48,7 @@ fn App() -> impl IntoView {
         spawn_local(async move {
             if !check_onnx_runtime() {
                 set_error_message.set(Some(
-                    "ONNX Runtime not found! Please add the script tag to index.html".to_string()
+                    "ONNX Runtime not found! Please add the script tag to index.html".to_string(),
                 ));
                 set_status_message.set("ONNX Runtime missing".to_string());
                 return;
@@ -57,7 +60,10 @@ fn App() -> impl IntoView {
             match WasmOnnxEmbedder::new(384) {
                 Ok(mut emb) => {
                     // Load model with WebGPU
-                    match emb.load_model("./models/all-MiniLM-L6-v2.onnx", Some(true)).await {
+                    match emb
+                        .load_model("./models/all-MiniLM-L6-v2.onnx", Some(true))
+                        .await
+                    {
                         Ok(_) => {
                             web_sys::console::log_1(&"✅ ONNX model loaded with WebGPU".into());
                             set_embedder.set(Some(emb));
@@ -66,29 +72,30 @@ fn App() -> impl IntoView {
                             match GraphRAG::new(384) {
                                 Ok(graph) => {
                                     set_graph_instance.set(Some(graph));
-                                    set_status_message.set("Ready! Add documents or ask questions.".to_string());
+                                    set_status_message
+                                        .set("Ready! Add documents or ask questions.".to_string());
                                     set_error_message.set(None);
-                                }
+                                },
                                 Err(e) => {
                                     let err_msg = format!("Failed to create GraphRAG: {:?}", e);
                                     web_sys::console::error_1(&err_msg.clone().into());
                                     set_error_message.set(Some(err_msg));
-                                }
+                                },
                             }
-                        }
+                        },
                         Err(e) => {
                             let err_msg = format!("Failed to load ONNX model: {:?}", e);
                             web_sys::console::error_1(&err_msg.clone().into());
                             set_error_message.set(Some(err_msg));
                             set_status_message.set("Model loading failed".to_string());
-                        }
+                        },
                     }
-                }
+                },
                 Err(e) => {
                     let err_msg = format!("Failed to create ONNX embedder: {:?}", e);
                     web_sys::console::error_1(&err_msg.clone().into());
                     set_error_message.set(Some(err_msg));
-                }
+                },
             }
         });
     });
@@ -110,22 +117,24 @@ fn App() -> impl IntoView {
                         // Query GraphRAG
                         match graph.query(query_vec, 3).await {
                             Ok(results) => {
-                                web_sys::console::log_1(&format!("✅ Query results: {}", results).into());
+                                web_sys::console::log_1(
+                                    &format!("✅ Query results: {}", results).into(),
+                                );
                                 set_status_message.set("Query completed".to_string());
                                 // TODO: Update UI with results
-                            }
+                            },
                             Err(e) => {
                                 let err = format!("Query failed: {:?}", e);
                                 web_sys::console::error_1(&err.clone().into());
                                 set_error_message.set(Some(err));
-                            }
+                            },
                         }
-                    }
+                    },
                     Err(e) => {
                         let err = format!("Embedding generation failed: {:?}", e);
                         web_sys::console::error_1(&err.clone().into());
                         set_error_message.set(Some(err));
-                    }
+                    },
                 }
             } else {
                 set_error_message.set(Some("System not initialized".to_string()));
@@ -152,23 +161,32 @@ fn App() -> impl IntoView {
                             let mut embedding_vec = vec![0.0f32; embedding_js.length() as usize];
                             embedding_js.copy_to(&mut embedding_vec);
 
-                            match graph.add_document(
-                                format!("doc_{}", idx),
-                                content.clone(),
-                                embedding_vec
-                            ).await {
+                            match graph
+                                .add_document(
+                                    format!("doc_{}", idx),
+                                    content.clone(),
+                                    embedding_vec,
+                                )
+                                .await
+                            {
                                 Ok(_) => {
-                                    web_sys::console::log_1(&format!("✅ Added: {}", file_name).into());
+                                    web_sys::console::log_1(
+                                        &format!("✅ Added: {}", file_name).into(),
+                                    );
                                     set_document_count.update(|c| *c += 1);
-                                }
+                                },
                                 Err(e) => {
-                                    web_sys::console::error_1(&format!("Failed to add {}: {:?}", file_name, e).into());
-                                }
+                                    web_sys::console::error_1(
+                                        &format!("Failed to add {}: {:?}", file_name, e).into(),
+                                    );
+                                },
                             }
-                        }
+                        },
                         Err(e) => {
-                            web_sys::console::error_1(&format!("Embedding failed for {}: {:?}", file_name, e).into());
-                        }
+                            web_sys::console::error_1(
+                                &format!("Embedding failed for {}: {:?}", file_name, e).into(),
+                            );
+                        },
                     }
                 }
 
@@ -177,10 +195,10 @@ fn App() -> impl IntoView {
                     Ok(_) => {
                         set_graph_instance.set(Some(graph));
                         set_status_message.set(format!("Indexed {} documents", files.len()));
-                    }
+                    },
                     Err(e) => {
                         set_error_message.set(Some(format!("Index build failed: {:?}", e)));
-                    }
+                    },
                 }
             }
 

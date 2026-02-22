@@ -3,23 +3,22 @@
 //! This module provides a complete async implementation of the GraphRAG system
 //! that leverages all async traits for maximum performance and scalability.
 
+use std::{collections::HashMap, sync::Arc};
+
+use tokio::sync::RwLock;
+
 use crate::{
     config::Config,
     core::{
         traits::{AsyncLanguageModel, BoxedAsyncLanguageModel},
-        Document, DocumentId, Entity, EntityId, GraphRAGError, KnowledgeGraph, Result,
-        TextChunk,
+        Document, DocumentId, Entity, EntityId, GraphRAGError, KnowledgeGraph, Result, TextChunk,
     },
     generation::{AnswerContext, GeneratedAnswer, PromptTemplate},
     retrieval::SearchResult,
-    summarization::{DocumentTree, HierarchicalConfig, QueryResult, LLMClient},
+    summarization::{DocumentTree, HierarchicalConfig, LLMClient, QueryResult},
 };
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
-type SharedAsyncLanguageModel =
-    Arc<dyn AsyncLanguageModel<Error = GraphRAGError> + Send + Sync>;
+type SharedAsyncLanguageModel = Arc<dyn AsyncLanguageModel<Error = GraphRAGError> + Send + Sync>;
 
 /// Adapter to connect BoxedAsyncLanguageModel to LLMClient trait
 pub struct AsyncLanguageModelAdapter {
@@ -50,9 +49,11 @@ impl LLMClient for AsyncLanguageModelAdapter {
     ) -> crate::Result<String> {
         let full_prompt = format!("{}\n\nText: {}", prompt, text);
 
-        let response = self.model
-            .complete(&full_prompt)
-            .await.map_err(|e| crate::core::GraphRAGError::Generation { message: e.to_string() })?;
+        let response = self.model.complete(&full_prompt).await.map_err(|e| {
+            crate::core::GraphRAGError::Generation {
+                message: e.to_string(),
+            }
+        })?;
 
         Ok(response)
     }
@@ -64,7 +65,8 @@ impl LLMClient for AsyncLanguageModelAdapter {
 
 /// Async version of the main GraphRAG system
 pub struct AsyncGraphRAG {
-    #[allow(dead_code)] config: Config,
+    #[allow(dead_code)]
+    config: Config,
     knowledge_graph: Arc<RwLock<Option<KnowledgeGraph>>>,
     document_trees: Arc<RwLock<HashMap<DocumentId, DocumentTree>>>,
     hierarchical_config: HierarchicalConfig,
@@ -123,7 +125,8 @@ impl AsyncGraphRAG {
             #[cfg(not(feature = "async-traits"))]
             {
                 return Err(GraphRAGError::Config {
-                    message: "No async language model available and async-traits feature disabled".to_string(),
+                    message: "No async language model available and async-traits feature disabled"
+                        .to_string(),
                 });
             }
         }
@@ -138,11 +141,9 @@ impl AsyncGraphRAG {
         self.build_document_tree(&document).await?;
 
         let mut graph_guard = self.knowledge_graph.write().await;
-        let graph = graph_guard
-            .as_mut()
-            .ok_or_else(|| GraphRAGError::Config {
-                message: "Knowledge graph not initialized".to_string(),
-            })?;
+        let graph = graph_guard.as_mut().ok_or_else(|| GraphRAGError::Config {
+            message: "Knowledge graph not initialized".to_string(),
+        })?;
 
         graph.add_document(document)
     }
@@ -184,11 +185,9 @@ impl AsyncGraphRAG {
     /// Build the knowledge graph from documents asynchronously
     pub async fn build_graph(&mut self) -> Result<()> {
         let mut graph_guard = self.knowledge_graph.write().await;
-        let graph = graph_guard
-            .as_mut()
-            .ok_or_else(|| GraphRAGError::Config {
-                message: "Knowledge graph not initialized".to_string(),
-            })?;
+        let graph = graph_guard.as_mut().ok_or_else(|| GraphRAGError::Config {
+            message: "Knowledge graph not initialized".to_string(),
+        })?;
 
         tracing::info!("Building knowledge graph asynchronously");
 
@@ -196,7 +195,8 @@ impl AsyncGraphRAG {
         let chunks: Vec<_> = graph.chunks().cloned().collect();
         let mut total_entities = 0;
 
-        // For each chunk, extract entities (would use AsyncEntityExtractor in full implementation)
+        // For each chunk, extract entities (would use AsyncEntityExtractor in full
+        // implementation)
         for chunk in &chunks {
             // Simulate async entity extraction
             let entities = self.extract_entities_async(chunk).await?;
@@ -215,7 +215,10 @@ impl AsyncGraphRAG {
             }
         }
 
-        tracing::info!(entity_count = total_entities, "Knowledge graph built asynchronously");
+        tracing::info!(
+            entity_count = total_entities,
+            "Knowledge graph built asynchronously"
+        );
         Ok(())
     }
 
@@ -340,7 +343,9 @@ impl AsyncGraphRAG {
         llm: &(dyn AsyncLanguageModel<Error = GraphRAGError> + Send + Sync),
     ) -> Result<GeneratedAnswer> {
         // Assemble context
-        let context = self.assemble_context_async(search_results, hierarchical_results).await?;
+        let context = self
+            .assemble_context_async(search_results, hierarchical_results)
+            .await?;
 
         // Create prompt
         let prompt = self.create_qa_prompt(question, &context)?;
@@ -401,7 +406,10 @@ impl AsyncGraphRAG {
         values.insert("question".to_string(), question.to_string());
 
         let template = PromptTemplate::new(
-            "Context:\n{context}\n\nQuestion: {question}\n\nBased on the provided context, please answer the question. If the context doesn't contain enough information, please say so.".to_string()
+            "Context:\n{context}\n\nQuestion: {question}\n\nBased on the provided context, please \
+             answer the question. If the context doesn't contain enough information, please say \
+             so."
+            .to_string(),
         );
 
         template.fill(&values)
@@ -409,10 +417,14 @@ impl AsyncGraphRAG {
 
     /// Batch process multiple documents concurrently
     pub async fn add_documents_batch(&mut self, documents: Vec<Document>) -> Result<()> {
-        tracing::info!(document_count = documents.len(), "Processing documents concurrently");
+        tracing::info!(
+            document_count = documents.len(),
+            "Processing documents concurrently"
+        );
 
         // Process documents sequentially for now to avoid borrowing issues
-        // In a production implementation, you'd use channels or other concurrency patterns
+        // In a production implementation, you'd use channels or other concurrency
+        // patterns
         for document in documents {
             self.add_document(document).await?;
         }
@@ -446,10 +458,7 @@ impl AsyncGraphRAG {
 
         AsyncPerformanceStats {
             total_documents: trees_guard.len(),
-            total_entities: graph_guard
-                .as_ref()
-                .map(|g| g.entity_count())
-                .unwrap_or(0),
+            total_entities: graph_guard.as_ref().map(|g| g.entity_count()).unwrap_or(0),
             total_chunks: graph_guard
                 .as_ref()
                 .map(|g| g.chunks().count())
@@ -520,9 +529,11 @@ pub struct AsyncPerformanceStats {
 pub enum AsyncHealthStatus {
     /// All async components are functioning normally with no issues detected
     Healthy,
-    /// Some async components are experiencing issues but the system remains operational
+    /// Some async components are experiencing issues but the system remains
+    /// operational
     Degraded,
-    /// Critical async components have failed and the system is not functioning properly
+    /// Critical async components have failed and the system is not functioning
+    /// properly
     Unhealthy,
 }
 
@@ -571,10 +582,7 @@ impl AsyncGraphRAGBuilder {
 
     /// Build with async Ollama LLM
     #[cfg(all(feature = "ollama", feature = "async-traits"))]
-    pub async fn with_async_ollama(
-        mut self,
-        config: crate::ollama::OllamaConfig,
-    ) -> Result<Self> {
+    pub async fn with_async_ollama(mut self, config: crate::ollama::OllamaConfig) -> Result<Self> {
         let ollama_llm = crate::ollama::AsyncOllamaGenerator::new(config).await?;
         self.language_model = Some(Arc::new(Box::new(ollama_llm)));
         Ok(self)
@@ -584,7 +592,8 @@ impl AsyncGraphRAGBuilder {
     pub async fn build(self) -> Result<AsyncGraphRAG> {
         let hierarchical_config = self.hierarchical_config.unwrap_or_default();
 
-        let mut graphrag = AsyncGraphRAG::with_hierarchical_config(self.config, hierarchical_config).await?;
+        let mut graphrag =
+            AsyncGraphRAG::with_hierarchical_config(self.config, hierarchical_config).await?;
 
         if let Some(llm) = self.language_model {
             graphrag.set_language_model(llm).await;

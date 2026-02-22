@@ -1,7 +1,7 @@
 //! LLM-based Hierarchical Summarization Demo
 //!
-//! This example demonstrates how to use the new LLM-powered hierarchical summarization
-//! system to create multi-level abstractions of document content.
+//! This example demonstrates how to use the new LLM-powered hierarchical
+//! summarization system to create multi-level abstractions of document content.
 //!
 //! Features demonstrated:
 //! - LLM-based vs extractive summarization
@@ -10,19 +10,20 @@
 //! - Batch processing with LLM
 //! - Fallback to extractive when LLM fails
 
+use std::{collections::HashMap, sync::Arc};
+
 use graphrag_core::{
     core::{DocumentId, TextChunk},
     summarization::{
-        DocumentTree, HierarchicalConfig, LLMConfig, LLMStrategy, LevelConfig, LLMClient
+        DocumentTree, HierarchicalConfig, LLMClient, LLMConfig, LLMStrategy, LevelConfig,
     },
     text::TextProcessor,
     Result,
 };
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Example LLM client implementation
-/// In a real implementation, this would connect to Ollama, OpenAI, or another LLM provider
+/// In a real implementation, this would connect to Ollama, OpenAI, or another
+/// LLM provider
 struct ExampleLLMClient {
     model_name: String,
 }
@@ -37,21 +38,25 @@ impl LLMClient for ExampleLLMClient {
         _temperature: f32,
     ) -> Result<String> {
         // Simulate LLM call with a simple extractive approach
-        println!("🤖 LLM Call: {} (max_tokens: {})", self.model_name, max_tokens);
-        println!("   Prompt: {}", prompt.chars().take(100).collect::<String>());
+        println!(
+            "🤖 LLM Call: {} (max_tokens: {})",
+            self.model_name, max_tokens
+        );
+        println!(
+            "   Prompt: {}",
+            prompt.chars().take(100).collect::<String>()
+        );
 
         // Simple mock implementation - in reality this would call the actual LLM
-        let sentences: Vec<&str> = text
-            .split('.')
-            .filter(|s| s.trim().len() > 10)
-            .collect();
+        let sentences: Vec<&str> = text.split('.').filter(|s| s.trim().len() > 10).collect();
 
         let mut summary = String::new();
         let mut char_count = 0;
 
         for sentence in sentences {
             let sentence = sentence.trim();
-            if char_count + sentence.len() + 1 <= max_tokens * 4 { // Rough char estimation
+            if char_count + sentence.len() + 1 <= max_tokens * 4 {
+                // Rough char estimation
                 if !summary.is_empty() {
                     summary.push(' ');
                 }
@@ -105,7 +110,7 @@ async fn main() -> Result<()> {
 /// Demonstrate the difference between extractive and LLM-based summarization
 async fn demo_extractive_vs_llm(document_text: &str) -> Result<()> {
     println!("📊 Demo 1: Extractive vs LLM-based Summarization");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
 
     // Create chunks
     let mut text_processor = TextProcessor::new(800, 200)?;
@@ -175,12 +180,22 @@ async fn demo_extractive_vs_llm(document_text: &str) -> Result<()> {
     println!("\n📝 Sample Summary Comparison:");
     if let (Some(extractive_root), Some(llm_root)) = (
         extractive_tree.get_root_nodes().first(),
-        llm_tree.get_root_nodes().first()
+        llm_tree.get_root_nodes().first(),
     ) {
-        println!("Extractive Root (Level {}): {}", extractive_root.level,
-                   extractive_root.summary.chars().take(100).collect::<String>());
-        println!("LLM Root (Level {}): {}", llm_root.level,
-                   llm_root.summary.chars().take(100).collect::<String>());
+        println!(
+            "Extractive Root (Level {}): {}",
+            extractive_root.level,
+            extractive_root
+                .summary
+                .chars()
+                .take(100)
+                .collect::<String>()
+        );
+        println!(
+            "LLM Root (Level {}): {}",
+            llm_root.level,
+            llm_root.summary.chars().take(100).collect::<String>()
+        );
     }
 
     println!("\n");
@@ -190,7 +205,7 @@ async fn demo_extractive_vs_llm(document_text: &str) -> Result<()> {
 /// Demonstrate progressive summarization across levels
 async fn demo_progressive_summarization(document_text: &str) -> Result<()> {
     println!("🔄 Demo 2: Progressive Abstraction Across Levels");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
 
     let llm_client = Arc::new(ExampleLLMClient {
         model_name: "llama3.1:8b".to_string(),
@@ -212,42 +227,60 @@ async fn demo_progressive_summarization(document_text: &str) -> Result<()> {
                 let mut level_configs = HashMap::new();
 
                 // Level 0: Extractive
-                level_configs.insert(0, LevelConfig {
-                    max_length: 180,
-                    use_abstractive: false,
-                    prompt_template: None,
-                    temperature: Some(0.2),
-                });
+                level_configs.insert(
+                    0,
+                    LevelConfig {
+                        max_length: 180,
+                        use_abstractive: false,
+                        prompt_template: None,
+                        temperature: Some(0.2),
+                    },
+                );
 
                 // Level 1: Still extractive
-                level_configs.insert(1, LevelConfig {
-                    max_length: 200,
-                    use_abstractive: false,
-                    prompt_template: Some(
-                        "Extract the key information from this text segment. Keep it factual and under {max_length} characters.\n\n{text}".to_string()
-                    ),
-                    temperature: Some(0.25),
-                });
+                level_configs.insert(
+                    1,
+                    LevelConfig {
+                        max_length: 200,
+                        use_abstractive: false,
+                        prompt_template: Some(
+                            "Extract the key information from this text segment. Keep it factual \
+                             and under {max_length} characters.\n\n{text}"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.25),
+                    },
+                );
 
                 // Level 2: Begin abstractive
-                level_configs.insert(2, LevelConfig {
-                    max_length: 220,
-                    use_abstractive: true,
-                    prompt_template: Some(
-                        "Create a summary that synthesizes the key concepts from these related segments. Focus on main themes.\n\n{text}".to_string()
-                    ),
-                    temperature: Some(0.3),
-                });
+                level_configs.insert(
+                    2,
+                    LevelConfig {
+                        max_length: 220,
+                        use_abstractive: true,
+                        prompt_template: Some(
+                            "Create a summary that synthesizes the key concepts from these \
+                             related segments. Focus on main themes.\n\n{text}"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.3),
+                    },
+                );
 
                 // Level 3+: Fully abstractive
-                level_configs.insert(3, LevelConfig {
-                    max_length: 250,
-                    use_abstractive: true,
-                    prompt_template: Some(
-                        "Generate a high-level abstract summary of this content. Focus on essential themes and insights.\n\n{text}".to_string()
-                    ),
-                    temperature: Some(0.35),
-                });
+                level_configs.insert(
+                    3,
+                    LevelConfig {
+                        max_length: 250,
+                        use_abstractive: true,
+                        prompt_template: Some(
+                            "Generate a high-level abstract summary of this content. Focus on \
+                             essential themes and insights.\n\n{text}"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.35),
+                    },
+                );
 
                 level_configs
             },
@@ -271,10 +304,12 @@ async fn demo_progressive_summarization(document_text: &str) -> Result<()> {
     for level in 0..=stats.max_level {
         if let Some(nodes) = progressive_tree.get_level_nodes(level) {
             if let Some(node) = nodes.first() {
-                println!("Level {}: {} ({} chars)",
-                          level,
-                          node.summary.chars().take(80).collect::<String>(),
-                          node.summary.len());
+                println!(
+                    "Level {}: {} ({} chars)",
+                    level,
+                    node.summary.chars().take(80).collect::<String>(),
+                    node.summary.len()
+                );
             }
         }
     }
@@ -286,7 +321,7 @@ async fn demo_progressive_summarization(document_text: &str) -> Result<()> {
 /// Demonstrate level-specific configuration
 async fn demo_level_specific_configuration(document_text: &str) -> Result<()> {
     println!("⚙️  Demo 3: Level-Specific Configuration");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
 
     let llm_client = Arc::new(ExampleLLMClient {
         model_name: "llama3.1:8b".to_string(),
@@ -308,41 +343,61 @@ async fn demo_level_specific_configuration(document_text: &str) -> Result<()> {
                 let mut configs = HashMap::new();
 
                 // Custom templates for different purposes
-                configs.insert(0, LevelConfig {
-                    max_length: 150,
-                    use_abstractive: false,
-                    prompt_template: Some(
-                        "🔍 FACT EXTRACTION\nExtract the most important facts from this text segment:\n\n{text}\n\nKey facts:".to_string()
-                    ),
-                    temperature: Some(0.1),
-                });
+                configs.insert(
+                    0,
+                    LevelConfig {
+                        max_length: 150,
+                        use_abstractive: false,
+                        prompt_template: Some(
+                            "🔍 FACT EXTRACTION\nExtract the most important facts from this text \
+                             segment:\n\n{text}\n\nKey facts:"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.1),
+                    },
+                );
 
-                configs.insert(1, LevelConfig {
-                    max_length: 200,
-                    use_abstractive: false,
-                    prompt_template: Some(
-                        "📋 SEGMENT SUMMARY\nCreate a concise summary of this document segment:\n\n{text}\n\nSummary:".to_string()
-                    ),
-                    temperature: Some(0.2),
-                });
+                configs.insert(
+                    1,
+                    LevelConfig {
+                        max_length: 200,
+                        use_abstractive: false,
+                        prompt_template: Some(
+                            "📋 SEGMENT SUMMARY\nCreate a concise summary of this document \
+                             segment:\n\n{text}\n\nSummary:"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.2),
+                    },
+                );
 
-                configs.insert(2, LevelConfig {
-                    max_length: 250,
-                    use_abstractive: true,
-                    prompt_template: Some(
-                        "🎯 THEME SYNTHESIS\nIdentify and synthesize the main themes in this content:\n\n{text}\n\nMain themes:".to_string()
-                    ),
-                    temperature: Some(0.3),
-                });
+                configs.insert(
+                    2,
+                    LevelConfig {
+                        max_length: 250,
+                        use_abstractive: true,
+                        prompt_template: Some(
+                            "🎯 THEME SYNTHESIS\nIdentify and synthesize the main themes in this \
+                             content:\n\n{text}\n\nMain themes:"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.3),
+                    },
+                );
 
-                configs.insert(3, LevelConfig {
-                    max_length: 300,
-                    use_abstractive: true,
-                    prompt_template: Some(
-                        "🌟 INSIGHTS OVERVIEW\nGenerate high-level insights and abstract understanding:\n\n{text}\n\nKey insights:".to_string()
-                    ),
-                    temperature: Some(0.4),
-                });
+                configs.insert(
+                    3,
+                    LevelConfig {
+                        max_length: 300,
+                        use_abstractive: true,
+                        prompt_template: Some(
+                            "🌟 INSIGHTS OVERVIEW\nGenerate high-level insights and abstract \
+                             understanding:\n\n{text}\n\nKey insights:"
+                                .to_string(),
+                        ),
+                        temperature: Some(0.4),
+                    },
+                );
 
                 configs
             },
@@ -369,7 +424,10 @@ async fn demo_level_specific_configuration(document_text: &str) -> Result<()> {
                 if node.summary.len() < 100 {
                     println!("  \"{}\"", node.summary);
                 } else {
-                    println!("  \"{}...\"", node.summary.chars().take(97).collect::<String>());
+                    println!(
+                        "  \"{}...\"",
+                        node.summary.chars().take(97).collect::<String>()
+                    );
                 }
             }
         }
@@ -382,7 +440,7 @@ async fn demo_level_specific_configuration(document_text: &str) -> Result<()> {
 /// Demonstrate batch processing capabilities
 async fn demo_batch_processing(document_text: &str) -> Result<()> {
     println!("⚡ Demo 4: Batch Processing with LLM");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
 
     let llm_client = Arc::new(ExampleLLMClient {
         model_name: "llama3.1:8b".to_string(),
@@ -406,7 +464,10 @@ async fn demo_batch_processing(document_text: &str) -> Result<()> {
     let mut text_processor = TextProcessor::new(400, 100)?;
     let chunks = text_processor.chunk_text(document_text)?;
 
-    println!("Processing {} chunks with batch LLM summarization...", chunks.len());
+    println!(
+        "Processing {} chunks with batch LLM summarization...",
+        chunks.len()
+    );
 
     let start_time = std::time::Instant::now();
 

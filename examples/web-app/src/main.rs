@@ -18,13 +18,16 @@
 //! trunk serve --open
 //! ```
 
-use leptos::prelude::*;
-use leptos::task::spawn_local;
-use graphrag_leptos::*;
-use wasm_bindgen::prelude::*;
-use graphrag_wasm::webllm::{WebLLM, is_webllm_available};
-use graphrag_wasm::{WasmOnnxEmbedder, GraphRAG, check_onnx_runtime};
 use std::sync::Arc;
+
+use graphrag_leptos::*;
+use graphrag_wasm::{
+    check_onnx_runtime,
+    webllm::{is_webllm_available, WebLLM},
+    GraphRAG, WasmOnnxEmbedder,
+};
+use leptos::{prelude::*, task::spawn_local};
+use wasm_bindgen::prelude::*;
 
 /// Main application component
 #[component]
@@ -47,7 +50,8 @@ fn App() -> impl IntoView {
     let llm_instance = RwSignal::new(None::<Arc<WebLLM>>);
     // Note: WasmOnnxEmbedder and GraphRAG can't be stored in reactive signals
     // because they contain raw pointers (*mut u8) which are not Send+Sync.
-    // In production, use a different state management pattern (e.g., channels, LocalResource)
+    // In production, use a different state management pattern (e.g., channels,
+    // LocalResource)
 
     // Check WebGPU and WebLLM availability on mount
     create_effect(move |_| {
@@ -57,10 +61,10 @@ fn App() -> impl IntoView {
                 Ok(available) => {
                     set_webgpu_available.set(available);
                     log(&format!("WebGPU available: {}", available));
-                }
+                },
                 Err(e) => {
                     log(&format!("WebGPU check error: {:?}", e));
-                }
+                },
             }
 
             // Check WebLLM
@@ -88,17 +92,19 @@ fn App() -> impl IntoView {
                 move |progress, text| {
                     set_llm_progress.set((progress, text));
                 },
-            ).await {
+            )
+            .await
+            {
                 Ok(llm) => {
                     llm_instance.set(Some(Arc::new(llm)));
                     set_llm_initialized.set(true);
                     set_llm_loading.set(false);
                     log("✅ WebLLM initialized successfully");
-                }
+                },
                 Err(e) => {
                     set_llm_loading.set(false);
                     log(&format!("❌ WebLLM initialization failed: {}", e));
-                }
+                },
             }
         });
     };
@@ -144,11 +150,11 @@ fn App() -> impl IntoView {
                             log(&format!("❌ ONNX model loading failed: {:?}", e));
                         }
                     }
-                }
+                },
                 Err(e) => {
                     set_embedder_loading.set(false);
                     log(&format!("❌ ONNX embedder creation failed: {:?}", e));
-                }
+                },
             }
         });
     };
@@ -188,10 +194,10 @@ fn App() -> impl IntoView {
                 match llm.ask(&prompt).await {
                     Ok(response) => {
                         log(&format!("✅ Answer: {}", response));
-                    }
+                    },
                     Err(e) => {
                         log(&format!("❌ Answer generation failed: {}", e));
-                    }
+                    },
                 }
             }
         });
@@ -216,7 +222,10 @@ fn App() -> impl IntoView {
             log("🔧 Processing documents with ONNX embeddings...");
 
             // Demonstrate document processing flow
-            log(&format!("📊 Step 1: Generating embeddings for {} documents (3-8ms each)...", files.len()));
+            log(&format!(
+                "📊 Step 1: Generating embeddings for {} documents (3-8ms each)...",
+                files.len()
+            ));
             log("📦 Step 2: Adding documents to GraphRAG...");
             log("🌲 Step 3: Building Voy k-d tree index...");
             log("✅ Step 4: Ready for semantic search!");

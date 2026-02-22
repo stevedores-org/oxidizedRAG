@@ -1,13 +1,15 @@
 //! Query Refinement for LazyGraphRAG
 //!
-//! This module implements query expansion and refinement without requiring LLM calls,
-//! using the concept graph and bidirectional entity-chunk index for iterative deepening.
+//! This module implements query expansion and refinement without requiring LLM
+//! calls, using the concept graph and bidirectional entity-chunk index for
+//! iterative deepening.
 //!
 //! ## Key Features
 //!
 //! - **Zero LLM Cost**: Query refinement using graph traversal only
 //! - **Iterative Deepening**: Progressively expand query with related concepts
-//! - **Fast Lookups**: Uses bidirectional index for instant entity-chunk mapping
+//! - **Fast Lookups**: Uses bidirectional index for instant entity-chunk
+//!   mapping
 //! - **Relevance Scoring**: Ranks refined queries by concept co-occurrence
 //!
 //! ## Algorithm
@@ -21,9 +23,13 @@
 //! ## Example
 //!
 //! ```rust
-//! use graphrag_core::lightrag::query_refinement::{QueryRefiner, QueryRefinementConfig};
-//! use graphrag_core::lightrag::concept_graph::ConceptGraph;
-//! use graphrag_core::entity::BidirectionalIndex;
+//! use graphrag_core::{
+//!     entity::BidirectionalIndex,
+//!     lightrag::{
+//!         concept_graph::ConceptGraph,
+//!         query_refinement::{QueryRefinementConfig, QueryRefiner},
+//!     },
+//! };
 //!
 //! let config = QueryRefinementConfig::default();
 //! let refiner = QueryRefiner::new(config);
@@ -40,11 +46,15 @@
 //! println!("Relevant chunks: {}", refined.relevant_chunk_ids.len());
 //! ```
 
-use crate::core::{ChunkId, EntityId};
-use crate::entity::BidirectionalIndex;
-use crate::lightrag::concept_graph::{ConceptExtractor, ConceptGraph};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    core::{ChunkId, EntityId},
+    entity::BidirectionalIndex,
+    lightrag::concept_graph::{ConceptExtractor, ConceptGraph},
+};
 
 /// Configuration for query refinement
 #[derive(Debug, Clone)]
@@ -99,8 +109,8 @@ impl QueryRefiner {
 
     /// Refine a query using the concept graph and bidirectional index
     ///
-    /// This performs iterative deepening to expand the query with related concepts
-    /// and identify relevant chunks without requiring LLM calls.
+    /// This performs iterative deepening to expand the query with related
+    /// concepts and identify relevant chunks without requiring LLM calls.
     pub fn refine_query(
         &self,
         query: &str,
@@ -138,10 +148,8 @@ impl QueryRefiner {
 
             for concept in &current_concepts {
                 // Get co-occurring concepts from concept graph
-                let related = concept_graph.get_related_concepts(
-                    concept,
-                    self.config.concepts_per_iteration,
-                );
+                let related =
+                    concept_graph.get_related_concepts(concept, self.config.concepts_per_iteration);
 
                 for related_concept in related {
                     if !current_concepts.contains(&related_concept)
@@ -174,10 +182,7 @@ impl QueryRefiner {
             }
 
             // Retrieve chunks for current concepts using bidirectional index
-            let iteration_chunks = self.get_chunks_for_concepts(
-                &new_concepts,
-                bidirectional_index,
-            );
+            let iteration_chunks = self.get_chunks_for_concepts(&new_concepts, bidirectional_index);
 
             // Add to relevant chunks
             relevant_chunks.extend(iteration_chunks);
@@ -200,7 +205,8 @@ impl QueryRefiner {
                 (c, score)
             })
             .collect();
-        expanded_with_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        expanded_with_scores
+            .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
         let expanded_concepts: Vec<String> = expanded_with_scores
             .iter()
@@ -366,7 +372,8 @@ impl RefinedQuery {
             })
             .collect();
 
-        concepts_with_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        concepts_with_scores
+            .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
         concepts_with_scores
             .into_iter()
@@ -389,7 +396,7 @@ impl RefinedQuery {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lightrag::concept_graph::{ConceptGraphBuilder, ConceptExtractor};
+    use crate::lightrag::concept_graph::{ConceptExtractor, ConceptGraphBuilder};
 
     #[test]
     fn test_query_refinement_basic() {
@@ -405,28 +412,31 @@ mod tests {
 
         // Create a simple concept graph
         let mut builder = ConceptGraphBuilder::new();
-        builder.add_document_concepts("doc1", vec![
-            "machine learning".to_string(),
-            "neural networks".to_string(),
-            "deep learning".to_string(),
-        ]);
-        builder.add_chunk_concepts("chunk1", vec![
-            "machine learning".to_string(),
-            "neural networks".to_string(),
-        ]);
-        builder.add_chunk_concepts("chunk2", vec![
-            "neural networks".to_string(),
-            "deep learning".to_string(),
-        ]);
+        builder.add_document_concepts(
+            "doc1",
+            vec![
+                "machine learning".to_string(),
+                "neural networks".to_string(),
+                "deep learning".to_string(),
+            ],
+        );
+        builder.add_chunk_concepts(
+            "chunk1",
+            vec![
+                "machine learning".to_string(),
+                "neural networks".to_string(),
+            ],
+        );
+        builder.add_chunk_concepts(
+            "chunk2",
+            vec!["neural networks".to_string(), "deep learning".to_string()],
+        );
 
         let concept_graph = builder.build();
         let bidirectional_index = BidirectionalIndex::new();
 
-        let refined = refiner.refine_query(
-            "machine learning",
-            &concept_graph,
-            &bidirectional_index,
-        );
+        let refined =
+            refiner.refine_query("machine learning", &concept_graph, &bidirectional_index);
 
         assert!(!refined.initial_concepts.is_empty());
         assert_eq!(refined.original_query, "machine learning");

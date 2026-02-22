@@ -7,14 +7,14 @@
 //! - Monitoring and observability
 //! - Storage persistence
 
+use std::{fs, time::Duration};
+
 use graphrag_rs::{
     caching::L1Cache,
+    core::GraphRAGError,
     monitoring::{HealthCheck, ObservabilityManager, OperationTracer},
     query::QueryRewriter,
-    core::GraphRAGError,
 };
-use std::fs;
-use std::time::Duration;
 
 type Result<T> = std::result::Result<T, GraphRAGError>;
 
@@ -31,10 +31,9 @@ async fn main() -> Result<()> {
     let tracer = OperationTracer::new("load_document");
 
     let symposium_path = "docs-example/Symposium.txt";
-    let content = fs::read_to_string(symposium_path)
-        .map_err(|e| GraphRAGError::Storage {
-            message: format!("Failed to read Symposium.txt: {}", e)
-        })?;
+    let content = fs::read_to_string(symposium_path).map_err(|e| GraphRAGError::Storage {
+        message: format!("Failed to read Symposium.txt: {}", e),
+    })?;
 
     let char_count = content.len();
     let word_count = content.split_whitespace().count();
@@ -131,17 +130,11 @@ async fn main() -> Result<()> {
     let obs_manager = ObservabilityManager::new();
 
     // Register health checks
-    obs_manager.register_health_check(|| {
-        HealthCheck::healthy("document_loader", 5)
-    });
+    obs_manager.register_health_check(|| HealthCheck::healthy("document_loader", 5));
 
-    obs_manager.register_health_check(|| {
-        HealthCheck::healthy("cache_system", 3)
-    });
+    obs_manager.register_health_check(|| HealthCheck::healthy("cache_system", 3));
 
-    obs_manager.register_health_check(|| {
-        HealthCheck::healthy("query_processor", 8)
-    });
+    obs_manager.register_health_check(|| HealthCheck::healthy("query_processor", 8));
 
     // Check system health
     let health = obs_manager.check_health();
@@ -150,7 +143,10 @@ async fn main() -> Result<()> {
     println!("    Components checked: {}", health.checks.len());
 
     for check in &health.checks {
-        println!("    - {}: {:?} ({}ms)", check.component, check.status, check.latency_ms);
+        println!(
+            "    - {}: {:?} ({}ms)",
+            check.component, check.status, check.latency_ms
+        );
     }
 
     obs_tracer.complete(true);
@@ -163,7 +159,10 @@ async fn main() -> Result<()> {
     let rewritten = rewriter.rewrite(query);
 
     println!("  Original query: \"{}\"", query);
-    println!("  Retrieval strategy: {:?}", rewritten.analysis.retrieval_strategy());
+    println!(
+        "  Retrieval strategy: {:?}",
+        rewritten.analysis.retrieval_strategy()
+    );
 
     // Simulate finding relevant chunks
     let search_terms = ["love", "socrates", "nature"];
@@ -171,7 +170,8 @@ async fn main() -> Result<()> {
 
     for (i, chunk) in chunks.iter().enumerate() {
         let chunk_lower = chunk.to_lowercase();
-        let matches = search_terms.iter()
+        let matches = search_terms
+            .iter()
             .filter(|term| chunk_lower.contains(*term))
             .count();
 
@@ -193,7 +193,12 @@ async fn main() -> Result<()> {
             chunk.to_string()
         };
 
-        println!("\n  Result #{} (chunk {}, score: {}):", rank + 1, chunk_id, score);
+        println!(
+            "\n  Result #{} (chunk {}, score: {}):",
+            rank + 1,
+            chunk_id,
+            score
+        );
         println!("    {}", preview.replace('\n', " "));
     }
 
@@ -211,7 +216,10 @@ async fn main() -> Result<()> {
     println!("\n  Cache Performance:");
     let cache_stats = cache.stats();
     println!("    - L1 capacity: {}", cache_stats.capacity);
-    println!("    - L1 usage: {}/{}", cache_stats.size, cache_stats.capacity);
+    println!(
+        "    - L1 usage: {}/{}",
+        cache_stats.size, cache_stats.capacity
+    );
     println!("    - Hit rate: {:.1}%", (hits as f64 / 15.0) * 100.0);
 
     println!("\n  Query Processing:");
@@ -221,14 +229,16 @@ async fn main() -> Result<()> {
 
     println!("\n  Health Status:");
     println!("    - Overall: {:?}", health.overall_status);
-    println!("    - Components: {}/{} healthy",
+    println!(
+        "    - Components: {}/{} healthy",
         health.checks.len(),
         health.checks.len()
     );
 
     println!("\n  Retrieval Results:");
     println!("    - Relevant chunks found: {}", relevant_chunks.len());
-    println!("    - Top result relevance: {} term matches",
+    println!(
+        "    - Top result relevance: {} term matches",
         relevant_chunks.first().map(|r| r.2).unwrap_or(0)
     );
 

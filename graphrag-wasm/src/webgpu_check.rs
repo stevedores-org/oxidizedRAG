@@ -50,11 +50,8 @@ impl WebGPUInfo {
     pub fn get_summary(&self) -> String {
         if self.available {
             format!(
-                "✅ WebGPU Available\n\
-                 GPU: {} ({})\n\
-                 Max Buffer: {} MB\n\
-                 Max Texture: {}px\n\
-                 Browser: {}",
+                "✅ WebGPU Available\nGPU: {} ({})\nMax Buffer: {} MB\nMax Texture: \
+                 {}px\nBrowser: {}",
                 self.vendor,
                 self.architecture,
                 self.max_buffer_size / 1_048_576, // Convert to MB
@@ -247,20 +244,23 @@ pub fn is_webgpu_available() -> bool {
 pub async fn get_recommended_backend() -> String {
     match check_webgpu_support().await {
         Ok(info) if info.available => {
-            console::log_1(&"💡 Recommendation: Use Burn + wgpu or WebLLM for GPU acceleration".into());
+            console::log_1(
+                &"💡 Recommendation: Use Burn + wgpu or WebLLM for GPU acceleration".into(),
+            );
             "webgpu".to_string()
-        }
+        },
         _ => {
             console::log_1(&"💡 Recommendation: Use Candle CPU (fallback)".into());
             "cpu".to_string()
-        }
+        },
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
@@ -275,10 +275,10 @@ mod tests {
         match check_webgpu_support().await {
             Ok(info) => {
                 console::log_1(&info.get_summary().into());
-            }
+            },
             Err(e) => {
                 console::error_1(&format!("Error: {:?}", e).into());
-            }
+            },
         }
     }
 

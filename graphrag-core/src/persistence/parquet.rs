@@ -1,7 +1,7 @@
 //! Apache Parquet persistence backend for GraphRAG
 //!
-//! This module implements efficient columnar storage for knowledge graph components
-//! using Apache Arrow and Parquet formats.
+//! This module implements efficient columnar storage for knowledge graph
+//! components using Apache Arrow and Parquet formats.
 //!
 //! ## File Structure
 //!
@@ -23,8 +23,9 @@
 //! ## Example
 //!
 //! ```no_run
-//! use graphrag_core::{KnowledgeGraph, persistence::ParquetPersistence};
 //! use std::path::PathBuf;
+//!
+//! use graphrag_core::{persistence::ParquetPersistence, KnowledgeGraph};
 //!
 //! # fn example() -> graphrag_core::Result<()> {
 //! let graph = KnowledgeGraph::new();
@@ -39,12 +40,7 @@
 //! # }
 //! ```
 
-use crate::core::{
-    ChunkId, Document, DocumentId, Entity, EntityId, EntityMention, GraphRAGError,
-    KnowledgeGraph, Relationship, Result, TextChunk,
-};
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 #[cfg(feature = "persistent-storage")]
 use arrow::array::{
@@ -58,6 +54,11 @@ use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::arrow::ArrowReader;
 #[cfg(feature = "persistent-storage")]
 use parquet::file::properties::WriterProperties;
+
+use crate::core::{
+    ChunkId, Document, DocumentId, Entity, EntityId, EntityMention, GraphRAGError, KnowledgeGraph,
+    Relationship, Result, TextChunk,
+};
 
 /// Configuration for Parquet persistence
 #[derive(Debug, Clone)]
@@ -112,8 +113,9 @@ impl ParquetPersistence {
     ///
     /// # Example
     /// ```no_run
-    /// use graphrag_core::persistence::ParquetPersistence;
     /// use std::path::PathBuf;
+    ///
+    /// use graphrag_core::persistence::ParquetPersistence;
     ///
     /// let persistence = ParquetPersistence::new(PathBuf::from("./workspace")).unwrap();
     /// ```
@@ -269,11 +271,10 @@ impl ParquetPersistence {
             .set_compression(self.get_compression())
             .build();
 
-        let mut writer = ArrowWriter::try_new(file, schema, Some(props)).map_err(|e| {
-            GraphRAGError::Config {
+        let mut writer =
+            ArrowWriter::try_new(file, schema, Some(props)).map_err(|e| GraphRAGError::Config {
                 message: format!("Failed to create ArrowWriter: {}", e),
-            }
-        })?;
+            })?;
 
         writer.write(&batch).map_err(|e| GraphRAGError::Config {
             message: format!("Failed to write batch: {}", e),
@@ -494,8 +495,9 @@ impl ParquetPersistence {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_parquet_persistence_creation() {

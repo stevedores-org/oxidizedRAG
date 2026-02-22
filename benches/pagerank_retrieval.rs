@@ -1,9 +1,10 @@
+use std::collections::HashMap;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use graphrag_rs::{
     core::{ChunkId, DocumentId, Entity, EntityId, KnowledgeGraph, TextChunk},
     Config, PageRankConfig, PageRankRetrievalSystem,
 };
-use std::collections::HashMap;
 
 /// Create a test knowledge graph with varying sizes for benchmarking
 fn create_test_graph(num_entities: usize, num_connections: usize) -> KnowledgeGraph {

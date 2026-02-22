@@ -1,18 +1,20 @@
 //! Zero-Cost GraphRAG Approaches Demo
 //!
-//! This example demonstrates the three zero-cost approaches implemented in GraphRAG-rs:
+//! This example demonstrates the three zero-cost approaches implemented in
+//! GraphRAG-rs:
 //! 1. LazyGraphRAG-style (Microsoft Research) - Minimal LLM usage
 //! 2. E2GraphRAG-style (Pattern-based) - No heavy dependencies
 //! 3. Pure Algorithmic - Completely LLM-free
 //!
 //! Each approach is optimized for different cost/quality tradeoffs.
 
+use std::collections::HashMap;
+
 use graphrag_core::{
     config::Config,
     core::{Document, DocumentId, Result},
     text::TextProcessor,
 };
-use std::collections::HashMap;
 
 fn main() -> Result<()> {
     println!("🚀 Zero-Cost GraphRAG Approaches Demo\n");
@@ -68,7 +70,7 @@ fn main() -> Result<()> {
 /// Cost: $0.10 indexing, $0.0014 per query
 fn demo_lazy_graphrag(document_text: &str) -> Result<()> {
     println!("🧠 Demo 1: LazyGraphRAG-style Approach");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
     println!("💰 Cost: $0.10 indexing, $0.0014 per query");
     println!("🎯 Strategy: Minimal LLM usage, pattern-based indexing");
 
@@ -135,7 +137,12 @@ fn demo_lazy_graphrag(document_text: &str) -> Result<()> {
     let concepts = extract_lazy_concepts(document_text);
     println!("✅ Extracted {} concepts:", concepts.len());
     for (i, concept) in concepts.iter().take(5).enumerate() {
-        println!("   {}. {} (score: {:.3})", i + 1, concept.name, concept.score);
+        println!(
+            "   {}. {} (score: {:.3})",
+            i + 1,
+            concept.name,
+            concept.score
+        );
     }
 
     println!("🔗 Building co-occurrence graph");
@@ -150,7 +157,7 @@ fn demo_lazy_graphrag(document_text: &str) -> Result<()> {
 /// Cost: $0.05 indexing, $0.001 per query
 fn demo_e2_graphrag(document_text: &str) -> Result<()> {
     println!("🏷️ Demo 2: E2GraphRAG-style Approach");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
     println!("💰 Cost: $0.05 indexing, $0.001 per query");
     println!("🎯 Strategy: Pattern-based NER, lightweight processing");
 
@@ -225,7 +232,7 @@ fn demo_e2_graphrag(document_text: &str) -> Result<()> {
 /// Cost: $0 indexing, $0 query
 fn demo_pure_algorithmic(document_text: &str) -> Result<()> {
     println!("⚙️ Demo 3: Pure Algorithmic Approach");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
     println!("💰 Cost: $0 indexing, $0 query");
     println!("🎯 Strategy: No LLM, completely algorithmic");
 
@@ -317,7 +324,7 @@ fn demo_pure_algorithmic(document_text: &str) -> Result<()> {
 /// Demonstrate hybrid strategies
 fn demo_hybrid_strategies(document_text: &str) -> Result<()> {
     println!("🔄 Demo 4: Hybrid Strategies");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
     println!("🎯 Strategy: Combining multiple approaches");
 
     let config_json = r#"
@@ -358,7 +365,11 @@ fn demo_hybrid_strategies(document_text: &str) -> Result<()> {
     // Simulate progressive levels
     let levels = vec![
         ("Level 0", "pure_algorithmic", "Leaf nodes - No LLM"),
-        ("Level 1", "pure_algorithmic", "First abstraction - Patterns only"),
+        (
+            "Level 1",
+            "pure_algorithmic",
+            "First abstraction - Patterns only",
+        ),
         ("Level 2", "e2_graphrag", "Mid-level - Pattern NER"),
         ("Level 3", "lazy_graphrag", "High-level - Minimal LLM"),
         ("Level 4+", "lazy_graphrag", "Top levels - Full LLM assist"),
@@ -381,7 +392,7 @@ fn demo_hybrid_strategies(document_text: &str) -> Result<()> {
 /// Demonstrate budget-aware approach
 fn demo_budget_aware(document_text: &str) -> Result<()> {
     println!("💰 Demo 5: Budget-Aware Approach");
-    println!("=" .repeat(50));
+    println!("=".repeat(50));
     println!("🎯 Strategy: Automatically optimize based on budget");
 
     let budgets = vec![
@@ -392,7 +403,10 @@ fn demo_budget_aware(document_text: &str) -> Result<()> {
     ];
 
     for (tier, daily_budget, recommended_strategy) in budgets {
-        println!("💵 {}: ${:.2}/day → {}", tier, daily_budget, recommended_strategy);
+        println!(
+            "💵 {}: ${:.2}/day → {}",
+            tier, daily_budget, recommended_strategy
+        );
 
         // Calculate estimated monthly costs
         let monthly_cost = daily_budget * 30.0;
@@ -404,7 +418,10 @@ fn demo_budget_aware(document_text: &str) -> Result<()> {
             _ => "~500",
         };
 
-        println!("   Monthly: ${:.2} | Queries: {}/day", monthly_cost, queries_per_day);
+        println!(
+            "   Monthly: ${:.2} | Queries: {}/day",
+            monthly_cost, queries_per_day
+        );
     }
 
     println!("\n📊 Budget optimization recommendations:");
@@ -449,14 +466,38 @@ struct Relationship {
 // Simulation functions
 fn extract_lazy_concepts(text: &str) -> Vec<Concept> {
     vec![
-        Concept { name: "Machine Learning".to_string(), score: 0.95 },
-        Concept { name: "Natural Language Processing".to_string(), score: 0.92 },
-        Concept { name: "Deep Learning".to_string(), score: 0.88 },
-        Concept { name: "Attention Mechanisms".to_string(), score: 0.85 },
-        Concept { name: "Transformers".to_string(), score: 0.90 },
-        Concept { name: "Language Models".to_string(), score: 0.87 },
-        Concept { name: "BERT".to_string(), score: 0.82 },
-        Concept { name: "GPT".to_string(), score: 0.89 },
+        Concept {
+            name: "Machine Learning".to_string(),
+            score: 0.95,
+        },
+        Concept {
+            name: "Natural Language Processing".to_string(),
+            score: 0.92,
+        },
+        Concept {
+            name: "Deep Learning".to_string(),
+            score: 0.88,
+        },
+        Concept {
+            name: "Attention Mechanisms".to_string(),
+            score: 0.85,
+        },
+        Concept {
+            name: "Transformers".to_string(),
+            score: 0.90,
+        },
+        Concept {
+            name: "Language Models".to_string(),
+            score: 0.87,
+        },
+        Concept {
+            name: "BERT".to_string(),
+            score: 0.82,
+        },
+        Concept {
+            name: "GPT".to_string(),
+            score: 0.89,
+        },
     ]
 }
 
@@ -485,13 +526,41 @@ fn find_co_occurrences(text: &str, concepts: &[Concept], window_size: usize) -> 
 
 fn extract_pattern_entities(text: &str) -> Vec<Entity> {
     vec![
-        Entity { name: "BERT".to_string(), entity_type: "PRODUCT".to_string(), confidence: 0.92 },
-        Entity { name: "GPT".to_string(), entity_type: "PRODUCT".to_string(), confidence: 0.90 },
-        Entity { name: "OpenAI".to_string(), entity_type: "ORGANIZATION".to_string(), confidence: 0.88 },
-        Entity { name: "Google".to_string(), entity_type: "ORGANIZATION".to_string(), confidence: 0.91 },
-        Entity { name: "Stanford".to_string(), entity_type: "ORGANIZATION".to_string(), confidence: 0.87 },
-        Entity { name: "MIT".to_string(), entity_type: "ORGANIZATION".to_string(), confidence: 0.89 },
-        Entity { name: "Google AI".to_string(), entity_type: "ORGANIZATION".to_string(), confidence: 0.93 },
+        Entity {
+            name: "BERT".to_string(),
+            entity_type: "PRODUCT".to_string(),
+            confidence: 0.92,
+        },
+        Entity {
+            name: "GPT".to_string(),
+            entity_type: "PRODUCT".to_string(),
+            confidence: 0.90,
+        },
+        Entity {
+            name: "OpenAI".to_string(),
+            entity_type: "ORGANIZATION".to_string(),
+            confidence: 0.88,
+        },
+        Entity {
+            name: "Google".to_string(),
+            entity_type: "ORGANIZATION".to_string(),
+            confidence: 0.91,
+        },
+        Entity {
+            name: "Stanford".to_string(),
+            entity_type: "ORGANIZATION".to_string(),
+            confidence: 0.87,
+        },
+        Entity {
+            name: "MIT".to_string(),
+            entity_type: "ORGANIZATION".to_string(),
+            confidence: 0.89,
+        },
+        Entity {
+            name: "Google AI".to_string(),
+            entity_type: "ORGANIZATION".to_string(),
+            confidence: 0.93,
+        },
     ]
 }
 
@@ -535,11 +604,31 @@ fn build_relationships(entities: &[Entity], window_size: usize) -> Vec<Relations
 
 fn extract_regex_patterns(text: &str) -> Vec<Pattern> {
     vec![
-        Pattern { text: "Machine Learning".to_string(), pattern_type: "capitalized".to_string(), position: 0 },
-        Pattern { text: "Natural Language Processing".to_string(), pattern_type: "capitalized".to_string(), position: 23 },
-        Pattern { text: "Deep Learning".to_string(), pattern_type: "capitalized".to_string(), position: 85 },
-        Pattern { text: "attention mechanisms".to_string(), pattern_type: "technical".to_string(), position: 156 },
-        Pattern { text: "language models".to_string(), pattern_type: "technical".to_string(), position: 245 },
+        Pattern {
+            text: "Machine Learning".to_string(),
+            pattern_type: "capitalized".to_string(),
+            position: 0,
+        },
+        Pattern {
+            text: "Natural Language Processing".to_string(),
+            pattern_type: "capitalized".to_string(),
+            position: 23,
+        },
+        Pattern {
+            text: "Deep Learning".to_string(),
+            pattern_type: "capitalized".to_string(),
+            position: 85,
+        },
+        Pattern {
+            text: "attention mechanisms".to_string(),
+            pattern_type: "technical".to_string(),
+            position: 156,
+        },
+        Pattern {
+            text: "language models".to_string(),
+            pattern_type: "technical".to_string(),
+            position: 245,
+        },
     ]
 }
 
@@ -558,7 +647,11 @@ fn compute_tfidf_keywords(text: &str) -> Vec<String> {
     ]
 }
 
-fn discover_relationships_algorithmic(patterns: &[Pattern], keywords: &[String], window_size: usize) -> Vec<Relationship> {
+fn discover_relationships_algorithmic(
+    patterns: &[Pattern],
+    keywords: &[String],
+    window_size: usize,
+) -> Vec<Relationship> {
     vec![
         Relationship {
             source: "Machine Learning".to_string(),

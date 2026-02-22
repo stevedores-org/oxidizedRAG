@@ -2,20 +2,22 @@
 //!
 //! Tests actual HTTP requests/responses using axum test utilities
 
+use std::{collections::HashMap, sync::Arc};
+
 use axum::{
     body::Body,
-    http::{Request, StatusCode, header},
-    Router,
+    http::{header, Request, StatusCode},
     routing::{get, post},
+    Router,
 };
-use graphrag_rs::{GraphRAG, Config};
-use graphrag_rs::api::handlers::{
-    AppState, health_check, handle_query, add_document, get_document,
-    graph_stats, export_graph, list_entities, get_metrics,
+use graphrag_rs::{
+    api::handlers::{
+        add_document, export_graph, get_document, get_metrics, graph_stats, handle_query,
+        health_check, list_entities, AppState,
+    },
+    Config, GraphRAG,
 };
 use serde_json::json;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower::ServiceExt;
 
@@ -55,14 +57,16 @@ async fn test_health_endpoint() {
             Request::builder()
                 .uri("/health")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["status"], "healthy");
@@ -88,14 +92,16 @@ async fn test_document_upload() {
                 .uri("/api/v1/documents")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(serde_json::to_vec(&payload).unwrap()))
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["status"], "success");
@@ -110,7 +116,9 @@ async fn test_query_endpoint() {
     // Add a document first
     {
         let mut graphrag = state.graphrag.write().await;
-        graphrag.add_document_from_text("Alice is a researcher at MIT.").unwrap();
+        graphrag
+            .add_document_from_text("Alice is a researcher at MIT.")
+            .unwrap();
         graphrag.build_graph().unwrap();
     }
 
@@ -128,14 +136,16 @@ async fn test_query_endpoint() {
                 .uri("/api/v1/query")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(serde_json::to_vec(&payload).unwrap()))
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert!(json["answer"].is_array());
@@ -160,14 +170,16 @@ async fn test_graph_stats_endpoint() {
             Request::builder()
                 .uri("/api/v1/graph/stats")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert!(json["entities"].is_number());
@@ -182,7 +194,9 @@ async fn test_graph_export_endpoint() {
     // Add test data
     {
         let mut graphrag = state.graphrag.write().await;
-        graphrag.add_document_from_text("Alice works with Bob.").unwrap();
+        graphrag
+            .add_document_from_text("Alice works with Bob.")
+            .unwrap();
         graphrag.build_graph().unwrap();
     }
 
@@ -193,14 +207,16 @@ async fn test_graph_export_endpoint() {
             Request::builder()
                 .uri("/api/v1/graph/export")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert!(json["nodes"].is_array());
@@ -215,7 +231,9 @@ async fn test_list_entities_endpoint() {
     // Add test data
     {
         let mut graphrag = state.graphrag.write().await;
-        graphrag.add_document_from_text("Alice and Bob work at OpenAI.").unwrap();
+        graphrag
+            .add_document_from_text("Alice and Bob work at OpenAI.")
+            .unwrap();
         graphrag.build_graph().unwrap();
     }
 
@@ -226,14 +244,16 @@ async fn test_list_entities_endpoint() {
             Request::builder()
                 .uri("/api/v1/entities?page=1&page_size=10")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert!(json["entities"].is_array());
@@ -253,14 +273,16 @@ async fn test_metrics_endpoint() {
             Request::builder()
                 .uri("/api/v1/admin/metrics")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert!(json["sessions"].is_object());
@@ -276,14 +298,16 @@ async fn test_document_not_found() {
             Request::builder()
                 .uri("/api/v1/documents/non-existent-doc")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert!(json["error"].is_string());
@@ -297,7 +321,9 @@ async fn test_pagination() {
     {
         let mut graphrag = state.graphrag.write().await;
         for i in 0..5 {
-            graphrag.add_document_from_text(&format!("Person{} works at Company{}.", i, i)).unwrap();
+            graphrag
+                .add_document_from_text(&format!("Person{} works at Company{}.", i, i))
+                .unwrap();
         }
         graphrag.build_graph().unwrap();
     }
@@ -311,12 +337,14 @@ async fn test_pagination() {
             Request::builder()
                 .uri("/api/v1/entities?page=1&page_size=2")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let page1: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(page1["page"], 1);
@@ -328,12 +356,14 @@ async fn test_pagination() {
             Request::builder()
                 .uri("/api/v1/entities?page=2&page_size=2")
                 .body(Body::empty())
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let page2: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(page2["page"], 2);
@@ -345,7 +375,9 @@ async fn test_query_with_options() {
 
     {
         let mut graphrag = state.graphrag.write().await;
-        graphrag.add_document_from_text("GraphRAG is a knowledge graph system.").unwrap();
+        graphrag
+            .add_document_from_text("GraphRAG is a knowledge graph system.")
+            .unwrap();
         graphrag.build_graph().unwrap();
     }
 
@@ -367,16 +399,24 @@ async fn test_query_with_options() {
                 .uri("/api/v1/query")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(serde_json::to_vec(&payload).unwrap()))
-                .unwrap()
+                .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
-    assert!(json["sources"].is_array(), "Expected sources array when include_sources=true");
-    assert!(json["confidence"].is_number(), "Expected confidence when include_confidence=true");
+    assert!(
+        json["sources"].is_array(),
+        "Expected sources array when include_sources=true"
+    );
+    assert!(
+        json["confidence"].is_number(),
+        "Expected confidence when include_confidence=true"
+    );
 }

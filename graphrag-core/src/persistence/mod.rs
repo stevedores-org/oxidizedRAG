@@ -1,14 +1,16 @@
 //! Persistence layer for GraphRAG knowledge graphs
 //!
-//! This module provides storage backends for persisting knowledge graphs to disk
-//! and loading them back into memory for fast querying.
+//! This module provides storage backends for persisting knowledge graphs to
+//! disk and loading them back into memory for fast querying.
 //!
 //! ## Supported Formats
 //!
-//! - **Parquet**: Columnar format for entities, relationships, chunks (Apache Arrow ecosystem)
+//! - **Parquet**: Columnar format for entities, relationships, chunks (Apache
+//!   Arrow ecosystem)
 //! - **LanceDB**: Vector storage for embeddings (Lance columnar format)
 //! - **JSON**: Human-readable backup format (already implemented in core)
-//! - **GraphML**: Export format for visualization tools (already implemented in core)
+//! - **GraphML**: Export format for visualization tools (already implemented in
+//!   core)
 //!
 //! ## Architecture
 //!
@@ -29,7 +31,7 @@
 //! ## Example
 //!
 //! ```no_run
-//! use graphrag_core::{KnowledgeGraph, persistence::WorkspaceManager};
+//! use graphrag_core::{persistence::WorkspaceManager, KnowledgeGraph};
 //!
 //! # fn example() -> graphrag_core::Result<()> {
 //! // Create workspace manager
@@ -59,10 +61,9 @@ pub mod parquet;
 // pub mod lance;
 
 // Re-exports (workspace always available)
-pub use workspace::{WorkspaceManager, WorkspaceMetadata, WorkspaceInfo};
-
 #[cfg(feature = "persistent-storage")]
-pub use parquet::{ParquetPersistence, ParquetConfig};
+pub use parquet::{ParquetConfig, ParquetPersistence};
+pub use workspace::{WorkspaceInfo, WorkspaceManager, WorkspaceMetadata};
 
 // Lance storage temporarily disabled
 // #[cfg(feature = "lance-storage")]

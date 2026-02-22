@@ -1,10 +1,11 @@
 //! TOML Configuration System for GraphRAG
 //! Complete configuration management with extensive TOML support
 
-use crate::Result;
+use std::{fs, path::Path};
+
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
+
+use crate::Result;
 
 /// Complete GraphRAG configuration loaded from TOML
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -504,8 +505,9 @@ pub struct ExperimentalConfig {
 }
 
 /// LazyGraphRAG configuration
-/// Concept-based retrieval without prior summarization (Microsoft Research, 2025)
-/// Achieves 0.1% of full GraphRAG indexing cost and 700x cheaper query costs
+/// Concept-based retrieval without prior summarization (Microsoft Research,
+/// 2025) Achieves 0.1% of full GraphRAG indexing cost and 700x cheaper query
+/// costs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LazyGraphRAGConfig {
     /// Enable concept extraction (noun phrases without LLM)
@@ -652,7 +654,8 @@ pub struct SemanticPipelineConfig {
 /// Semantic embeddings configuration (neural models)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticEmbeddingsConfig {
-    /// Backend: "huggingface", "openai", "voyage", "cohere", "jina", "mistral", "together", "ollama"
+    /// Backend: "huggingface", "openai", "voyage", "cohere", "jina", "mistral",
+    /// "together", "ollama"
     #[serde(default = "default_semantic_embedding_backend")]
     pub backend: String,
 
@@ -1316,24 +1319,24 @@ fn default_hybrid_fallback_strategy() -> String {
     "semantic_first".to_string()
 }
 fn default_auto_save_interval() -> u64 {
-    300  // 5 minutes
+    300 // 5 minutes
 }
 fn default_max_auto_save_versions() -> usize {
-    5  // Keep 5 versions by default
+    5 // Keep 5 versions by default
 }
 
 // LazyGraphRAG default functions
 fn default_min_concept_length() -> usize {
-    3  // Minimum 3 characters for concepts
+    3 // Minimum 3 characters for concepts
 }
 fn default_max_concept_words() -> usize {
-    5  // Maximum 5 words per concept
+    5 // Maximum 5 words per concept
 }
 fn default_co_occurrence_threshold() -> usize {
-    1  // Minimum 1 shared chunk for relationship
+    1 // Minimum 1 shared chunk for relationship
 }
 fn default_max_refinement_iterations() -> usize {
-    3  // Up to 3 query refinement iterations
+    3 // Up to 3 query refinement iterations
 }
 
 // E2GraphRAG default functions
@@ -1346,10 +1349,10 @@ fn default_e2_entity_types() -> Vec<String> {
     ]
 }
 fn default_e2_min_confidence() -> f32 {
-    0.6  // 60% minimum confidence for pattern-based extraction
+    0.6 // 60% minimum confidence for pattern-based extraction
 }
 fn default_min_entity_frequency() -> usize {
-    1  // Entities must appear at least once
+    1 // Entities must appear at least once
 }
 
 impl Default for GeneralConfig {
@@ -1674,16 +1677,14 @@ impl Default for HybridGraphConfig {
 }
 
 impl SetConfig {
-    /// Load configuration from TOML or JSON5 file (auto-detects format by extension)
+    /// Load configuration from TOML or JSON5 file (auto-detects format by
+    /// extension)
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path_ref = path.as_ref();
         let content = fs::read_to_string(path_ref)?;
 
         // Detect format by file extension
-        let extension = path_ref
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let extension = path_ref.extension().and_then(|e| e.to_str()).unwrap_or("");
 
         let config: SetConfig = match extension {
             #[cfg(feature = "json5-support")]
@@ -1691,18 +1692,17 @@ impl SetConfig {
                 json5::from_str(&content).map_err(|e| crate::core::GraphRAGError::Config {
                     message: format!("JSON5 parse error: {e}"),
                 })?
-            }
+            },
             #[cfg(not(feature = "json5-support"))]
             "json5" | "json" => {
                 return Err(crate::core::GraphRAGError::Config {
-                    message: "JSON5 support not enabled. Rebuild with --features json5-support".to_string(),
+                    message: "JSON5 support not enabled. Rebuild with --features json5-support"
+                        .to_string(),
                 });
-            }
-            _ => {
-                toml::from_str(&content).map_err(|e| crate::core::GraphRAGError::Config {
-                    message: format!("TOML parse error: {e}"),
-                })?
-            }
+            },
+            _ => toml::from_str(&content).map_err(|e| crate::core::GraphRAGError::Config {
+                message: format!("TOML parse error: {e}"),
+            })?,
         };
 
         Ok(config)
@@ -1717,10 +1717,11 @@ impl SetConfig {
 
         // Add header comment
         let commented_toml = format!(
-            "# =============================================================================\n\
-             # GraphRAG Configuration File\n\
-             # Complete configuration with extensive parameters for easy customization\n\
-             # =============================================================================\n\n{toml_string}"
+            "# =============================================================================\n# \
+             GraphRAG Configuration File\n# Complete configuration with extensive parameters for \
+             easy customization\n# \
+             =============================================================================\n\\
+             n{toml_string}"
         );
 
         fs::write(path, commented_toml)?;
@@ -1739,9 +1740,7 @@ impl SetConfig {
         config.text.chunk_overlap = self.pipeline.text_extraction.chunk_overlap;
 
         // Map entity extraction based on approach
-        config.entities.min_confidence = self
-            .entity_extraction
-            .min_confidence;
+        config.entities.min_confidence = self.entity_extraction.min_confidence;
 
         // Map entity types from pipeline.entity_extraction
         if let Some(ref types) = self.pipeline.entity_extraction.entity_types {
@@ -1756,41 +1755,47 @@ impl SetConfig {
             "semantic" => {
                 if let Some(ref semantic) = self.semantic {
                     config.entities.use_gleaning = semantic.entity_extraction.use_gleaning;
-                    config.entities.max_gleaning_rounds = semantic.entity_extraction.max_gleaning_rounds;
-                    config.entities.min_confidence = semantic.entity_extraction.confidence_threshold;
+                    config.entities.max_gleaning_rounds =
+                        semantic.entity_extraction.max_gleaning_rounds;
+                    config.entities.min_confidence =
+                        semantic.entity_extraction.confidence_threshold;
                 } else {
-                    // Fallback for semantic approach: ALWAYS enable gleaning when mode.approach = "semantic"
-                    // This ensures JSON5 configs with mode.approach="semantic" use LLM-based extraction
+                    // Fallback for semantic approach: ALWAYS enable gleaning when mode.approach =
+                    // "semantic" This ensures JSON5 configs with
+                    // mode.approach="semantic" use LLM-based extraction
                     config.entities.use_gleaning = true;
                     config.entities.max_gleaning_rounds = if self.entity_extraction.use_gleaning {
                         self.entity_extraction.max_gleaning_rounds
                     } else {
-                        default_max_gleaning_rounds() // Use default if not explicitly set
+                        default_max_gleaning_rounds() // Use default if not
+                                                      // explicitly set
                     };
                     // Use top-level min_confidence if available
                     config.entities.min_confidence = self.entity_extraction.min_confidence;
                 }
-            }
+            },
             "algorithmic" => {
                 // Algorithmic uses pattern-based extraction, no gleaning
                 config.entities.use_gleaning = false;
                 if let Some(ref algorithmic) = self.algorithmic {
-                    config.entities.min_confidence = algorithmic.entity_extraction.confidence_threshold;
+                    config.entities.min_confidence =
+                        algorithmic.entity_extraction.confidence_threshold;
                 }
-            }
+            },
             "hybrid" => {
                 // Hybrid can use both, enable gleaning for LLM component
                 config.entities.use_gleaning = true;
                 if self.hybrid.is_some() {
                     // Use hybrid configuration if available
-                    config.entities.max_gleaning_rounds = 2; // Reduced for hybrid efficiency
+                    config.entities.max_gleaning_rounds = 2; // Reduced for
+                                                             // hybrid efficiency
                 }
-            }
+            },
             _ => {
                 // Unknown approach, use top-level config as fallback
                 config.entities.use_gleaning = self.entity_extraction.use_gleaning;
                 config.entities.max_gleaning_rounds = self.entity_extraction.max_gleaning_rounds;
-            }
+            },
         }
 
         // Map graph building

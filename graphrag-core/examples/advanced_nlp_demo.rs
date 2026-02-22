@@ -6,13 +6,11 @@
 //! - Query Optimization (cost-based planning)
 
 use graphrag_core::{
-    KnowledgeGraph, Entity, EntityId, Relationship,
-    Result,
+    graph::{GraphTraversal, TraversalConfig},
+    nlp::{SyntaxAnalyzer, SyntaxAnalyzerConfig},
+    query::{GraphStatistics, JoinType, QueryOp, QueryOptimizer},
+    Entity, EntityId, KnowledgeGraph, Relationship, Result,
 };
-
-use graphrag_core::nlp::{SyntaxAnalyzer, SyntaxAnalyzerConfig};
-use graphrag_core::graph::{GraphTraversal, TraversalConfig};
-use graphrag_core::query::{QueryOptimizer, QueryOp, GraphStatistics, JoinType};
 
 fn main() -> Result<()> {
     println!("\n🚀 Advanced NLP Features Demo");
@@ -56,9 +54,9 @@ fn demo_syntax_analysis() -> Result<()> {
     let deps = analyzer.parse_dependencies(&tokens)?;
     println!("\n3. Dependencies ({} found):", deps.len());
     for dep in deps.iter().take(3) {
-        println!("   {} → {}",
-            tokens[dep.head].text,
-            tokens[dep.dependent].text
+        println!(
+            "   {} → {}",
+            tokens[dep.head].text, tokens[dep.dependent].text
         );
     }
 
@@ -104,7 +102,8 @@ fn demo_graph_traversal() -> Result<()> {
         context: vec![],
     })?;
 
-    println!("\nGraph: {} entities, {} relationships",
+    println!(
+        "\nGraph: {} entities, {} relationships",
         graph.entities().count(),
         graph.relationships().count()
     );
@@ -120,7 +119,10 @@ fn demo_graph_traversal() -> Result<()> {
 
     // BFS
     let bfs = traversal.bfs(&graph, &alice)?;
-    println!("\n1. BFS from Alice: {} entities discovered", bfs.entities.len());
+    println!(
+        "\n1. BFS from Alice: {} entities discovered",
+        bfs.entities.len()
+    );
     for entity in &bfs.entities {
         let depth = bfs.distances.get(&entity.id).unwrap_or(&0);
         println!("   Depth {}: {}", depth, entity.name);
@@ -192,7 +194,10 @@ fn demo_query_optimization() -> Result<()> {
 
     let join_cost = optimizer.estimate_cost(&join_query)?;
     println!("\n2. Join Query:");
-    println!("   Cost: {}, Cardinality: {}", join_cost.cost, join_cost.cardinality);
+    println!(
+        "   Cost: {}, Cardinality: {}",
+        join_cost.cost, join_cost.cardinality
+    );
 
     // Optimization
     let optimized = optimizer.optimize(join_query.clone())?;
@@ -201,7 +206,10 @@ fn demo_query_optimization() -> Result<()> {
     if opt_cost.cost < join_cost.cost {
         let improvement = (join_cost.cost - opt_cost.cost) / join_cost.cost * 100.0;
         println!("\n3. After Optimization:");
-        println!("   Cost: {} ({}% improvement)", opt_cost.cost, improvement as i32);
+        println!(
+            "   Cost: {} ({}% improvement)",
+            opt_cost.cost, improvement as i32
+        );
     }
 
     Ok(())

@@ -2,10 +2,10 @@
 //!
 //! Tests all REST API endpoints with real GraphRAG instances
 
-use graphrag_rs::{GraphRAG, Config};
+use std::{collections::HashMap, sync::Arc};
+
+use graphrag_rs::{Config, GraphRAG};
 use serde_json::json;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 #[tokio::test]
@@ -31,14 +31,19 @@ async fn test_document_lifecycle() {
 
     // Upload document
     let content = "Alice knows Bob. Bob works at Acme Corp.";
-    graphrag.add_document_from_text(content).expect("Failed to add document");
+    graphrag
+        .add_document_from_text(content)
+        .expect("Failed to add document");
 
     // Build graph
     graphrag.build_graph().expect("Failed to build graph");
 
     // Verify graph has content
     let graph = graphrag.get_knowledge_graph().expect("No knowledge graph");
-    assert!(graph.entity_count() > 0, "Expected entities to be extracted");
+    assert!(
+        graph.entity_count() > 0,
+        "Expected entities to be extracted"
+    );
 }
 
 #[tokio::test]
@@ -48,7 +53,9 @@ async fn test_graph_statistics() {
     graphrag.initialize().expect("Failed to initialize");
 
     // Add test data
-    graphrag.add_document_from_text("Test document with Alice and Bob.").expect("Failed to add");
+    graphrag
+        .add_document_from_text("Test document with Alice and Bob.")
+        .expect("Failed to add");
     graphrag.build_graph().expect("Failed to build graph");
 
     // Get statistics
@@ -57,8 +64,10 @@ async fn test_graph_statistics() {
         let relationship_count = graph.relationship_count();
         let document_count = graph.document_count();
 
-        println!("Graph stats: {} entities, {} relationships, {} documents",
-                 entity_count, relationship_count, document_count);
+        println!(
+            "Graph stats: {} entities, {} relationships, {} documents",
+            entity_count, relationship_count, document_count
+        );
 
         // entity_count and relationship_count are usize (always >= 0)
         assert!(document_count > 0);
@@ -72,12 +81,15 @@ async fn test_graph_export() {
     graphrag.initialize().expect("Failed to initialize");
 
     // Add test data
-    graphrag.add_document_from_text("Alice works with Bob at OpenAI.").expect("Failed to add");
+    graphrag
+        .add_document_from_text("Alice works with Bob at OpenAI.")
+        .expect("Failed to add");
     graphrag.build_graph().expect("Failed to build graph");
 
     // Export graph
     if let Some(graph) = graphrag.get_knowledge_graph() {
-        let nodes: Vec<_> = graph.entities()
+        let nodes: Vec<_> = graph
+            .entities()
             .map(|entity| {
                 json!({
                     "id": entity.id.to_string(),
@@ -87,7 +99,8 @@ async fn test_graph_export() {
             })
             .collect();
 
-        let edges: Vec<_> = graph.relationships()
+        let edges: Vec<_> = graph
+            .relationships()
             .map(|rel| {
                 json!({
                     "source": rel.source.to_string(),
@@ -100,7 +113,9 @@ async fn test_graph_export() {
         println!("Exported {} nodes and {} edges", nodes.len(), edges.len());
 
         // Basic validation (lengths are usize, always >= 0)
-        assert!(nodes.is_empty() || !nodes.is_empty()); // Always true, just checking serialization worked
+        assert!(nodes.is_empty() || !nodes.is_empty()); // Always true, just
+                                                        // checking serialization
+                                                        // worked
     }
 }
 
@@ -111,7 +126,9 @@ async fn test_entity_retrieval() {
     graphrag.initialize().expect("Failed to initialize");
 
     // Add test data
-    graphrag.add_document_from_text("Alice is a scientist at MIT.").expect("Failed to add");
+    graphrag
+        .add_document_from_text("Alice is a scientist at MIT.")
+        .expect("Failed to add");
     graphrag.build_graph().expect("Failed to build graph");
 
     // List entities
@@ -120,7 +137,10 @@ async fn test_entity_retrieval() {
 
         if !entities.is_empty() {
             let first_entity = &entities[0];
-            println!("Found entity: {} ({})", first_entity.name, first_entity.entity_type);
+            println!(
+                "Found entity: {} ({})",
+                first_entity.name, first_entity.entity_type
+            );
 
             // Verify we can retrieve it by ID
             let retrieved = graph.get_entity(&first_entity.id);
@@ -137,9 +157,9 @@ async fn test_entity_filtering_by_type() {
     graphrag.initialize().expect("Failed to initialize");
 
     // Add diverse test data
-    graphrag.add_document_from_text(
-        "Alice works at Google. Bob studies at MIT. OpenAI develops AI."
-    ).expect("Failed to add");
+    graphrag
+        .add_document_from_text("Alice works at Google. Bob studies at MIT. OpenAI develops AI.")
+        .expect("Failed to add");
     graphrag.build_graph().expect("Failed to build graph");
 
     // Filter entities by type
@@ -165,9 +185,12 @@ async fn test_query_pipeline() {
     graphrag.initialize().expect("Failed to initialize");
 
     // Add test document
-    graphrag.add_document_from_text(
-        "GraphRAG is a knowledge graph retrieval system. It extracts entities and relationships."
-    ).expect("Failed to add");
+    graphrag
+        .add_document_from_text(
+            "GraphRAG is a knowledge graph retrieval system. It extracts entities and \
+             relationships.",
+        )
+        .expect("Failed to add");
     graphrag.build_graph().expect("Failed to build graph");
 
     // Query the graph
@@ -190,8 +213,12 @@ async fn test_session_isolation() {
     graphrag2.initialize().expect("Failed to initialize 2");
 
     // Add different data to each
-    graphrag1.add_document_from_text("Alice works at Company A.").expect("Failed to add to 1");
-    graphrag2.add_document_from_text("Bob works at Company B.").expect("Failed to add to 2");
+    graphrag1
+        .add_document_from_text("Alice works at Company A.")
+        .expect("Failed to add to 1");
+    graphrag2
+        .add_document_from_text("Bob works at Company B.")
+        .expect("Failed to add to 2");
 
     graphrag1.build_graph().expect("Failed to build graph 1");
     graphrag2.build_graph().expect("Failed to build graph 2");
@@ -241,7 +268,9 @@ async fn test_concurrent_access() {
     // Single writer
     {
         let mut graphrag = state.write().await;
-        graphrag.add_document_from_text("Concurrent test document.").expect("Failed to add");
+        graphrag
+            .add_document_from_text("Concurrent test document.")
+            .expect("Failed to add");
     }
 
     // Final read
@@ -288,8 +317,20 @@ async fn test_empty_graph_operations() {
 
     // Graph should be initialized but empty
     if let Some(graph) = graphrag.get_knowledge_graph() {
-        assert_eq!(graph.entity_count(), 0, "Expected 0 entities in empty graph");
-        assert_eq!(graph.relationship_count(), 0, "Expected 0 relationships in empty graph");
-        assert_eq!(graph.document_count(), 0, "Expected 0 documents in empty graph");
+        assert_eq!(
+            graph.entity_count(),
+            0,
+            "Expected 0 entities in empty graph"
+        );
+        assert_eq!(
+            graph.relationship_count(),
+            0,
+            "Expected 0 relationships in empty graph"
+        );
+        assert_eq!(
+            graph.document_count(),
+            0,
+            "Expected 0 documents in empty graph"
+        );
     }
 }

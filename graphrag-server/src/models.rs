@@ -2,12 +2,13 @@
 //!
 //! All request/response models with automatic OpenAPI schema generation
 
+use std::fmt;
+
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use apistos::ApiComponent;
 use apistos_gen::ApiErrorComponent;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use actix_web::{error::ResponseError, HttpResponse, http::StatusCode};
 
 // ============================================================================
 // Query Models
@@ -100,7 +101,8 @@ fn example_title() -> &'static str {
 }
 
 fn example_content() -> &'static str {
-    "GraphRAG is a retrieval-augmented generation system that combines knowledge graphs with large language models..."
+    "GraphRAG is a retrieval-augmented generation system that combines knowledge graphs with large \
+     language models..."
 }
 
 /// Document metadata (for listing)
@@ -219,8 +221,9 @@ pub struct HealthResponse {
 // Success Response Models
 // ============================================================================
 
-// Note: Using specific response types (DocumentOperationResponse, BuildGraphResponse, etc.)
-// instead of generic success responses for better type safety and clearer API contracts
+// Note: Using specific response types (DocumentOperationResponse,
+// BuildGraphResponse, etc.) instead of generic success responses for better
+// type safety and clearer API contracts
 
 /// Document operation success
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApiComponent)]
@@ -318,9 +321,15 @@ pub struct ApiKeyRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, ApiErrorComponent)]
 #[openapi_error(
     status(code = 400, description = "Bad Request - Invalid input or parameters"),
-    status(code = 401, description = "Unauthorized - Authentication required or failed"),
+    status(
+        code = 401,
+        description = "Unauthorized - Authentication required or failed"
+    ),
     status(code = 404, description = "Not Found - Resource does not exist"),
-    status(code = 500, description = "Internal Server Error - Server encountered an error")
+    status(
+        code = 500,
+        description = "Internal Server Error - Server encountered an error"
+    )
 )]
 pub enum ApiError {
     /// Bad request error

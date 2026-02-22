@@ -1,7 +1,8 @@
 //! HTML layout parser
 //!
-//! Extracts document structure from HTML documents by parsing heading tags (h1-h6).
-//! This is a simplified parser - for production use, consider using a proper HTML parsing library.
+//! Extracts document structure from HTML documents by parsing heading tags
+//! (h1-h6). This is a simplified parser - for production use, consider using a
+//! proper HTML parsing library.
 
 use crate::text::{
     document_structure::{DocumentStructure, Heading, HeadingHierarchy, Section},
@@ -28,7 +29,7 @@ impl HtmlLayoutParser {
                 '<' => inside_tag = true,
                 '>' => inside_tag = false,
                 _ if !inside_tag => text.push(ch),
-                _ => {}
+                _ => {},
             }
         }
 
@@ -227,7 +228,8 @@ mod tests {
         let structure = parser.parse(content);
 
         assert_eq!(structure.headings.len(), 1);
-        assert_eq!(structure.headings[0].text, "Chapter One"); // Nested tags removed
+        assert_eq!(structure.headings[0].text, "Chapter One"); // Nested tags
+                                                               // removed
     }
 
     #[test]

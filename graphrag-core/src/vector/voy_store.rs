@@ -1,7 +1,7 @@
 //! Voy vector store implementation for WASM
 //!
-//! Voy is a lightweight (75KB) pure Rust vector search library optimized for WASM.
-//! It uses a k-d tree algorithm for efficient similarity search.
+//! Voy is a lightweight (75KB) pure Rust vector search library optimized for
+//! WASM. It uses a k-d tree algorithm for efficient similarity search.
 //!
 //! ## Features
 //!
@@ -23,12 +23,13 @@
 //! let results = store.search(&query_embedding, 10)?;
 //! ```
 
-use crate::{GraphRAGError, Result};
 use std::collections::HashMap;
-use voy::{Embeddings, Similarity};
 
+use voy::{Embeddings, Similarity};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+
+use crate::{GraphRAGError, Result};
 
 /// Voy-based vector store for WASM environments
 ///
@@ -55,7 +56,8 @@ impl VoyStore {
     ///
     /// # Arguments
     ///
-    /// * `dimension` - The dimensionality of the embeddings (e.g., 384 for MiniLM, 768 for BERT)
+    /// * `dimension` - The dimensionality of the embeddings (e.g., 384 for
+    ///   MiniLM, 768 for BERT)
     ///
     /// # Example
     ///
@@ -75,7 +77,8 @@ impl VoyStore {
 
     /// Add a vector to the store
     ///
-    /// Vectors are added to a pending queue and indexed when `build_index()` is called.
+    /// Vectors are added to a pending queue and indexed when `build_index()` is
+    /// called.
     ///
     /// # Arguments
     ///
@@ -84,7 +87,8 @@ impl VoyStore {
     ///
     /// # Errors
     ///
-    /// Returns error if embedding dimension doesn't match or if ID already exists
+    /// Returns error if embedding dimension doesn't match or if ID already
+    /// exists
     pub fn add_vector(&mut self, id: String, embedding: Vec<f32>) -> Result<()> {
         if embedding.len() != self.dimension {
             return Err(GraphRAGError::VectorSearch {
@@ -114,7 +118,8 @@ impl VoyStore {
     /// Build the k-d tree index from all pending vectors
     ///
     /// This must be called after adding vectors and before searching.
-    /// Building is fast (typically <100ms for 10k vectors) but blocks the thread.
+    /// Building is fast (typically <100ms for 10k vectors) but blocks the
+    /// thread.
     ///
     /// # Errors
     ///
@@ -181,16 +186,20 @@ impl VoyStore {
             });
         }
 
-        let index = self.index.as_ref().ok_or_else(|| GraphRAGError::VectorSearch {
-            message: "Index not available".to_string(),
-        })?;
+        let index = self
+            .index
+            .as_ref()
+            .ok_or_else(|| GraphRAGError::VectorSearch {
+                message: "Index not available".to_string(),
+            })?;
 
         // Search using Voy
-        let results = index
-            .search(query_embedding, top_k)
-            .map_err(|e| GraphRAGError::VectorSearch {
-                message: format!("Voy search failed: {}", e),
-            })?;
+        let results =
+            index
+                .search(query_embedding, top_k)
+                .map_err(|e| GraphRAGError::VectorSearch {
+                    message: format!("Voy search failed: {}", e),
+                })?;
 
         // Convert results to (id, similarity) tuples
         let mut scored_results = Vec::new();
@@ -365,7 +374,11 @@ impl VoyStoreWasm {
     }
 
     #[wasm_bindgen(js_name = addVector)]
-    pub fn add_vector(&mut self, id: String, embedding: Vec<f32>) -> std::result::Result<(), JsValue> {
+    pub fn add_vector(
+        &mut self,
+        id: String,
+        embedding: Vec<f32>,
+    ) -> std::result::Result<(), JsValue> {
         self.inner
             .add_vector(id, embedding)
             .map_err(|e| JsValue::from_str(&e.to_string()))
@@ -379,14 +392,17 @@ impl VoyStoreWasm {
     }
 
     #[wasm_bindgen(js_name = search)]
-    pub fn search(&self, query_embedding: Vec<f32>, top_k: usize) -> std::result::Result<JsValue, JsValue> {
+    pub fn search(
+        &self,
+        query_embedding: Vec<f32>,
+        top_k: usize,
+    ) -> std::result::Result<JsValue, JsValue> {
         let results = self
             .inner
             .search(&query_embedding, top_k)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-        serde_wasm_bindgen::to_value(&results)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&results).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     #[wasm_bindgen(js_name = len)]
@@ -442,7 +458,9 @@ mod tests {
         let mut store = VoyStore::new(3);
         let embedding = vec![0.1, 0.2, 0.3];
 
-        store.add_vector("doc1".to_string(), embedding.clone()).unwrap();
+        store
+            .add_vector("doc1".to_string(), embedding.clone())
+            .unwrap();
         assert!(store.add_vector("doc1".to_string(), embedding).is_err());
     }
 
@@ -451,9 +469,15 @@ mod tests {
         let mut store = VoyStore::new(3);
 
         // Add test vectors
-        store.add_vector("doc1".to_string(), vec![1.0, 0.0, 0.0]).unwrap();
-        store.add_vector("doc2".to_string(), vec![0.0, 1.0, 0.0]).unwrap();
-        store.add_vector("doc3".to_string(), vec![0.9, 0.1, 0.0]).unwrap();
+        store
+            .add_vector("doc1".to_string(), vec![1.0, 0.0, 0.0])
+            .unwrap();
+        store
+            .add_vector("doc2".to_string(), vec![0.0, 1.0, 0.0])
+            .unwrap();
+        store
+            .add_vector("doc3".to_string(), vec![0.9, 0.1, 0.0])
+            .unwrap();
 
         // Build index
         assert!(store.build_index().is_ok());
@@ -483,8 +507,12 @@ mod tests {
     fn test_remove_vector() {
         let mut store = VoyStore::new(3);
 
-        store.add_vector("doc1".to_string(), vec![1.0, 0.0, 0.0]).unwrap();
-        store.add_vector("doc2".to_string(), vec![0.0, 1.0, 0.0]).unwrap();
+        store
+            .add_vector("doc1".to_string(), vec![1.0, 0.0, 0.0])
+            .unwrap();
+        store
+            .add_vector("doc2".to_string(), vec![0.0, 1.0, 0.0])
+            .unwrap();
 
         assert_eq!(store.len(), 2);
 
@@ -498,8 +526,12 @@ mod tests {
     fn test_statistics() {
         let mut store = VoyStore::new(3);
 
-        store.add_vector("doc1".to_string(), vec![1.0, 0.0, 0.0]).unwrap();
-        store.add_vector("doc2".to_string(), vec![0.0, 1.0, 0.0]).unwrap();
+        store
+            .add_vector("doc1".to_string(), vec![1.0, 0.0, 0.0])
+            .unwrap();
+        store
+            .add_vector("doc2".to_string(), vec![0.0, 1.0, 0.0])
+            .unwrap();
 
         let stats = store.statistics();
         assert_eq!(stats.vector_count, 2);

@@ -2,8 +2,9 @@
 //!
 //! Provides helpers for loading and validating files.
 
-use color_eyre::eyre::{eyre, Result};
 use std::path::{Path, PathBuf};
+
+use color_eyre::eyre::{eyre, Result};
 use tokio::fs;
 
 /// File operations utility
@@ -136,6 +137,8 @@ mod tests {
     fn test_is_supported_document() {
         assert!(FileOperations::is_supported_document(Path::new("test.txt")));
         assert!(FileOperations::is_supported_document(Path::new("test.md")));
-        assert!(!FileOperations::is_supported_document(Path::new("test.pdf")));
+        assert!(!FileOperations::is_supported_document(Path::new(
+            "test.pdf"
+        )));
     }
 }

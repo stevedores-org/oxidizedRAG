@@ -4,10 +4,6 @@
 //! fails or when logic form retrieval is not applicable.
 
 #[cfg(feature = "rograg")]
-use crate::core::{EntityId, KnowledgeGraph};
-#[cfg(feature = "rograg")]
-use crate::Result;
-#[cfg(feature = "rograg")]
 use derive_more::Display;
 #[cfg(feature = "rograg")]
 use itertools::Itertools;
@@ -18,29 +14,36 @@ use tap::Pipe;
 #[cfg(feature = "rograg")]
 use thiserror::Error;
 
+#[cfg(feature = "rograg")]
+use crate::core::{EntityId, KnowledgeGraph};
+#[cfg(feature = "rograg")]
+use crate::Result;
+
 /// Errors that can occur during fuzzy matching operations.
 #[cfg(feature = "rograg")]
 #[derive(Error, Debug)]
 pub enum FuzzyMatchError {
-    /// No entities or content chunks matched the query above the similarity threshold.
+    /// No entities or content chunks matched the query above the similarity
+    /// threshold.
     ///
-    /// Occurs when the query terms have no semantic similarity to any content in
-    /// the knowledge graph. Consider lowering the similarity threshold or using
-    /// query reformulation.
+    /// Occurs when the query terms have no semantic similarity to any content
+    /// in the knowledge graph. Consider lowering the similarity threshold
+    /// or using query reformulation.
     #[error("No matching entities found for query: {query}")]
     NoMatches {
         /// The query text that produced no matches.
-        query: String
+        query: String,
     },
 
     /// The configured similarity threshold is too restrictive.
     ///
-    /// Occurs when the threshold is set below 0.0 or above 1.0. Valid thresholds
-    /// should be in the range [0.0, 1.0], with typical values between 0.5 and 0.8.
+    /// Occurs when the threshold is set below 0.0 or above 1.0. Valid
+    /// thresholds should be in the range [0.0, 1.0], with typical values
+    /// between 0.5 and 0.8.
     #[error("Similarity threshold too low: {threshold}")]
     ThresholdTooLow {
         /// The invalid threshold value that was configured.
-        threshold: f32
+        threshold: f32,
     },
 
     /// The knowledge graph is empty or contains no queryable content.
@@ -71,7 +74,8 @@ pub struct FuzzyMatchConfig {
 
     /// Whether to match against entity names and types.
     ///
-    /// Default: true. Disabling reduces search space but may miss relevant entities.
+    /// Default: true. Disabling reduces search space but may miss relevant
+    /// entities.
     pub enable_entity_matching: bool,
 
     /// Whether to match against text chunk content.
@@ -81,7 +85,8 @@ pub struct FuzzyMatchConfig {
 
     /// Whether to expand matches through graph relationships.
     ///
-    /// Default: true. When enabled, finds related entities through graph traversal.
+    /// Default: true. When enabled, finds related entities through graph
+    /// traversal.
     pub enable_semantic_expansion: bool,
 
     /// Maximum depth for semantic expansion (number of hops).
@@ -282,7 +287,8 @@ impl FuzzyMatcher {
         Self { config }
     }
 
-    /// Match a query against the knowledge graph using fuzzy semantic similarity.
+    /// Match a query against the knowledge graph using fuzzy semantic
+    /// similarity.
     ///
     /// Executes a multi-stage matching process:
     /// 1. Direct entity name matching (exact and partial)
@@ -304,7 +310,8 @@ impl FuzzyMatcher {
     /// # Errors
     ///
     /// - `FuzzyMatchError::InvalidGraph` if the graph is empty
-    /// - `FuzzyMatchError::NoMatches` if no matches exceed the similarity threshold
+    /// - `FuzzyMatchError::NoMatches` if no matches exceed the similarity
+    ///   threshold
     pub fn match_query(&self, query: &str, graph: &KnowledgeGraph) -> Result<FuzzyMatchResult> {
         if graph.entities().count() == 0 && graph.chunks().count() == 0 {
             return Err(FuzzyMatchError::InvalidGraph.into());
@@ -816,7 +823,8 @@ impl FuzzyMatcher {
     ///
     /// # Returns
     ///
-    /// Returns `(hits, total)` tuple. Currently always (0, 0) as caching is disabled.
+    /// Returns `(hits, total)` tuple. Currently always (0, 0) as caching is
+    /// disabled.
     pub fn cache_stats(&self) -> (usize, usize) {
         (0, 0) // Cache disabled
     }
@@ -857,7 +865,9 @@ mod tests {
         let chunk = TextChunk::new(
             ChunkId::new("chunk1".to_string()),
             DocumentId::new("doc1".to_string()),
-            "Entity Name is a character who interacts with other entities. It is associated with Second Entity and they have various relationships.".to_string(),
+            "Entity Name is a character who interacts with other entities. It is associated with \
+             Second Entity and they have various relationships."
+                .to_string(),
             0,
             100,
         );
@@ -901,7 +911,9 @@ mod tests {
         let matcher = FuzzyMatcher::new();
         let graph = create_test_graph();
 
-        let result = matcher.match_query("character relationships", &graph).unwrap();
+        let result = matcher
+            .match_query("character relationships", &graph)
+            .unwrap();
 
         assert!(!result.matches.is_empty());
         assert!(result

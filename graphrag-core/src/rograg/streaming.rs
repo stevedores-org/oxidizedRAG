@@ -4,21 +4,23 @@
 //! to improve user experience and system resilience.
 
 #[cfg(feature = "rograg")]
-use crate::rograg::{
-    IntentResult, ProcessingStats, RogragResponse, SubqueryResult, SubqueryResultType,
-};
-#[cfg(feature = "rograg")]
-use crate::Result;
+use std::collections::HashMap;
+
 #[cfg(feature = "rograg")]
 use itertools::Itertools;
 #[cfg(feature = "rograg")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "rograg")]
-use std::collections::HashMap;
-#[cfg(feature = "rograg")]
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::rograg::{
+    IntentResult, ProcessingStats, RogragResponse, SubqueryResult, SubqueryResultType,
+};
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Error types for streaming response generation
 #[cfg(feature = "rograg")]
@@ -29,7 +31,7 @@ pub enum StreamingError {
     #[error("Failed to generate response: {reason}")]
     GenerationFailed {
         /// Description of what failed during generation.
-        reason: String
+        reason: String,
     },
 
     /// Not enough subquery results to synthesize a response.
@@ -38,21 +40,21 @@ pub enum StreamingError {
         /// Number of results available.
         got: usize,
         /// Minimum number of results required.
-        needed: usize
+        needed: usize,
     },
 
     /// Synthesis operation failed to combine subquery results.
     #[error("Response synthesis failed: {reason}")]
     SynthesisFailed {
         /// Description of the synthesis failure.
-        reason: String
+        reason: String,
     },
 
     /// Generic streaming error occurred.
     #[error("Streaming error: {message}")]
     StreamingError {
         /// Error message describing the streaming issue.
-        message: String
+        message: String,
     },
 }
 
@@ -297,8 +299,8 @@ impl StreamingResponseBuilder {
 
     /// Build a streaming response from subquery results
     ///
-    /// Synthesizes multiple subquery results into a coherent response using the configured
-    /// synthesis strategy and appropriate response templates.
+    /// Synthesizes multiple subquery results into a coherent response using the
+    /// configured synthesis strategy and appropriate response templates.
     ///
     /// # Arguments
     ///
@@ -308,7 +310,8 @@ impl StreamingResponseBuilder {
     ///
     /// # Returns
     ///
-    /// A complete ROGRAG response with synthesized content, confidence scores, and sources
+    /// A complete ROGRAG response with synthesized content, confidence scores,
+    /// and sources
     pub async fn build_streaming_response(
         &self,
         query: String,
@@ -373,8 +376,9 @@ impl StreamingResponseBuilder {
 
     /// Build a complete (non-streaming) response
     ///
-    /// Generates a full response without streaming, using the same synthesis logic
-    /// as streaming responses but delivering the complete result at once.
+    /// Generates a full response without streaming, using the same synthesis
+    /// logic as streaming responses but delivering the complete result at
+    /// once.
     ///
     /// # Arguments
     ///
@@ -401,8 +405,8 @@ impl StreamingResponseBuilder {
 
     /// Determine the appropriate template type based on query intent
     ///
-    /// Maps the classified query intent to the most suitable response template type,
-    /// with fallback logic based on subquery result patterns.
+    /// Maps the classified query intent to the most suitable response template
+    /// type, with fallback logic based on subquery result patterns.
     fn determine_template_type(
         &self,
         intent_result: &IntentResult,
@@ -426,14 +430,15 @@ impl StreamingResponseBuilder {
                 } else {
                     TemplateType::Fallback
                 }
-            }
+            },
         }
     }
 
     /// Select the best template for the given type and confidence level
     ///
-    /// Finds a template matching the type with an appropriate confidence threshold.
-    /// Falls back to generic templates if no exact match is found.
+    /// Finds a template matching the type with an appropriate confidence
+    /// threshold. Falls back to generic templates if no exact match is
+    /// found.
     fn select_template(
         &self,
         template_type: &TemplateType,
@@ -459,8 +464,8 @@ impl StreamingResponseBuilder {
 
     /// Generate content using template and synthesis result
     ///
-    /// Replaces template placeholders with actual content from synthesis results
-    /// and subquery data, then cleans up the final output.
+    /// Replaces template placeholders with actual content from synthesis
+    /// results and subquery data, then cleans up the final output.
     fn generate_content(
         &self,
         template: &ResponseTemplate,
@@ -475,7 +480,7 @@ impl StreamingResponseBuilder {
                 "content" => synthesis_result.content.clone(),
                 "confidence_indicator" => {
                     self.generate_confidence_indicator(synthesis_result.confidence)
-                }
+                },
                 "entity" => self.extract_primary_entity(subquery_results),
                 "entity1" => self.extract_entity_by_index(subquery_results, 0),
                 "entity2" => self.extract_entity_by_index(subquery_results, 1),
@@ -502,7 +507,8 @@ impl StreamingResponseBuilder {
 
     /// Generate confidence indicator text based on confidence score
     ///
-    /// Returns human-readable text describing the confidence level of the response.
+    /// Returns human-readable text describing the confidence level of the
+    /// response.
     fn generate_confidence_indicator(&self, confidence: f32) -> String {
         if confidence >= 0.9 {
             "I'm very confident in this information.".to_string()
@@ -558,7 +564,8 @@ impl StreamingResponseBuilder {
 
     /// Generate additional context from secondary subquery results
     ///
-    /// Combines content from results beyond the first to provide supporting context.
+    /// Combines content from results beyond the first to provide supporting
+    /// context.
     fn generate_additional_context(&self, results: &[SubqueryResult]) -> String {
         if results.len() > 1 {
             let additional: Vec<String> =
@@ -576,8 +583,8 @@ impl StreamingResponseBuilder {
 
     /// Generate details from high-confidence results
     ///
-    /// Filters and combines content from subquery results with confidence above 0.6
-    /// to provide detailed supporting information.
+    /// Filters and combines content from subquery results with confidence above
+    /// 0.6 to provide detailed supporting information.
     fn generate_details(&self, results: &[SubqueryResult]) -> String {
         let details: Vec<String> = results
             .iter()
@@ -690,7 +697,8 @@ impl StreamingResponseBuilder {
 
     /// Extract all unique sources from subquery results
     ///
-    /// Collects and deduplicates all source references from the subquery results.
+    /// Collects and deduplicates all source references from the subquery
+    /// results.
     fn extract_all_sources(&self, results: &[SubqueryResult]) -> Vec<String> {
         results
             .iter()
@@ -702,8 +710,9 @@ impl StreamingResponseBuilder {
 
     /// Generate streaming chunks from a complete response
     ///
-    /// Splits a full response into smaller chunks for progressive streaming delivery.
-    /// Each chunk is marked with its position and whether it's the final chunk.
+    /// Splits a full response into smaller chunks for progressive streaming
+    /// delivery. Each chunk is marked with its position and whether it's
+    /// the final chunk.
     ///
     /// # Arguments
     ///
@@ -794,8 +803,8 @@ impl SynthesisEngine {
 
     /// Synthesize multiple subquery results using the specified strategy
     ///
-    /// Combines information from multiple subquery results into a single coherent
-    /// response using one of several synthesis strategies.
+    /// Combines information from multiple subquery results into a single
+    /// coherent response using one of several synthesis strategies.
     ///
     /// # Arguments
     ///
@@ -829,7 +838,8 @@ impl SynthesisEngine {
 
     /// Sequential synthesis strategy
     ///
-    /// Concatenates results in order with equal weighting, computing average confidence.
+    /// Concatenates results in order with equal weighting, computing average
+    /// confidence.
     fn synthesize_sequential(&self, results: &[SubqueryResult]) -> Result<SynthesisResult> {
         let content = results.iter().map(|r| r.content.clone()).join(". ");
 
@@ -853,8 +863,8 @@ impl SynthesisEngine {
 
     /// Weighted synthesis strategy
     ///
-    /// Prioritizes results by confidence score, taking the top 3 highest-confidence
-    /// results and computing weighted confidence.
+    /// Prioritizes results by confidence score, taking the top 3
+    /// highest-confidence results and computing weighted confidence.
     fn synthesize_weighted(&self, results: &[SubqueryResult]) -> Result<SynthesisResult> {
         let total_weight: f32 = results.iter().map(|r| r.confidence).sum();
 
@@ -915,8 +925,8 @@ impl SynthesisEngine {
 
     /// Smart merge synthesis strategy
     ///
-    /// Intelligently combines results by grouping by result type (logic form vs fuzzy match)
-    /// and preferring logic form results when available.
+    /// Intelligently combines results by grouping by result type (logic form vs
+    /// fuzzy match) and preferring logic form results when available.
     fn synthesize_smart_merge(&self, results: &[SubqueryResult]) -> Result<SynthesisResult> {
         // Group by result type and merge intelligently
         let mut logic_results = Vec::new();
@@ -968,8 +978,8 @@ impl SynthesisEngine {
 
     /// Hierarchical synthesis strategy
     ///
-    /// Structures results by importance with the highest confidence result as primary
-    /// and supporting results as secondary context.
+    /// Structures results by importance with the highest confidence result as
+    /// primary and supporting results as secondary context.
     fn synthesize_hierarchical(&self, results: &[SubqueryResult]) -> Result<SynthesisResult> {
         // Sort by confidence and create hierarchical structure
         let mut sorted_results = results.to_vec();

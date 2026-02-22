@@ -1,14 +1,14 @@
+use std::collections::HashMap;
+
+#[cfg(feature = "parallel-processing")]
+use rayon::prelude::*;
+
 use crate::{
     core::{Document, Entity, KnowledgeGraph, Relationship},
     entity::EntityExtractor,
     text::TextProcessor,
     Result,
 };
-
-#[cfg(feature = "parallel-processing")]
-use rayon::prelude::*;
-
-use std::collections::HashMap;
 
 // Incremental updates require async feature
 #[cfg(feature = "async")]
@@ -27,38 +27,22 @@ pub mod pagerank;
 #[cfg(feature = "leiden")]
 pub mod leiden;
 
-#[cfg(feature = "async")]
-pub use incremental::{
-    ConflictStrategy, IncrementalGraphManager, IncrementalStatistics,
-};
-
-pub use analytics::{
-    Community, CentralityScores, Path, GraphAnalytics,
-};
-
+pub use analytics::{CentralityScores, Community, GraphAnalytics, Path};
 pub use embeddings::{
-    EmbeddingConfig, EmbeddingGraph, Node2Vec, GraphSAGE,
-    GraphSAGEConfig, Aggregator,
+    Aggregator, EmbeddingConfig, EmbeddingGraph, GraphSAGE, GraphSAGEConfig, Node2Vec,
 };
-
-pub use temporal::{
-    TemporalGraph, TemporalEdge, Snapshot, TemporalQuery,
-    TemporalAnalytics, EvolutionMetrics,
-};
-
-pub use traversal::{
-    GraphTraversal, TraversalConfig, TraversalResult,
-};
-
+#[cfg(feature = "async")]
+pub use incremental::{ConflictStrategy, IncrementalGraphManager, IncrementalStatistics};
+// Leiden exports are only available when the feature is enabled
+#[cfg(feature = "leiden")]
+pub use leiden::{EntityMetadata, HierarchicalCommunities, LeidenCommunityDetector, LeidenConfig};
 // PageRank exports are only available when the feature is enabled
 #[cfg(feature = "pagerank")]
 pub use pagerank::{MultiModalScores, PageRankConfig, PersonalizedPageRank, ScoreWeights};
-
-// Leiden exports are only available when the feature is enabled
-#[cfg(feature = "leiden")]
-pub use leiden::{
-    EntityMetadata, HierarchicalCommunities, LeidenConfig, LeidenCommunityDetector,
+pub use temporal::{
+    EvolutionMetrics, Snapshot, TemporalAnalytics, TemporalEdge, TemporalGraph, TemporalQuery,
 };
+pub use traversal::{GraphTraversal, TraversalConfig, TraversalResult};
 
 /// Graph builder for constructing knowledge graphs from documents
 pub struct GraphBuilder {
@@ -221,10 +205,10 @@ impl GraphBuilder {
                     if entity.confidence > existing.confidence {
                         existing.confidence = entity.confidence;
                     }
-                }
+                },
                 None => {
                     entity_map.insert(key, entity);
-                }
+                },
             }
         }
 
@@ -303,9 +287,11 @@ impl GraphBuilder {
         for entity in graph.entities() {
             if entity.embedding.is_none() {
                 let _embedding = embedding_fn(&entity.name)?;
-                // Note: In a real implementation, you'd need to update the entity in the graph
-                // This requires a mutable reference to the entity, which is not available here
-                // You'd need to redesign the graph structure to allow updating entities
+                // Note: In a real implementation, you'd need to update the
+                // entity in the graph This requires a mutable
+                // reference to the entity, which is not available here
+                // You'd need to redesign the graph structure to allow updating
+                // entities
             }
         }
 

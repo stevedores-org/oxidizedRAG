@@ -8,9 +8,11 @@
 //! - Single quotes for strings
 //! - More JavaScript-like syntax
 
-use crate::core::error::{GraphRAGError, Result};
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+
+use crate::core::error::{GraphRAGError, Result};
 
 /// Load and parse a JSON5 configuration file
 ///
@@ -149,8 +151,9 @@ impl ConfigFormat {
 
 #[cfg(all(test, feature = "json5-support"))]
 mod tests {
-    use super::*;
     use serde::{Deserialize, Serialize};
+
+    use super::*;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct TestConfig {

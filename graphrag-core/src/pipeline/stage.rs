@@ -3,9 +3,10 @@
 //! Defines the interface for pipeline stages with typed inputs/outputs,
 //! enabling compile-time validation and swappable implementations.
 
+use std::fmt;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// Error type for stage execution.
 #[derive(Debug, Clone, Serialize, Deserialize)]

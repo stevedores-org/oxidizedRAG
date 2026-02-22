@@ -1,10 +1,10 @@
 //! GraphRAG WASM Web Application
 //!
-//! This is a demonstration application showing GraphRAG running 100% in the browser
-//! with Leptos, WASM, Voy vector search, and WebLLM for GPU-accelerated inference.
+//! This is a demonstration application showing GraphRAG running 100% in the
+//! browser with Leptos, WASM, Voy vector search, and WebLLM for GPU-accelerated
+//! inference.
 
-use leptos::prelude::*;
-use leptos::mount;
+use leptos::{mount, prelude::*};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{console, MouseEvent};
@@ -24,7 +24,8 @@ fn App() -> impl IntoView {
     let (input_value, set_input_value) = signal(String::new());
     let (is_loading, set_is_loading) = signal(false);
     let (llm_ready, set_llm_ready) = signal(false);
-    let (status_message, set_status_message) = signal(String::from("Checking WebLLM availability..."));
+    let (status_message, set_status_message) =
+        signal(String::from("Checking WebLLM availability..."));
     let (gpu_info, set_gpu_info) = signal(String::from("Detecting GPU..."));
 
     // Check WebLLM availability on mount
@@ -36,20 +37,21 @@ fn App() -> impl IntoView {
                 Ok(webllm) if !webllm.is_undefined() => {
                     set_status_message.set("WebLLM is available! ✅".to_string());
                     set_llm_ready.set(true);
-                }
+                },
                 _ => {
-                    set_status_message.set("WebLLM not loaded. Add script tag to index.html ⚠️".to_string());
-                }
+                    set_status_message
+                        .set("WebLLM not loaded. Add script tag to index.html ⚠️".to_string());
+                },
             }
 
             // Check WebGPU
             match js_sys::Reflect::get(&window.navigator(), &JsValue::from_str("gpu")) {
                 Ok(gpu) if !gpu.is_undefined() => {
                     set_gpu_info.set("WebGPU Available ✅ - GPU acceleration enabled".to_string());
-                }
+                },
                 _ => {
                     set_gpu_info.set("WebGPU Not Available ⚠️ - Using CPU fallback".to_string());
-                }
+                },
             }
         });
     });
@@ -85,7 +87,8 @@ fn App() -> impl IntoView {
                     msgs.push(ChatMessage {
                         role: "assistant".to_string(),
                         content: format!(
-                            "This is a demo response. WebLLM integration is ready! Your question was: \"{}\"",
+                            "This is a demo response. WebLLM integration is ready! Your question \
+                             was: \"{}\"",
                             text
                         ),
                         timestamp: js_sys::Date::now(),
@@ -97,7 +100,8 @@ fn App() -> impl IntoView {
             set_messages.update(|msgs| {
                 msgs.push(ChatMessage {
                     role: "assistant".to_string(),
-                    content: "WebLLM is not loaded. Please add the WebLLM script to index.html.".to_string(),
+                    content: "WebLLM is not loaded. Please add the WebLLM script to index.html."
+                        .to_string(),
                     timestamp: js_sys::Date::now(),
                 });
             });

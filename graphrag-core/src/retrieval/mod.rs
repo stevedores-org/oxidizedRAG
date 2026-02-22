@@ -14,15 +14,6 @@ pub mod hipporag_ppr;
 pub mod hybrid;
 pub mod pagerank_retrieval;
 
-#[cfg(feature = "parallel-processing")]
-use crate::parallel::ParallelProcessor;
-use crate::{
-    config::Config,
-    core::{ChunkId, EntityId, KnowledgeGraph},
-    summarization::DocumentTree,
-    vector::{EmbeddingGenerator, VectorIndex, VectorUtils},
-    Result,
-};
 use std::collections::{HashMap, HashSet};
 
 pub use bm25::{BM25Result, BM25Retriever, Document as BM25Document};
@@ -32,13 +23,21 @@ pub use fusion::{
     CascadeFusion, FusedResult, FusionMetrics, FusionPolicy, RankedResult, ReciprocalRankFusion,
     RetrievalSource, WeightedSum,
 };
+#[cfg(feature = "pagerank")]
+pub use hipporag_ppr::{Fact, HippoRAGConfig, HippoRAGRetriever};
 pub use hybrid::{CascadeConfig, FusionMethod, HybridConfig, HybridRetriever, HybridSearchResult};
-
 #[cfg(feature = "pagerank")]
 pub use pagerank_retrieval::{PageRankRetrievalSystem, ScoredResult};
 
-#[cfg(feature = "pagerank")]
-pub use hipporag_ppr::{Fact, HippoRAGConfig, HippoRAGRetriever};
+#[cfg(feature = "parallel-processing")]
+use crate::parallel::ParallelProcessor;
+use crate::{
+    config::Config,
+    core::{ChunkId, EntityId, KnowledgeGraph},
+    summarization::DocumentTree,
+    vector::{EmbeddingGenerator, VectorIndex, VectorUtils},
+    Result,
+};
 
 /// Retrieval system for querying the knowledge graph
 pub struct RetrievalSystem {
@@ -374,7 +373,8 @@ impl RetrievalSystem {
         Ok(vec![format!("Results for query: {}", query)])
     }
 
-    /// Advanced hybrid query with strategy selection and hierarchical integration
+    /// Advanced hybrid query with strategy selection and hierarchical
+    /// integration
     pub fn hybrid_query(
         &mut self,
         query: &str,
@@ -432,7 +432,8 @@ impl RetrievalSystem {
         Ok(results)
     }
 
-    /// Add embeddings to chunks and entities in the graph with parallel processing
+    /// Add embeddings to chunks and entities in the graph with parallel
+    /// processing
     pub fn add_embeddings_to_graph(&mut self, graph: &mut KnowledgeGraph) -> Result<()> {
         #[cfg(feature = "parallel-processing")]
         if let Some(processor) = self.parallel_processor.clone() {
@@ -442,7 +443,8 @@ impl RetrievalSystem {
         self.add_embeddings_sequential(graph)
     }
 
-    /// Parallel embedding generation with proper error handling and work-stealing
+    /// Parallel embedding generation with proper error handling and
+    /// work-stealing
     #[cfg(feature = "parallel-processing")]
     fn add_embeddings_parallel(
         &mut self,
@@ -506,7 +508,8 @@ impl RetrievalSystem {
         // Debug: Check total counts first (uncomment for debugging)
         let _total_chunks = graph.chunks().count();
         let _total_entities = graph.entities().count();
-        // println!("DEBUG: Found {} total chunks and {} total entities in graph", _total_chunks, _total_entities);
+        // println!("DEBUG: Found {} total chunks and {} total entities in graph",
+        // _total_chunks, _total_entities);
 
         // Generate embeddings for all chunks
         let mut chunk_count = 0;
@@ -576,9 +579,10 @@ impl RetrievalSystem {
 
         #[cfg(feature = "parallel-processing")]
         {
-            // For parallel query processing, we need to work around the borrowing limitations
-            // of the embedding generator. We'll use enhanced sequential processing with
-            // better monitoring and chunking for now.
+            // For parallel query processing, we need to work around the borrowing
+            // limitations of the embedding generator. We'll use enhanced
+            // sequential processing with better monitoring and chunking for
+            // now.
 
             let chunk_size = processor.config().chunk_batch_size.min(queries.len());
             tracing::debug!(
@@ -763,7 +767,8 @@ impl RetrievalSystem {
         Ok(final_results.into_iter().take(self.config.top_k).collect())
     }
 
-    /// Comprehensive search that combines multiple retrieval strategies (legacy)
+    /// Comprehensive search that combines multiple retrieval strategies
+    /// (legacy)
     pub fn comprehensive_search(
         &self,
         query_embedding: &[f32],
@@ -1474,7 +1479,8 @@ impl RetrievalSystem {
 
     /// Graph-based search
     pub fn graph_search(&self, query: &str, max_results: usize) -> Result<Vec<SearchResult>> {
-        // Simplified graph search - in a real implementation this would traverse the graph
+        // Simplified graph search - in a real implementation this would traverse the
+        // graph
         let mut results = Vec::new();
         results.push(SearchResult {
             id: format!("graph_result_{}", query.len()),
@@ -1494,7 +1500,8 @@ impl RetrievalSystem {
         query: &str,
         max_results: usize,
     ) -> Result<Vec<SearchResult>> {
-        // Simplified hierarchical search - in a real implementation this would use document trees
+        // Simplified hierarchical search - in a real implementation this would use
+        // document trees
         let mut results = Vec::new();
         results.push(SearchResult {
             id: format!("hierarchical_result_{}", query.len()),
@@ -1510,7 +1517,8 @@ impl RetrievalSystem {
 
     /// BM25-based search
     pub fn bm25_search(&self, query: &str, max_results: usize) -> Result<Vec<SearchResult>> {
-        // Simplified BM25 search - in a real implementation this would use proper BM25 scoring
+        // Simplified BM25 search - in a real implementation this would use proper BM25
+        // scoring
         let mut results = Vec::new();
         results.push(SearchResult {
             id: format!("bm25_result_{}", query.len()),
@@ -1536,7 +1544,8 @@ impl RetrievalSystem {
         }
     }
 
-    /// Safely truncate a string to a maximum byte length, respecting UTF-8 character boundaries
+    /// Safely truncate a string to a maximum byte length, respecting UTF-8
+    /// character boundaries
     fn safe_truncate(s: &str, max_bytes: usize) -> String {
         if s.len() <= max_bytes {
             return s.to_string();

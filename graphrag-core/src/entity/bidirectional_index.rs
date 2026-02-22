@@ -1,13 +1,16 @@
 //! Bidirectional Entity-Chunk Index
 //!
-//! This module provides efficient bidirectional lookups between entities and chunks,
-//! essential for LazyGraphRAG and E2GraphRAG query refinement and concept expansion.
+//! This module provides efficient bidirectional lookups between entities and
+//! chunks, essential for LazyGraphRAG and E2GraphRAG query refinement and
+//! concept expansion.
 //!
 //! ## Key Features
 //!
 //! - **Fast lookups**: O(1) access in both directions
-//! - **Many-to-many relationships**: One entity can appear in multiple chunks, one chunk can contain multiple entities
-//! - **Incremental updates**: Add/remove mappings without rebuilding the entire index
+//! - **Many-to-many relationships**: One entity can appear in multiple chunks,
+//!   one chunk can contain multiple entities
+//! - **Incremental updates**: Add/remove mappings without rebuilding the entire
+//!   index
 //! - **Memory efficient**: Uses IndexMap for predictable iteration order
 //!
 //! ## Use Cases
@@ -15,13 +18,16 @@
 //! 1. **Query Expansion**: Given entities in a query, find all relevant chunks
 //! 2. **Context Retrieval**: Given a chunk, find all related entities
 //! 3. **Concept Graph Building**: Track concept co-occurrence across chunks
-//! 4. **Iterative Deepening**: Expand search by traversing entity-chunk relationships
+//! 4. **Iterative Deepening**: Expand search by traversing entity-chunk
+//!    relationships
 //!
 //! ## Example
 //!
 //! ```rust
-//! use graphrag_core::entity::bidirectional_index::BidirectionalIndex;
-//! use graphrag_core::core::{EntityId, ChunkId};
+//! use graphrag_core::{
+//!     core::{ChunkId, EntityId},
+//!     entity::bidirectional_index::BidirectionalIndex,
+//! };
 //!
 //! let mut index = BidirectionalIndex::new();
 //!
@@ -40,10 +46,12 @@
 //! assert_eq!(entities.len(), 1);
 //! ```
 
-use crate::core::{ChunkId, Entity, EntityId};
+use std::collections::HashMap;
+
 use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::core::{ChunkId, Entity, EntityId};
 
 /// Bidirectional index for fast entity-chunk lookups
 ///
@@ -89,7 +97,8 @@ impl BidirectionalIndex {
 
     /// Add a mapping between an entity and a chunk
     ///
-    /// This is idempotent - adding the same mapping multiple times has no effect
+    /// This is idempotent - adding the same mapping multiple times has no
+    /// effect
     pub fn add_mapping(&mut self, entity_id: &EntityId, chunk_id: &ChunkId) {
         // Add to entity → chunks index
         let chunks = self.entity_to_chunks.entry(entity_id.clone()).or_default();
@@ -287,7 +296,8 @@ impl BidirectionalIndex {
 
     /// Get co-occurring entities for a given entity
     ///
-    /// Returns entities that appear in the same chunks, along with their co-occurrence count
+    /// Returns entities that appear in the same chunks, along with their
+    /// co-occurrence count
     pub fn get_co_occurring_entities(&self, entity_id: &EntityId) -> HashMap<EntityId, usize> {
         let mut co_occurrences: HashMap<EntityId, usize> = HashMap::new();
 
@@ -311,7 +321,8 @@ impl BidirectionalIndex {
 
     /// Get entities that appear in multiple chunks (common entities)
     ///
-    /// Returns entities sorted by the number of chunks they appear in (descending)
+    /// Returns entities sorted by the number of chunks they appear in
+    /// (descending)
     pub fn get_common_entities(&self, min_chunk_count: usize) -> Vec<(EntityId, usize)> {
         let mut common_entities: Vec<_> = self
             .entity_to_chunks
@@ -333,7 +344,8 @@ impl BidirectionalIndex {
 
     /// Get chunks that contain multiple entities (dense chunks)
     ///
-    /// Returns chunks sorted by the number of entities they contain (descending)
+    /// Returns chunks sorted by the number of entities they contain
+    /// (descending)
     pub fn get_dense_chunks(&self, min_entity_count: usize) -> Vec<(ChunkId, usize)> {
         let mut dense_chunks: Vec<_> = self
             .chunk_to_entities
@@ -543,7 +555,8 @@ mod tests {
 
         let co_occurrences = index.get_co_occurring_entities(&entity1);
         assert_eq!(co_occurrences.get(&entity2), Some(&2)); // co-occurs in 2 chunks
-        assert_eq!(co_occurrences.get(&entity3), Some(&1)); // co-occurs in 1 chunk
+        assert_eq!(co_occurrences.get(&entity3), Some(&1)); // co-occurs in 1
+                                                            // chunk
     }
 
     #[test]

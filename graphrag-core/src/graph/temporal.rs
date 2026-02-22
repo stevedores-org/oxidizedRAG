@@ -15,8 +15,9 @@
 //! - Trend analysis and forecasting
 //! - Event detection in temporal data
 
+use std::collections::{BTreeMap, HashMap, HashSet};
+
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap};
 
 /// Temporal edge with timestamp
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -149,10 +150,7 @@ impl TemporalGraph {
         self.update_node_timestamp(&edge.target, timestamp);
 
         // Add to edge index
-        self.edge_index
-            .entry(timestamp)
-            .or_default()
-            .push(edge_idx);
+        self.edge_index.entry(timestamp).or_default().push(edge_idx);
 
         self.edges.push(edge);
     }
@@ -297,11 +295,7 @@ impl TemporalAnalytics {
             return 0.0;
         }
 
-        let total_degree: usize = snapshot
-            .nodes
-            .iter()
-            .map(|n| snapshot.node_degree(n))
-            .sum();
+        let total_degree: usize = snapshot.nodes.iter().map(|n| snapshot.node_degree(n)).sum();
 
         total_degree as f32 / snapshot.node_count as f32
     }
@@ -345,8 +339,12 @@ impl TemporalAnalytics {
 
     /// Find nodes with highest activity growth
     pub fn top_growing_nodes(&self, query: &TemporalQuery, top_k: usize) -> Vec<(String, f32)> {
-        let start_snapshot = self.graph.snapshot_range(query.start_time, query.start_time + query.granularity);
-        let end_snapshot = self.graph.snapshot_range(query.end_time - query.granularity, query.end_time);
+        let start_snapshot = self
+            .graph
+            .snapshot_range(query.start_time, query.start_time + query.granularity);
+        let end_snapshot = self
+            .graph
+            .snapshot_range(query.end_time - query.granularity, query.end_time);
 
         let mut growth_scores: Vec<(String, f32)> = Vec::new();
 

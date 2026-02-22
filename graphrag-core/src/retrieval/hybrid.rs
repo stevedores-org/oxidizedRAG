@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     core::KnowledgeGraph,
     retrieval::{
@@ -7,7 +9,6 @@ use crate::{
     vector::{EmbeddingGenerator, VectorIndex},
     GraphRAGError, Result,
 };
-use std::collections::HashMap;
 
 /// Hybrid search result combining multiple retrieval strategies
 #[derive(Debug, Clone)]
@@ -55,7 +56,8 @@ pub struct CascadeConfig {
     pub score_threshold: f32,
     /// Number of results to retrieve from cheap (keyword) stage
     pub cheap_k: usize,
-    /// Number of results to retrieve from expensive (vector) stage on escalation
+    /// Number of results to retrieve from expensive (vector) stage on
+    /// escalation
     pub expensive_k: usize,
 }
 
@@ -216,7 +218,8 @@ impl HybridRetriever {
         Ok(combined_results)
     }
 
-    /// Cascade search: run cheap (keyword) first, escalate to vector only if needed
+    /// Cascade search: run cheap (keyword) first, escalate to vector only if
+    /// needed
     fn cascade_search(&mut self, query: &str, limit: usize) -> Result<Vec<HybridSearchResult>> {
         let cascade = self.config.cascade.clone();
 
@@ -268,14 +271,14 @@ impl HybridRetriever {
         match self.config.fusion_method {
             FusionMethod::RRF | FusionMethod::Cascade => {
                 self.reciprocal_rank_fusion(semantic_results, keyword_results, limit)
-            }
+            },
             FusionMethod::Weighted => {
                 self.weighted_combination(semantic_results, keyword_results, limit)
-            }
+            },
             FusionMethod::CombSum => self.comb_sum_fusion(semantic_results, keyword_results, limit),
             FusionMethod::MaxScore => {
                 self.max_score_fusion(semantic_results, keyword_results, limit)
-            }
+            },
         }
     }
 

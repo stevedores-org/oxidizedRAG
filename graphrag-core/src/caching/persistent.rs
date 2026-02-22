@@ -6,13 +6,17 @@
 //! - Entity extractions
 //! - Graph structures
 
-use crate::{Result, GraphRAGError};
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
+
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
+
+use crate::{GraphRAGError, Result};
 
 /// Persistent cache implementation with TTL and size limits
 #[derive(Debug, Clone)]
@@ -41,7 +45,7 @@ pub struct CacheConfig {
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
-            max_size_bytes: 1_073_741_824, // 1GB
+            max_size_bytes: 1_073_741_824,               // 1GB
             default_ttl: Duration::from_secs(86400 * 7), // 7 days
             enable_compression: true,
             eviction_policy: EvictionPolicy::LRU,
@@ -53,10 +57,10 @@ impl Default for CacheConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EvictionPolicy {
-    LRU,    // Least Recently Used
-    LFU,    // Least Frequently Used
-    FIFO,   // First In First Out
-    TTL,    // Time To Live based
+    LRU,  // Least Recently Used
+    LFU,  // Least Frequently Used
+    FIFO, // First In First Out
+    TTL,  // Time To Live based
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -218,8 +222,8 @@ impl PersistentCache {
             hit_count: self.metadata.hit_count,
             miss_count: self.metadata.miss_count,
             hit_rate: if self.metadata.hit_count + self.metadata.miss_count > 0 {
-                self.metadata.hit_count as f64 /
-                (self.metadata.hit_count + self.metadata.miss_count) as f64
+                self.metadata.hit_count as f64
+                    / (self.metadata.hit_count + self.metadata.miss_count) as f64
             } else {
                 0.0
             },
@@ -272,7 +276,7 @@ impl PersistentCache {
                     entries_to_evict.push(hash.clone());
                     freed_space += entry.size;
                 }
-            }
+            },
             EvictionPolicy::LFU => {
                 // Sort by access count
                 let mut entries: Vec<_> = self.metadata.entries.iter().collect();
@@ -285,7 +289,7 @@ impl PersistentCache {
                     entries_to_evict.push(hash.clone());
                     freed_space += entry.size;
                 }
-            }
+            },
             EvictionPolicy::FIFO => {
                 // Sort by creation time
                 let mut entries: Vec<_> = self.metadata.entries.iter().collect();
@@ -298,7 +302,7 @@ impl PersistentCache {
                     entries_to_evict.push(hash.clone());
                     freed_space += entry.size;
                 }
-            }
+            },
             EvictionPolicy::TTL => {
                 // Remove expired entries first
                 for (hash, entry) in &self.metadata.entries {
@@ -307,7 +311,7 @@ impl PersistentCache {
                         freed_space += entry.size;
                     }
                 }
-            }
+            },
         }
 
         for hash in entries_to_evict {
@@ -319,9 +323,9 @@ impl PersistentCache {
 
     fn compress(&self, data: &[u8]) -> Result<Vec<u8>> {
         // Simple compression using zlib
-        use flate2::write::ZlibEncoder;
-        use flate2::Compression;
         use std::io::Write;
+
+        use flate2::{write::ZlibEncoder, Compression};
 
         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
         encoder.write_all(data)?;
@@ -329,8 +333,9 @@ impl PersistentCache {
     }
 
     fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
-        use flate2::read::ZlibDecoder;
         use std::io::Read;
+
+        use flate2::read::ZlibDecoder;
 
         let mut decoder = ZlibDecoder::new(data);
         let mut decompressed = Vec::new();
@@ -353,7 +358,10 @@ impl PersistentCache {
     /// Manual cleanup of expired entries
     pub fn cleanup(&mut self) -> Result<usize> {
         let mut removed = 0;
-        let expired: Vec<_> = self.metadata.entries.iter()
+        let expired: Vec<_> = self
+            .metadata
+            .entries
+            .iter()
             .filter(|(_k, v)| self.is_expired(v))
             .map(|(k, _)| k.clone())
             .collect();
@@ -399,7 +407,8 @@ impl EmbeddingCache {
     }
 
     pub fn put_embedding(&mut self, text: &str, embedding: &[f32]) -> Result<()> {
-        self.cache.put(&format!("emb:{}", text), &embedding.to_vec(), None)
+        self.cache
+            .put(&format!("emb:{}", text), &embedding.to_vec(), None)
     }
 }
 
@@ -423,14 +432,16 @@ impl QueryCache {
     }
 
     pub fn put_result(&mut self, query: &str, result: &str) -> Result<()> {
-        self.cache.put(&format!("query:{}", query), &result.to_string(), None)
+        self.cache
+            .put(&format!("query:{}", query), &result.to_string(), None)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[test]
     fn test_persistent_cache() {
@@ -458,7 +469,9 @@ mod tests {
 
         // Add entries that exceed cache size
         for i in 0..10 {
-            cache.put(&format!("key{}", i), &format!("value{}", i), None).unwrap();
+            cache
+                .put(&format!("key{}", i), &format!("value{}", i), None)
+                .unwrap();
         }
 
         // Cache should have evicted some entries

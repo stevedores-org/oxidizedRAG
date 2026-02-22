@@ -4,9 +4,11 @@
 //! are correct before they're used. This catches errors early with clear
 //! messages about what's wrong and where.
 
-use crate::core::error::{GraphRAGError, Result};
-use serde_json::Value;
 use std::path::Path;
+
+use serde_json::Value;
+
+use crate::core::error::{GraphRAGError, Result};
 
 /// Validate a configuration against a JSON Schema
 ///
@@ -42,12 +44,7 @@ pub fn validate_config(config_value: &Value, schema_value: &Value) -> Result<()>
     // Validate
     if let Err(errors) = schema.validate(config_value) {
         let error_messages: Vec<String> = errors
-            .map(|error| {
-                format!(
-                    "Validation error at '{}': {}",
-                    error.instance_path, error
-                )
-            })
+            .map(|error| format!("Validation error at '{}': {}", error.instance_path, error))
             .collect();
 
         return Err(GraphRAGError::Config {
@@ -159,7 +156,7 @@ pub fn format_validation_error(error: &GraphRAGError) -> String {
                 }
             }
             format!("❌ Configuration error: {}", message)
-        }
+        },
         _ => format!("❌ Error: {:?}", error),
     }
 }
@@ -215,7 +212,12 @@ impl ValidationResult {
         let mut formatted = String::from("❌ Configuration validation failed:\n\n");
 
         for (i, error) in self.errors.iter().enumerate() {
-            formatted.push_str(&format!("  {}. At '{}': {}\n", i + 1, error.path, error.message));
+            formatted.push_str(&format!(
+                "  {}. At '{}': {}\n",
+                i + 1,
+                error.path,
+                error.message
+            ));
 
             if let Some(suggestion) = &error.suggestion {
                 formatted.push_str(&format!("     💡 Suggestion: {}\n", suggestion));
@@ -228,8 +230,9 @@ impl ValidationResult {
 
 #[cfg(all(test, feature = "json5-support"))]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_validate_simple_config() {

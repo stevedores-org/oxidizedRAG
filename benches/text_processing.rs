@@ -261,7 +261,7 @@ fn create_messy_text(word_count: usize) -> String {
             2 => text.push('!'),
             3 => text.push('?'),
             4 => text.push(';'),
-            _ => {}
+            _ => {},
         }
     }
 

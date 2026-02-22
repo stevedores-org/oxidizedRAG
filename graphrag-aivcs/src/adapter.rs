@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use oxidized_state::{fakes::MemoryRunLedger, RunLedger, StorageError};
 
-use crate::recorder::RagRunRecorder;
-use crate::spec::GraphRagSpec;
+use crate::{recorder::RagRunRecorder, spec::GraphRagSpec};
 
 /// Convenience wrapper that holds a ledger and creates [`RagRunRecorder`]s.
 pub struct RagAdapter {
@@ -30,7 +29,8 @@ impl RagAdapter {
         RagRunRecorder::start(self.ledger.clone(), spec).await
     }
 
-    /// Return a reference to the underlying ledger (useful for assertions in tests).
+    /// Return a reference to the underlying ledger (useful for assertions in
+    /// tests).
     pub fn ledger(&self) -> &Arc<dyn RunLedger> {
         &self.ledger
     }

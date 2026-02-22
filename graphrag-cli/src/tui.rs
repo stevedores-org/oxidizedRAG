@@ -2,6 +2,8 @@
 //!
 //! Handles terminal initialization, cleanup, and event streaming.
 
+use std::io::{self, Stdout};
+
 use color_eyre::eyre::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture, Event as CrosstermEvent, EventStream},
@@ -10,7 +12,6 @@ use crossterm::{
 };
 use futures::StreamExt;
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::io::{self, Stdout};
 use tokio::{
     sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
     task::JoinHandle,

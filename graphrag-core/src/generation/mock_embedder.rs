@@ -4,12 +4,15 @@
 //! Uses the same hash-based pattern as `EmbeddingGenerator` in `vector/mod.rs`
 //! and tracks stats via `AtomicU64` (same pattern as `AsyncMockLLM`).
 
-use crate::core::traits::AsyncEmbedder;
-use crate::core::{GraphRAGError, Result};
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    sync::atomic::{AtomicU64, Ordering},
+};
+
 use async_trait::async_trait;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::sync::atomic::{AtomicU64, Ordering};
+
+use crate::core::{traits::AsyncEmbedder, GraphRAGError, Result};
 
 /// Statistics tracking for the mock embedder
 #[derive(Debug, Default)]
@@ -76,7 +79,9 @@ impl AsyncEmbedder for MockEmbedder {
 
     async fn embed(&self, text: &str) -> Result<Vec<f32>> {
         self.stats.total_requests.fetch_add(1, Ordering::Relaxed);
-        self.stats.total_texts_embedded.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .total_texts_embedded
+            .fetch_add(1, Ordering::Relaxed);
         Ok(self.hash_embed(text))
     }
 

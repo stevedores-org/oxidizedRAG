@@ -1,6 +1,7 @@
 //! Chat component for GraphRAG
 //!
-//! Provides a chat interface for interacting with the knowledge graph using LLM.
+//! Provides a chat interface for interacting with the knowledge graph using
+//! LLM.
 
 use leptos::*;
 
@@ -25,7 +26,8 @@ pub enum MessageRole {
 /// Integrates with WebLLM for GPU-accelerated responses.
 ///
 /// # Props
-/// * `model` - Optional LLM model ID (default: "Phi-3-mini-4k-instruct-q4f16_1-MLC")
+/// * `model` - Optional LLM model ID (default:
+///   "Phi-3-mini-4k-instruct-q4f16_1-MLC")
 /// * `on_message` - Callback when user sends a message
 #[component]
 pub fn ChatWindow(
@@ -68,7 +70,8 @@ pub fn ChatWindow(
                 set_messages.update(|msgs| {
                     msgs.push(ChatMessage {
                         role: MessageRole::Assistant,
-                        content: "This is a placeholder response. WebLLM integration coming soon!".to_string(),
+                        content: "This is a placeholder response. WebLLM integration coming soon!"
+                            .to_string(),
                         timestamp: js_sys::Date::now(),
                     });
                 });

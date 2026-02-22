@@ -3,8 +3,9 @@
 //! This example shows how to use the stateful API to process a document once
 //! and ask multiple questions without reprocessing.
 
-use graphrag_rs::easy::SimpleGraphRAG;
 use std::error::Error;
+
+use graphrag_rs::easy::SimpleGraphRAG;
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("GraphRAG-rs Stateful API Example\n");

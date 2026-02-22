@@ -1,7 +1,8 @@
 //! Real TF-IDF keyword extraction
 //!
-//! This module implements actual TF-IDF (Term Frequency-Inverse Document Frequency)
-//! algorithm for keyword extraction, not mock/placeholder implementations.
+//! This module implements actual TF-IDF (Term Frequency-Inverse Document
+//! Frequency) algorithm for keyword extraction, not mock/placeholder
+//! implementations.
 
 use std::collections::HashMap;
 
@@ -26,7 +27,8 @@ impl TfIdfKeywordExtractor {
         }
     }
 
-    /// Create with default stopwords and empty IDF data (for single-document use)
+    /// Create with default stopwords and empty IDF data (for single-document
+    /// use)
     pub fn new_default() -> Self {
         Self::new(HashMap::new(), 1)
     }
@@ -110,11 +112,7 @@ impl TfIdfKeywordExtractor {
     ///
     /// If term is not in corpus, uses a default IDF (assumes rare term)
     fn calculate_idf(&self, term: &str) -> f32 {
-        let doc_freq = self
-            .document_frequencies
-            .get(term)
-            .copied()
-            .unwrap_or(1); // Default to 1 if not seen (rare term)
+        let doc_freq = self.document_frequencies.get(term).copied().unwrap_or(1); // Default to 1 if not seen (rare term)
 
         let idf = (self.total_documents as f32 / doc_freq as f32).ln();
         idf.max(0.0) // Ensure non-negative
@@ -128,12 +126,12 @@ impl TfIdfKeywordExtractor {
             "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from",
             "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would",
             "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which",
-            "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know",
-            "take", "people", "into", "year", "your", "good", "some", "could", "them", "see",
-            "other", "than", "then", "now", "look", "only", "come", "its", "over", "think",
-            "also", "back", "after", "use", "two", "how", "our", "work", "first", "well",
-            "way", "even", "new", "want", "because", "any", "these", "give", "day", "most",
-            "us", "is", "was", "are", "been", "has", "had", "were", "said", "did",
+            "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take",
+            "people", "into", "year", "your", "good", "some", "could", "them", "see", "other",
+            "than", "then", "now", "look", "only", "come", "its", "over", "think", "also", "back",
+            "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new",
+            "want", "because", "any", "these", "give", "day", "most", "us", "is", "was", "are",
+            "been", "has", "had", "were", "said", "did",
         ];
 
         stopwords_list.into_iter().map(|s| s.to_string()).collect()
@@ -230,8 +228,8 @@ mod tests {
         extractor.add_document_to_corpus("deep learning uses neural networks");
         extractor.add_document_to_corpus("natural language processing is important");
 
-        let text = "machine learning and deep learning are important topics in artificial intelligence. \
-                    neural networks and machine learning models are widely used.";
+        let text = "machine learning and deep learning are important topics in artificial \
+                    intelligence. neural networks and machine learning models are widely used.";
 
         let keywords = extractor.extract_keywords(text, 5);
 
@@ -240,10 +238,13 @@ mod tests {
         let keyword_terms: Vec<&str> = keywords.iter().map(|(w, _)| w.as_str()).collect();
 
         // At least one of these high-frequency terms should appear
-        assert!(keyword_terms.contains(&"learning") ||
-                keyword_terms.contains(&"machine") ||
-                keyword_terms.contains(&"neural"),
-                "Expected high-frequency terms not found. Got: {:?}", keyword_terms);
+        assert!(
+            keyword_terms.contains(&"learning")
+                || keyword_terms.contains(&"machine")
+                || keyword_terms.contains(&"neural"),
+            "Expected high-frequency terms not found. Got: {:?}",
+            keyword_terms
+        );
     }
 
     #[test]
@@ -271,6 +272,8 @@ mod tests {
         assert!(!keywords.iter().any(|w| w == "over"));
 
         // Content words should appear
-        assert!(keywords.iter().any(|w| w == "quick" || w == "brown" || w == "fox"));
+        assert!(keywords
+            .iter()
+            .any(|w| w == "quick" || w == "brown" || w == "fox"));
     }
 }

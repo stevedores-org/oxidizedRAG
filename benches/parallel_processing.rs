@@ -1,10 +1,10 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use graphrag_rs::{
     config::ParallelConfig,
-    core::{ChunkId, TextChunk, DocumentId},
-    parallel::{ParallelProcessor, ItemComplexity, ProcessingStrategy},
-    vector::{EmbeddingGenerator, VectorIndex},
+    core::{ChunkId, DocumentId, TextChunk},
+    parallel::{ItemComplexity, ParallelProcessor, ProcessingStrategy},
     summarization::{DocumentTree, HierarchicalConfig},
+    vector::{EmbeddingGenerator, VectorIndex},
 };
 
 #[allow(dead_code)]
@@ -14,8 +14,9 @@ fn create_test_chunks(count: usize) -> Vec<TextChunk> {
             id: ChunkId::new(format!("chunk_{i}")),
             document_id: DocumentId::new("test_doc".to_string()),
             content: format!(
-                "This is test content for chunk {i}. It contains multiple sentences to test summarization. \
-                The content is designed to be realistic and provide meaningful test data for parallel processing benchmarks."
+                "This is test content for chunk {i}. It contains multiple sentences to test \
+                 summarization. The content is designed to be realistic and provide meaningful \
+                 test data for parallel processing benchmarks."
             ),
             start_offset: i * 100,
             end_offset: (i + 1) * 100,
@@ -27,9 +28,11 @@ fn create_test_chunks(count: usize) -> Vec<TextChunk> {
 
 fn create_test_texts(count: usize) -> Vec<String> {
     (0..count)
-        .map(|i| format!(
-            "Test document {i} with meaningful content for embedding generation and processing"
-        ))
+        .map(|i| {
+            format!(
+                "Test document {i} with meaningful content for embedding generation and processing"
+            )
+        })
         .collect()
 }
 
@@ -47,7 +50,9 @@ fn bench_parallel_embedding_generation(c: &mut Criterion) {
     };
 
     let mut processor = ParallelProcessor::new(parallel_config);
-    processor.initialize().expect("Failed to initialize parallel processor");
+    processor
+        .initialize()
+        .expect("Failed to initialize parallel processor");
 
     for size in [50, 100, 500, 1000].iter() {
         let texts = create_test_texts(*size);
@@ -173,7 +178,9 @@ fn bench_parallel_similarity_computation(c: &mut Criterion) {
         for i in 0..*size {
             let vec: Vec<f32> = (0..128).map(|j| (i + j) as f32 / 100.0).collect();
             let id = format!("vec_{i}");
-            index_sequential.add_vector(id.clone(), vec.clone()).unwrap();
+            index_sequential
+                .add_vector(id.clone(), vec.clone())
+                .unwrap();
             index_parallel.add_vector(id, vec).unwrap();
         }
 
@@ -254,7 +261,9 @@ fn bench_processing_strategies(c: &mut Criterion) {
         ProcessingStrategy::ParallelMap,
         ProcessingStrategy::ChunkedParallel,
         ProcessingStrategy::WorkStealing,
-    ].iter() {
+    ]
+    .iter()
+    {
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{strategy:?}")),
             strategy,
@@ -271,7 +280,13 @@ fn bench_processing_strategies(c: &mut Criterion) {
     }
 
     // Benchmark adaptive strategy selection
-    for complexity in [ItemComplexity::Low, ItemComplexity::Medium, ItemComplexity::High].iter() {
+    for complexity in [
+        ItemComplexity::Low,
+        ItemComplexity::Medium,
+        ItemComplexity::High,
+    ]
+    .iter()
+    {
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("adaptive_{complexity:?}")),
             complexity,

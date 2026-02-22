@@ -1,10 +1,14 @@
 //! Enhanced tool registry with dynamic function management
 
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
+
+use json::JsonValue;
+
 use super::{CallableFunction, FunctionCaller, FunctionDefinition};
 use crate::{GraphRAGError, Result};
-use json::JsonValue;
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 
 /// Enhanced tool registry with dynamic capabilities
 pub struct EnhancedToolRegistry {
@@ -155,7 +159,7 @@ impl EnhancedToolRegistry {
                     .take(5)
                     .map(|(name, _)| name.clone())
                     .collect()
-            }
+            },
         }
     }
 

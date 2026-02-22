@@ -1,12 +1,15 @@
 //! LazyGraphRAG Pipeline
 //!
 //! Complete end-to-end pipeline for LazyGraphRAG (Microsoft Research, 2025)
-//! that achieves 0.1% of full GraphRAG indexing cost and 700x cheaper query costs.
+//! that achieves 0.1% of full GraphRAG indexing cost and 700x cheaper query
+//! costs.
 //!
 //! ## Key Features
 //!
-//! - **No LLM for Indexing**: Uses noun phrase extraction instead of LLM entity extraction
-//! - **Fast Construction**: Builds concept graph from co-occurrence without summarization
+//! - **No LLM for Indexing**: Uses noun phrase extraction instead of LLM entity
+//!   extraction
+//! - **Fast Construction**: Builds concept graph from co-occurrence without
+//!   summarization
 //! - **Efficient Queries**: Iterative deepening search with bidirectional index
 //! - **Zero Prior Summarization**: Works directly on text chunks
 //!
@@ -16,7 +19,8 @@
 //! 2. **Concept Extraction**: Extract concepts using NLP patterns (no LLM)
 //! 3. **Graph Construction**: Build co-occurrence graph from concepts
 //! 4. **Index Building**: Create bidirectional entity-chunk index
-//! 5. **Query Processing**: Refine queries and retrieve using iterative deepening
+//! 5. **Query Processing**: Refine queries and retrieve using iterative
+//!    deepening
 //!
 //! ## Example
 //!
@@ -38,15 +42,21 @@
 //! println!("Found {} relevant chunks", results.chunk_count());
 //! ```
 
-use crate::core::{ChunkId, TextChunk};
-use crate::entity::BidirectionalIndex;
-use crate::lightrag::concept_graph::{
-    ConceptExtractor, ConceptExtractorConfig, ConceptGraph, ConceptGraphBuilder,
-};
-use crate::lightrag::iterative_deepening::{IterativeDeepeningSearch, SearchConfig, SearchResults};
-use crate::lightrag::query_refinement::{QueryRefiner, QueryRefinementConfig};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    core::{ChunkId, TextChunk},
+    entity::BidirectionalIndex,
+    lightrag::{
+        concept_graph::{
+            ConceptExtractor, ConceptExtractorConfig, ConceptGraph, ConceptGraphBuilder,
+        },
+        iterative_deepening::{IterativeDeepeningSearch, SearchConfig, SearchResults},
+        query_refinement::{QueryRefinementConfig, QueryRefiner},
+    },
+};
 
 /// Configuration for LazyGraphRAG pipeline
 #[derive(Debug, Clone)]
@@ -124,8 +134,9 @@ impl LazyGraphRAGPipeline {
 
     /// Index a document by extracting concepts and building the graph
     ///
-    /// This processes the document, extracts concepts, and adds them to the graph builder.
-    /// Call `build_graph()` after indexing all documents to finalize the graph.
+    /// This processes the document, extracts concepts, and adds them to the
+    /// graph builder. Call `build_graph()` after indexing all documents to
+    /// finalize the graph.
     pub fn index_document(&mut self, document_id: &str, text: &str) {
         // Chunk the document
         let chunks = self.chunk_text(text, document_id);
@@ -149,8 +160,9 @@ impl LazyGraphRAGPipeline {
 
     /// Build the concept graph from all indexed documents
     ///
-    /// This finalizes the graph construction and creates the bidirectional index.
-    /// Must be called after indexing all documents and before querying.
+    /// This finalizes the graph construction and creates the bidirectional
+    /// index. Must be called after indexing all documents and before
+    /// querying.
     pub fn build_graph(&mut self) {
         // Build concept graph
         let graph_builder = std::mem::replace(&mut self.graph_builder, ConceptGraphBuilder::new());
@@ -163,7 +175,8 @@ impl LazyGraphRAGPipeline {
             // Add all concept-chunk mappings to the index
             if let Some(ref graph) = self.concept_graph {
                 for (concept_text, concept) in &graph.concepts {
-                    let entity_id = crate::core::EntityId::new(self.normalize_concept(concept_text));
+                    let entity_id =
+                        crate::core::EntityId::new(self.normalize_concept(concept_text));
 
                     for chunk_id in &concept.chunk_ids {
                         index.add_mapping(&entity_id, chunk_id);
@@ -184,7 +197,7 @@ impl LazyGraphRAGPipeline {
             None => {
                 // Return empty results if graph not built
                 return SearchResults::new(query.to_string());
-            }
+            },
         };
 
         let index = match &self.bidirectional_index {
@@ -192,7 +205,7 @@ impl LazyGraphRAGPipeline {
             None => {
                 // Return empty results if index not built
                 return SearchResults::new(query.to_string());
-            }
+            },
         };
 
         self.search_engine.search(query, graph, index)
@@ -224,7 +237,10 @@ impl LazyGraphRAGPipeline {
             relation_count: g.relation_count(),
         });
 
-        let index_stats = self.bidirectional_index.as_ref().map(|i| i.get_statistics());
+        let index_stats = self
+            .bidirectional_index
+            .as_ref()
+            .map(|i| i.get_statistics());
 
         PipelineStatistics {
             document_count: self.document_count,
@@ -343,8 +359,8 @@ mod tests {
         // Index a simple document
         pipeline.index_document(
             "test_doc",
-            "Machine Learning is a subset of Artificial Intelligence. \
-             Neural Networks are used in Deep Learning.",
+            "Machine Learning is a subset of Artificial Intelligence. Neural Networks are used in \
+             Deep Learning.",
         );
 
         assert_eq!(pipeline.document_count, 1);

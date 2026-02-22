@@ -1,14 +1,16 @@
 //! Enriched metadata-aware retrieval
 //!
-//! This module provides retrieval strategies that leverage enriched chunk metadata
-//! (chapters, sections, keywords, summaries) to improve search relevance and precision.
+//! This module provides retrieval strategies that leverage enriched chunk
+//! metadata (chapters, sections, keywords, summaries) to improve search
+//! relevance and precision.
+
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     core::{KnowledgeGraph, TextChunk},
-    retrieval::{QueryAnalysis, SearchResult, ResultType},
+    retrieval::{QueryAnalysis, ResultType, SearchResult},
     Result,
 };
-use std::collections::{HashMap, HashSet};
 
 /// Configuration for enriched metadata retrieval
 #[derive(Debug, Clone)]
@@ -88,7 +90,8 @@ impl EnrichedRetriever {
                 let mut metadata_boost = 0.0;
 
                 // 1. KEYWORD MATCHING BOOST
-                let keyword_matches = self.count_keyword_matches(&chunk.metadata.keywords, &query_words);
+                let keyword_matches =
+                    self.count_keyword_matches(&chunk.metadata.keywords, &query_words);
                 if keyword_matches >= self.config.min_keyword_matches {
                     let keyword_boost = (keyword_matches as f32 / query_words.len().max(1) as f32)
                         * self.config.keyword_match_weight;
@@ -97,7 +100,9 @@ impl EnrichedRetriever {
 
                 // 2. STRUCTURE MATCHING BOOST (Chapter/Section)
                 if self.config.enable_structure_filtering {
-                    if let Some(structure_boost) = self.calculate_structure_boost(chunk, &structure_refs) {
+                    if let Some(structure_boost) =
+                        self.calculate_structure_boost(chunk, &structure_refs)
+                    {
                         metadata_boost += structure_boost * self.config.structure_match_weight;
                     }
                 }
@@ -112,7 +117,8 @@ impl EnrichedRetriever {
                 // 4. COMPLETENESS BONUS
                 let completeness = chunk.metadata.completeness_score();
                 if completeness > 0.7 {
-                    metadata_boost += 0.05; // Small bonus for high-quality metadata
+                    metadata_boost += 0.05; // Small bonus for high-quality
+                                            // metadata
                 }
 
                 // Apply boost only if significant
@@ -141,7 +147,8 @@ impl EnrichedRetriever {
 
     /// Filter chunks by chapter or section
     ///
-    /// Example: "What does Socrates say in Chapter 1?" -> filter to Chapter 1 chunks
+    /// Example: "What does Socrates say in Chapter 1?" -> filter to Chapter 1
+    /// chunks
     pub fn filter_by_structure(
         &self,
         query: &str,
@@ -188,9 +195,11 @@ impl EnrichedRetriever {
             if let Some(chunk_id) = result.source_chunks.first() {
                 if let Some(chunk) = graph.chunks().find(|c| c.id.to_string() == *chunk_id) {
                     // Boost based on keyword matches
-                    let keyword_matches = self.count_keyword_matches(&chunk.metadata.keywords, &query_words);
+                    let keyword_matches =
+                        self.count_keyword_matches(&chunk.metadata.keywords, &query_words);
                     if keyword_matches > 0 {
-                        let boost = (keyword_matches as f32 / query_words.len().max(1) as f32) * 0.2;
+                        let boost =
+                            (keyword_matches as f32 / query_words.len().max(1) as f32) * 0.2;
                         result.score = (result.score + boost).min(1.0);
                     }
 
@@ -217,7 +226,11 @@ impl EnrichedRetriever {
     }
 
     /// Get chunks from a specific chapter
-    pub fn get_chapter_chunks<'a>(&self, chapter_name: &str, graph: &'a KnowledgeGraph) -> Vec<&'a TextChunk> {
+    pub fn get_chapter_chunks<'a>(
+        &self,
+        chapter_name: &str,
+        graph: &'a KnowledgeGraph,
+    ) -> Vec<&'a TextChunk> {
         graph
             .chunks()
             .filter(|chunk| {
@@ -231,7 +244,11 @@ impl EnrichedRetriever {
     }
 
     /// Get chunks from a specific section
-    pub fn get_section_chunks<'a>(&self, section_name: &str, graph: &'a KnowledgeGraph) -> Vec<&'a TextChunk> {
+    pub fn get_section_chunks<'a>(
+        &self,
+        section_name: &str,
+        graph: &'a KnowledgeGraph,
+    ) -> Vec<&'a TextChunk> {
         graph
             .chunks()
             .filter(|chunk| {
@@ -256,7 +273,12 @@ impl EnrichedRetriever {
         for chunk in graph.chunks() {
             let mut score = 0.0;
             for keyword in keywords {
-                if chunk.metadata.keywords.iter().any(|k| k.eq_ignore_ascii_case(keyword)) {
+                if chunk
+                    .metadata
+                    .keywords
+                    .iter()
+                    .any(|k| k.eq_ignore_ascii_case(keyword))
+                {
                     score += 1.0 / keywords.len() as f32;
                 }
             }
@@ -291,7 +313,11 @@ impl EnrichedRetriever {
     // === HELPER METHODS ===
 
     /// Count matching keywords between chunk and query
-    fn count_keyword_matches(&self, chunk_keywords: &[String], query_words: &HashSet<String>) -> usize {
+    fn count_keyword_matches(
+        &self,
+        chunk_keywords: &[String],
+        query_words: &HashSet<String>,
+    ) -> usize {
         chunk_keywords
             .iter()
             .filter(|k| query_words.contains(&k.to_lowercase()))
@@ -319,7 +345,10 @@ impl EnrichedRetriever {
         ];
 
         for pattern in &patterns {
-            if let Some(captures) = regex::Regex::new(pattern).ok().and_then(|re| re.captures(query_lower)) {
+            if let Some(captures) = regex::Regex::new(pattern)
+                .ok()
+                .and_then(|re| re.captures(query_lower))
+            {
                 if let Some(matched) = captures.get(0) {
                     refs.push(matched.as_str().to_string());
                 }
@@ -430,7 +459,12 @@ mod tests {
     use super::*;
     use crate::core::{ChunkId, ChunkMetadata, DocumentId, KnowledgeGraph, TextChunk};
 
-    fn create_test_chunk(id: &str, content: &str, keywords: Vec<String>, chapter: Option<String>) -> TextChunk {
+    fn create_test_chunk(
+        id: &str,
+        content: &str,
+        keywords: Vec<String>,
+        chapter: Option<String>,
+    ) -> TextChunk {
         let mut chunk = TextChunk::new(
             ChunkId::new(id.to_string()),
             DocumentId::new("test_doc".to_string()),
@@ -450,7 +484,11 @@ mod tests {
     #[test]
     fn test_keyword_matching() {
         let retriever = EnrichedRetriever::new();
-        let chunk_keywords = vec!["machine".to_string(), "learning".to_string(), "neural".to_string()];
+        let chunk_keywords = vec![
+            "machine".to_string(),
+            "learning".to_string(),
+            "neural".to_string(),
+        ];
         let query_words: HashSet<String> = vec!["machine".to_string(), "learning".to_string()]
             .into_iter()
             .collect();

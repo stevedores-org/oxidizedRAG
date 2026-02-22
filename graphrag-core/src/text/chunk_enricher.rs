@@ -1,13 +1,11 @@
 //! Chunk enrichment pipeline
 //!
-//! Orchestrates document structure parsing, keyword extraction, and summarization
-//! to enrich text chunks with semantic metadata.
+//! Orchestrates document structure parsing, keyword extraction, and
+//! summarization to enrich text chunks with semantic metadata.
 
 use crate::{
     core::{ChunkMetadata, Document, TextChunk},
-    text::{
-        DocumentStructure, ExtractiveSummarizer, LayoutParser, TfIdfKeywordExtractor,
-    },
+    text::{DocumentStructure, ExtractiveSummarizer, LayoutParser, TfIdfKeywordExtractor},
     Result,
 };
 
@@ -45,11 +43,7 @@ impl ChunkEnricher {
     }
 
     /// Enrich multiple chunks with metadata
-    pub fn enrich_chunks(
-        &mut self,
-        chunks: &mut [TextChunk],
-        document: &Document,
-    ) -> Result<()> {
+    pub fn enrich_chunks(&mut self, chunks: &mut [TextChunk], document: &Document) -> Result<()> {
         tracing::debug!(
             "Enriching {} chunks for document: {}",
             chunks.len(),
@@ -222,25 +216,26 @@ impl EnrichmentStatistics {
             self.chunks_with_summary as f32 / self.total_chunks as f32 * 100.0
         );
         tracing::info!("  Total keywords: {}", self.total_keywords);
-        tracing::info!(
-            "  Average completeness: {:.2}",
-            self.avg_completeness
-        );
+        tracing::info!("  Average completeness: {:.2}", self.avg_completeness);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{ChunkId, DocumentId};
-    use crate::text::parsers::MarkdownLayoutParser;
+    use crate::{
+        core::{ChunkId, DocumentId},
+        text::parsers::MarkdownLayoutParser,
+    };
 
     #[test]
     fn test_chunk_enrichment() {
         let document = Document::new(
             DocumentId::new("test".to_string()),
             "test.md".to_string(),
-            "# Chapter 1\n\nThis is about machine learning and artificial intelligence.\n\n## Section 1.1\n\nDeep learning is a subset of machine learning.".to_string(),
+            "# Chapter 1\n\nThis is about machine learning and artificial intelligence.\n\n## \
+             Section 1.1\n\nDeep learning is a subset of machine learning."
+                .to_string(),
         );
 
         let mut chunks = vec![

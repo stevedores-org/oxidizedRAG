@@ -10,11 +10,11 @@
 //! ```
 
 use graphrag_core::{
-    Config,
     monitoring::{
-        BenchmarkConfig, BenchmarkDataset, BenchmarkQuery, BenchmarkRunner,
-        LatencyMetrics, QualityMetrics, QueryBenchmark, TokenMetrics,
+        BenchmarkConfig, BenchmarkDataset, BenchmarkQuery, BenchmarkRunner, LatencyMetrics,
+        QualityMetrics, QueryBenchmark, TokenMetrics,
     },
+    Config,
 };
 
 fn main() -> graphrag_core::Result<()> {
@@ -24,7 +24,10 @@ fn main() -> graphrag_core::Result<()> {
     // Create benchmark dataset with sample queries
     let dataset = create_sample_dataset();
 
-    println!("📊 Dataset: {} queries with ground truth answers\n", dataset.queries.len());
+    println!(
+        "📊 Dataset: {} queries with ground truth answers\n",
+        dataset.queries.len()
+    );
 
     // Run baseline benchmark (no enhancements)
     println!("🔵 Running BASELINE benchmark...");
@@ -60,31 +63,37 @@ fn create_sample_dataset() -> BenchmarkDataset {
             BenchmarkQuery {
                 question: "How did Alice and Bob collaborate on quantum computing?".to_string(),
                 answer: "Alice and Bob worked together on a quantum computing research project, \
-                         developing new algorithms for quantum error correction.".to_string(),
+                         developing new algorithms for quantum error correction."
+                    .to_string(),
                 context: None,
                 difficulty: Some("medium".to_string()),
                 query_type: Some("multi-hop".to_string()),
             },
             BenchmarkQuery {
                 question: "What was the impact of the climate research on policy?".to_string(),
-                answer: "The climate research led to new environmental policies that \
-                         reduced carbon emissions by 30%.".to_string(),
+                answer: "The climate research led to new environmental policies that reduced \
+                         carbon emissions by 30%."
+                    .to_string(),
                 context: None,
                 difficulty: Some("easy".to_string()),
                 query_type: Some("factual".to_string()),
             },
             BenchmarkQuery {
-                question: "Who discovered the relationship between gene X and disease Y?".to_string(),
-                answer: "Dr. Smith discovered that gene X is strongly correlated with \
-                         increased risk of disease Y through a longitudinal study.".to_string(),
+                question: "Who discovered the relationship between gene X and disease Y?"
+                    .to_string(),
+                answer: "Dr. Smith discovered that gene X is strongly correlated with increased \
+                         risk of disease Y through a longitudinal study."
+                    .to_string(),
                 context: None,
                 difficulty: Some("medium".to_string()),
                 query_type: Some("factual".to_string()),
             },
             BenchmarkQuery {
-                question: "What connections exist between the economic crisis and unemployment?".to_string(),
+                question: "What connections exist between the economic crisis and unemployment?"
+                    .to_string(),
                 answer: "The economic crisis caused a 15% increase in unemployment rates, \
-                         particularly affecting the manufacturing sector.".to_string(),
+                         particularly affecting the manufacturing sector."
+                    .to_string(),
                 context: None,
                 difficulty: Some("medium".to_string()),
                 query_type: Some("reasoning".to_string()),
@@ -92,7 +101,8 @@ fn create_sample_dataset() -> BenchmarkDataset {
             BenchmarkQuery {
                 question: "How does machine learning improve drug discovery?".to_string(),
                 answer: "Machine learning accelerates drug discovery by predicting molecular \
-                         interactions and reducing screening time by 80%.".to_string(),
+                         interactions and reducing screening time by 80%."
+                    .to_string(),
                 context: None,
                 difficulty: Some("easy".to_string()),
                 query_type: Some("reasoning".to_string()),
@@ -159,7 +169,10 @@ fn create_improved_config() -> Config {
 }
 
 /// Run benchmark with given configuration
-fn run_benchmark(config: &Config, dataset: &BenchmarkDataset) -> graphrag_core::Result<Vec<QueryBenchmark>> {
+fn run_benchmark(
+    config: &Config,
+    dataset: &BenchmarkDataset,
+) -> graphrag_core::Result<Vec<QueryBenchmark>> {
     let benchmark_config = BenchmarkConfig {
         enable_lightrag: config.enhancements.enabled && cfg!(feature = "lightrag"),
         enable_leiden: config.enhancements.enabled && cfg!(feature = "leiden"),
@@ -207,7 +220,8 @@ fn simulate_query_execution(
     let input_tokens = (base_tokens as f64 * token_reduction) as usize;
     let output_tokens = 500;
     let total_tokens = input_tokens + output_tokens;
-    let estimated_cost = (input_tokens as f64 / 1000.0 * 0.0015) + (output_tokens as f64 / 1000.0 * 0.002);
+    let estimated_cost =
+        (input_tokens as f64 / 1000.0 * 0.0015) + (output_tokens as f64 / 1000.0 * 0.002);
 
     Ok(QueryBenchmark {
         query: query.question.clone(),
@@ -279,10 +293,10 @@ fn calculate_quality_boost(features: &[String]) -> f64 {
     for feature in features {
         match feature.as_str() {
             "lightrag" => boost *= 1.08,      // +8% from better keyword extraction
-            "leiden" => boost *= 1.07,         // +7% from community structure
-            "cross-encoder" => boost *= 1.20,  // +20% from precise reranking
-            "hipporag-ppr" => boost *= 1.15,   // +15% from multi-hop reasoning
-            _ => {}
+            "leiden" => boost *= 1.07,        // +7% from community structure
+            "cross-encoder" => boost *= 1.20, // +20% from precise reranking
+            "hipporag-ppr" => boost *= 1.15,  // +15% from multi-hop reasoning
+            _ => {},
         }
     }
 
@@ -304,9 +318,9 @@ fn calculate_latency_change(features: &[String]) -> f64 {
 
     for feature in features {
         match feature.as_str() {
-            "cross-encoder" => change += 0.6,  // +60ms for reranking
-            "hipporag-ppr" => change += 0.4,   // +40ms for PageRank
-            _ => {}
+            "cross-encoder" => change += 0.6, // +60ms for reranking
+            "hipporag-ppr" => change += 0.4,  // +40ms for PageRank
+            _ => {},
         }
     }
 
@@ -321,9 +335,21 @@ fn display_results(label: &str, results: &[QueryBenchmark]) {
     }
 
     // Calculate averages
-    let avg_f1: f64 = results.iter().map(|r| r.quality.f1_score as f64).sum::<f64>() / results.len() as f64;
-    let avg_exact_match: f64 = results.iter().map(|r| r.quality.exact_match as f64).sum::<f64>() / results.len() as f64;
-    let avg_latency: f64 = results.iter().map(|r| r.latency.total_ms as f64).sum::<f64>() / results.len() as f64;
+    let avg_f1: f64 = results
+        .iter()
+        .map(|r| r.quality.f1_score as f64)
+        .sum::<f64>()
+        / results.len() as f64;
+    let avg_exact_match: f64 = results
+        .iter()
+        .map(|r| r.quality.exact_match as f64)
+        .sum::<f64>()
+        / results.len() as f64;
+    let avg_latency: f64 = results
+        .iter()
+        .map(|r| r.latency.total_ms as f64)
+        .sum::<f64>()
+        / results.len() as f64;
     let total_tokens: usize = results.iter().map(|r| r.tokens.total_tokens).sum();
     let avg_tokens: f64 = total_tokens as f64 / results.len() as f64;
 
@@ -339,7 +365,10 @@ fn display_results(label: &str, results: &[QueryBenchmark]) {
     println!("   Total Cost:    ${:.4}", total_cost);
 
     if !results.is_empty() && !results[0].features_enabled.is_empty() {
-        println!("   Features:      {}", results[0].features_enabled.join(", "));
+        println!(
+            "   Features:      {}",
+            results[0].features_enabled.join(", ")
+        );
     }
 }
 
@@ -351,33 +380,60 @@ fn compare_results(baseline: &[QueryBenchmark], improved: &[QueryBenchmark]) {
     }
 
     // Calculate baseline metrics
-    let baseline_f1: f64 = baseline.iter().map(|r| r.quality.f1_score as f64).sum::<f64>() / baseline.len() as f64;
+    let baseline_f1: f64 = baseline
+        .iter()
+        .map(|r| r.quality.f1_score as f64)
+        .sum::<f64>()
+        / baseline.len() as f64;
     let baseline_tokens: usize = baseline.iter().map(|r| r.tokens.total_tokens).sum();
-    let baseline_latency: f64 = baseline.iter().map(|r| r.latency.total_ms as f64).sum::<f64>() / baseline.len() as f64;
+    let baseline_latency: f64 = baseline
+        .iter()
+        .map(|r| r.latency.total_ms as f64)
+        .sum::<f64>()
+        / baseline.len() as f64;
     let baseline_cost: f64 = baseline.iter().map(|r| r.tokens.estimated_cost_usd).sum();
 
     // Calculate improved metrics
-    let improved_f1: f64 = improved.iter().map(|r| r.quality.f1_score as f64).sum::<f64>() / improved.len() as f64;
+    let improved_f1: f64 = improved
+        .iter()
+        .map(|r| r.quality.f1_score as f64)
+        .sum::<f64>()
+        / improved.len() as f64;
     let improved_tokens: usize = improved.iter().map(|r| r.tokens.total_tokens).sum();
-    let improved_latency: f64 = improved.iter().map(|r| r.latency.total_ms as f64).sum::<f64>() / improved.len() as f64;
+    let improved_latency: f64 = improved
+        .iter()
+        .map(|r| r.latency.total_ms as f64)
+        .sum::<f64>()
+        / improved.len() as f64;
     let improved_cost: f64 = improved.iter().map(|r| r.tokens.estimated_cost_usd).sum();
 
     // Calculate improvements
     let f1_improvement = ((improved_f1 - baseline_f1) / baseline_f1) * 100.0;
-    let token_reduction = ((baseline_tokens as f64 - improved_tokens as f64) / baseline_tokens as f64) * 100.0;
+    let token_reduction =
+        ((baseline_tokens as f64 - improved_tokens as f64) / baseline_tokens as f64) * 100.0;
     let latency_change = ((improved_latency - baseline_latency) / baseline_latency) * 100.0;
     let cost_savings = ((baseline_cost - improved_cost) / baseline_cost) * 100.0;
 
     println!("Metric               | Baseline  | Improved  | Change");
     println!("---------------------|-----------|-----------|-------------");
-    println!("F1 Score             | {:.1}%     | {:.1}%     | {:+.1}%",
-             baseline_f1 * 100.0, improved_f1 * 100.0, f1_improvement);
-    println!("Avg Latency          | {:.1}ms   | {:.1}ms   | {:+.1}%",
-             baseline_latency, improved_latency, latency_change);
-    println!("Total Tokens         | {}     | {}     | {:.1}% reduction",
-             baseline_tokens, improved_tokens, token_reduction);
-    println!("Total Cost           | ${:.4}  | ${:.4}  | {:.1}% savings",
-             baseline_cost, improved_cost, cost_savings);
+    println!(
+        "F1 Score             | {:.1}%     | {:.1}%     | {:+.1}%",
+        baseline_f1 * 100.0,
+        improved_f1 * 100.0,
+        f1_improvement
+    );
+    println!(
+        "Avg Latency          | {:.1}ms   | {:.1}ms   | {:+.1}%",
+        baseline_latency, improved_latency, latency_change
+    );
+    println!(
+        "Total Tokens         | {}     | {}     | {:.1}% reduction",
+        baseline_tokens, improved_tokens, token_reduction
+    );
+    println!(
+        "Total Cost           | ${:.4}  | ${:.4}  | {:.1}% savings",
+        baseline_cost, improved_cost, cost_savings
+    );
 
     println!("\n🎯 Summary:");
     if f1_improvement > 0.0 {
@@ -392,6 +448,9 @@ fn compare_results(baseline: &[QueryBenchmark], improved: &[QueryBenchmark]) {
     if latency_change < 0.0 {
         println!("   ✅ Latency improved by {:.1}%", -latency_change);
     } else {
-        println!("   ⚠️  Latency increased by {:.1}% (acceptable trade-off for quality)", latency_change);
+        println!(
+            "   ⚠️  Latency increased by {:.1}% (acceptable trade-off for quality)",
+            latency_change
+        );
     }
 }

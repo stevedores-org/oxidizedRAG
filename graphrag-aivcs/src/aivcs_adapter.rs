@@ -1,10 +1,12 @@
-//! AIVCS Integration Adapter - bridges RAG run recorder to AIVCS recording system
+//! AIVCS Integration Adapter - bridges RAG run recorder to AIVCS recording
+//! system
 //!
-//! Converts RagRunRecorder events into AIVCS-compatible events for persistent storage
-//! and version control integration.
+//! Converts RagRunRecorder events into AIVCS-compatible events for persistent
+//! storage and version control integration.
+
+use serde_json::json;
 
 use crate::run_recorder::RagRunRecorder;
-use serde_json::json;
 
 /// Converts a RAG run into AIVCS-compatible events
 ///

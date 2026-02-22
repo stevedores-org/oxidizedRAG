@@ -1,10 +1,11 @@
 //! Builder API example of GraphRAG-rs
 //!
-//! This example demonstrates the configurable Builder API for advanced use cases
-//! with custom configuration options.
+//! This example demonstrates the configurable Builder API for advanced use
+//! cases with custom configuration options.
 
-use graphrag_rs::{GraphRAG, ConfigPreset, Document, DocumentId};
 use std::error::Error;
+
+use graphrag_rs::{ConfigPreset, Document, DocumentId, GraphRAG};
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("GraphRAG-rs Builder API Example\n");

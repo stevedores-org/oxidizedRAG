@@ -1,22 +1,22 @@
 //! PageRank-based retrieval system for GraphRAG
-//! 
+//!
 //! This module is only available when the "pagerank" feature is enabled.
 #![cfg(feature = "pagerank")]
 
-use crate::{
-    core::traits::Retriever,
-    core::{ChunkId, EntityId, GraphRAGError, KnowledgeGraph, Result},
-    graph::pagerank::{MultiModalScores, PageRankConfig, PersonalizedPageRank, ScoreWeights},
-    vector::VectorIndex,
-};
+use std::{collections::HashMap, num::NonZeroUsize, sync::Arc};
+
 use lru::LruCache;
 use parking_lot::RwLock;
 use rayon::prelude::*;
-use std::collections::HashMap;
-use std::num::NonZeroUsize;
-use std::sync::Arc;
 
-/// High-performance PageRank-based retrieval system implementing fast-GraphRAG approach
+use crate::{
+    core::{traits::Retriever, ChunkId, EntityId, GraphRAGError, KnowledgeGraph, Result},
+    graph::pagerank::{MultiModalScores, PageRankConfig, PersonalizedPageRank, ScoreWeights},
+    vector::VectorIndex,
+};
+
+/// High-performance PageRank-based retrieval system implementing fast-GraphRAG
+/// approach
 pub struct PageRankRetrievalSystem {
     vector_index: Option<VectorIndex>,
     score_weights: ScoreWeights,
@@ -31,7 +31,8 @@ pub struct PageRankRetrievalSystem {
     incremental_mode: bool,
     /// Pre-computed global PageRank scores
     global_pagerank: Option<HashMap<EntityId, f64>>,
-    /// Optional in-memory knowledge graph used by trait-based search_with_context
+    /// Optional in-memory knowledge graph used by trait-based
+    /// search_with_context
     graph: Option<Arc<KnowledgeGraph>>,
 }
 
@@ -434,15 +435,18 @@ impl Retriever for PageRankRetrievalSystem {
         if let Some(graph) = &self.graph {
             // Ensure vector index is initialized lazily if not set
             if self.vector_index.is_none() {
-                // It's safe to initialize here; ignore index content size for now
-                // as initialize_vector_index requires &mut self, we can't call it here.
-                // So, require callers to initialize explicitly.
+                // It's safe to initialize here; ignore index content size for
+                // now as initialize_vector_index requires &mut
+                // self, we can't call it here. So, require
+                // callers to initialize explicitly.
             }
             // Delegate to PageRank-enhanced search
             self.search_with_pagerank(&enhanced_query, graph, Some(k))
         } else {
             Err(GraphRAGError::Retrieval {
-                message: "No KnowledgeGraph set. Call set_graph(Arc<KnowledgeGraph>) or use search_with_pagerank(query, &graph, ...)".to_string(),
+                message: "No KnowledgeGraph set. Call set_graph(Arc<KnowledgeGraph>) or use \
+                          search_with_pagerank(query, &graph, ...)"
+                    .to_string(),
             })
         }
     }
@@ -710,8 +714,8 @@ mod tests {
         let _results2 = retrieval.search_with_pagerank(query, &graph, None).unwrap();
         let second_duration = start_time.elapsed();
 
-        // Cache should make the second query faster (though this might be flaky in tests)
-        // At minimum, both queries should complete successfully
+        // Cache should make the second query faster (though this might be flaky in
+        // tests) At minimum, both queries should complete successfully
         assert!(first_duration > std::time::Duration::from_nanos(0));
         assert!(second_duration > std::time::Duration::from_nanos(0));
     }

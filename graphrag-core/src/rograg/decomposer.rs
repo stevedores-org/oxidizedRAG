@@ -1,12 +1,11 @@
 //! Query decomposition for ROGRAG system
 //!
-//! Implements multiple strategies for breaking complex queries into simpler subqueries:
+//! Implements multiple strategies for breaking complex queries into simpler
+//! subqueries:
 //! - Semantic decomposition using linguistic patterns
 //! - Syntactic decomposition using grammatical structure
 //! - Hybrid approach combining both methods
 
-#[cfg(feature = "rograg")]
-use crate::Result;
 #[cfg(feature = "rograg")]
 use async_trait::async_trait;
 #[cfg(feature = "rograg")]
@@ -15,6 +14,9 @@ use serde::{Deserialize, Serialize};
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Errors that can occur during query decomposition.
 ///
@@ -31,7 +33,7 @@ pub enum DecompositionError {
     #[error("Query too complex to decompose: {message}")]
     TooComplex {
         /// Error message describing the complexity issue.
-        message: String
+        message: String,
     },
 
     /// The query structure is invalid or malformed.
@@ -41,19 +43,19 @@ pub enum DecompositionError {
     #[error("Invalid query structure: {message}")]
     InvalidStructure {
         /// Error message describing the structural problem.
-        message: String
+        message: String,
     },
 
     /// A specific decomposition strategy encountered an error.
     ///
-    /// Occurs when a strategy (semantic, syntactic, etc.) fails during execution
-    /// due to pattern matching failures or internal errors.
+    /// Occurs when a strategy (semantic, syntactic, etc.) fails during
+    /// execution due to pattern matching failures or internal errors.
     #[error("Decomposition strategy failed: {strategy}: {reason}")]
     StrategyFailed {
         /// Name of the strategy that failed.
         strategy: String,
         /// Reason for the failure.
-        reason: String
+        reason: String,
     },
 
     /// No valid subqueries could be generated from the input.
@@ -66,8 +68,8 @@ pub enum DecompositionError {
 
 /// Strategy used for decomposing complex queries into subqueries.
 ///
-/// Different strategies apply different heuristics for identifying query boundaries
-/// and extracting meaningful subqueries.
+/// Different strategies apply different heuristics for identifying query
+/// boundaries and extracting meaningful subqueries.
 #[cfg(feature = "rograg")]
 #[derive(Debug, Clone, StrumDisplay, EnumString, Serialize, Deserialize, PartialEq)]
 pub enum DecompositionStrategy {
@@ -104,7 +106,8 @@ pub struct DecompositionResult {
 
     /// List of subqueries extracted from the original query.
     ///
-    /// May contain a single element if the query could not be meaningfully decomposed.
+    /// May contain a single element if the query could not be meaningfully
+    /// decomposed.
     pub subqueries: Vec<Subquery>,
 
     /// The strategy that was used to perform the decomposition.
@@ -122,8 +125,8 @@ pub struct DecompositionResult {
 
 /// A single subquery extracted from a complex query.
 ///
-/// Each subquery represents an atomic question that can be answered independently
-/// or with reference to other subquery results.
+/// Each subquery represents an atomic question that can be answered
+/// independently or with reference to other subquery results.
 #[cfg(feature = "rograg")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subquery {
@@ -271,9 +274,9 @@ pub trait QueryDecomposer: Send + Sync {
 
 /// Semantic query decomposer using linguistic patterns.
 ///
-/// This decomposer uses regex patterns to identify question types, entity mentions,
-/// and relationship patterns in queries. It excels at breaking down queries with
-/// clear semantic structure like "Who is X and what is Y?".
+/// This decomposer uses regex patterns to identify question types, entity
+/// mentions, and relationship patterns in queries. It excels at breaking down
+/// queries with clear semantic structure like "Who is X and what is Y?".
 ///
 /// # Pattern Matching
 ///
@@ -311,7 +314,8 @@ impl SemanticQueryDecomposer {
     ///
     /// # Errors
     ///
-    /// Returns an error if regex pattern compilation fails during initialization.
+    /// Returns an error if regex pattern compilation fails during
+    /// initialization.
     pub fn new() -> Result<Self> {
         let patterns = vec![
             SemanticPattern {
@@ -619,9 +623,9 @@ impl QueryDecomposer for SyntacticQueryDecomposer {
 
 /// Hybrid decomposer that combines semantic and syntactic approaches.
 ///
-/// This decomposer attempts semantic decomposition first (which is more accurate
-/// for well-formed queries) and falls back to syntactic decomposition if semantic
-/// patterns don't match or produce low confidence results.
+/// This decomposer attempts semantic decomposition first (which is more
+/// accurate for well-formed queries) and falls back to syntactic decomposition
+/// if semantic patterns don't match or produce low confidence results.
 ///
 /// # Strategy Selection
 ///
@@ -646,8 +650,8 @@ impl HybridQueryDecomposer {
     ///
     /// # Returns
     ///
-    /// Returns a `HybridQueryDecomposer` with initialized semantic and syntactic
-    /// decomposers, or an error if initialization fails.
+    /// Returns a `HybridQueryDecomposer` with initialized semantic and
+    /// syntactic decomposers, or an error if initialization fails.
     ///
     /// # Errors
     ///
@@ -703,7 +707,8 @@ impl DecompositionResult {
     /// Create a result with a single query (no decomposition).
     ///
     /// Used as a fallback when decomposition is not possible or not beneficial.
-    /// The result will have confidence 1.0 since the original query is preserved.
+    /// The result will have confidence 1.0 since the original query is
+    /// preserved.
     ///
     /// # Arguments
     ///

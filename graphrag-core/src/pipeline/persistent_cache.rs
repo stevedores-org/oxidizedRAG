@@ -70,10 +70,15 @@ impl CacheStats {
 
 #[cfg(feature = "persistent-cache")]
 mod rocksdb_backend {
+    use std::{
+        path::{Path, PathBuf},
+        sync::{
+            atomic::{AtomicU64, Ordering},
+            Arc,
+        },
+    };
+
     use super::{CacheStats, PersistentCacheBackend};
-    use std::path::{Path, PathBuf};
-    use std::sync::atomic::{AtomicU64, Ordering};
-    use std::sync::Arc;
 
     /// RocksDB-backed persistent cache.
     pub struct RocksDBCache {
@@ -134,7 +139,7 @@ mod rocksdb_backend {
         fn get_stats(&self) -> CacheStats {
             CacheStats {
                 total_entries: 0, // RocksDB doesn't provide direct count
-                size_bytes: 0,     // Would need to iterate
+                size_bytes: 0,    // Would need to iterate
                 hits: self.stats.hits.load(Ordering::Relaxed),
                 misses: self.stats.misses.load(Ordering::Relaxed),
                 evictions: self.stats.evictions.load(Ordering::Relaxed),
@@ -148,11 +153,11 @@ mod rocksdb_backend {
                 Ok(Some(value)) => {
                     self.stats.hits.fetch_add(1, Ordering::Relaxed);
                     Ok(Some(value))
-                }
+                },
                 Ok(None) => {
                     self.stats.misses.fetch_add(1, Ordering::Relaxed);
                     Ok(None)
-                }
+                },
                 Err(e) => Err(format!("RocksDB get error: {}", e)),
             }
         }
@@ -174,8 +179,9 @@ mod rocksdb_backend {
         }
 
         fn clear(&self) -> Result<(), String> {
-            // RocksDB doesn't have a direct clear, so we'd need to delete the DB and recreate it
-            // For now, just return an error indicating this isn't supported
+            // RocksDB doesn't have a direct clear, so we'd need to delete the DB and
+            // recreate it For now, just return an error indicating this isn't
+            // supported
             Err("Clear not supported - use delete key by key or recreate cache".to_string())
         }
 
@@ -189,16 +195,16 @@ mod rocksdb_backend {
         }
 
         fn compact(&self) -> Result<(), String> {
-            self.db
-                .compact_range(None::<&[u8]>, None::<&[u8]>);
+            self.db.compact_range(None::<&[u8]>, None::<&[u8]>);
             Ok(())
         }
     }
 
     #[cfg(test)]
     mod tests {
-        use super::*;
         use tempfile::TempDir;
+
+        use super::*;
 
         #[test]
         fn test_rocksdb_cache_new() {
@@ -259,9 +265,7 @@ mod rocksdb_backend {
 
             // Store a large value (should be compressed)
             let large_value = vec![42u8; 10_000];
-            cache
-                .set("large".to_string(), large_value.clone())
-                .unwrap();
+            cache.set("large".to_string(), large_value.clone()).unwrap();
 
             let retrieved = cache.get("large").unwrap();
             assert_eq!(retrieved, Some(large_value));
@@ -274,12 +278,7 @@ mod rocksdb_backend {
 
             // Add and delete some data
             for i in 0..10 {
-                cache
-                    .set(
-                        format!("key-{}", i),
-                        vec![i as u8; 100],
-                    )
-                    .unwrap();
+                cache.set(format!("key-{}", i), vec![i as u8; 100]).unwrap();
             }
 
             for i in 0..5 {

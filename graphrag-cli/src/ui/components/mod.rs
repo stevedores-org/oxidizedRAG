@@ -1,8 +1,9 @@
 //! Reusable UI components for the TUI
 
-use crate::action::Action;
 use color_eyre::eyre::Result;
 use ratatui::{layout::Rect, Frame};
+
+use crate::action::Action;
 
 pub mod help_overlay;
 pub mod info_panel;

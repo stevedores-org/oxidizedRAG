@@ -3,12 +3,18 @@
 //! Provides `QueryTrace`, `StageTrace`, `ScoreBreakdown`, and the
 //! `ExplainableRetriever` trait for wrapping search with trace output.
 
-use crate::retrieval::hybrid::{HybridRetriever, HybridSearchResult};
-use crate::retrieval::SearchResult;
-use crate::Result;
+use std::time::{Duration, Instant};
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
+
+use crate::{
+    retrieval::{
+        hybrid::{HybridRetriever, HybridSearchResult},
+        SearchResult,
+    },
+    Result,
+};
 
 /// Score breakdown showing contributions from different retrieval strategies.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,8 +70,9 @@ pub trait ExplainableRetriever: Send + Sync {
 
 /// Serde helper for Duration as milliseconds.
 mod duration_millis {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use std::time::Duration;
+
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     #[derive(Serialize, Deserialize)]
     struct DurationMillis {
@@ -118,7 +125,8 @@ impl TracingRetriever {
         let total_start = Instant::now();
         let mut stages = Vec::new();
 
-        // Run the full hybrid search (which internally does semantic + keyword + fusion)
+        // Run the full hybrid search (which internally does semantic + keyword +
+        // fusion)
         let start = Instant::now();
         let results = self.inner.search(query, limit)?;
         let search_duration = start.elapsed();
@@ -173,7 +181,8 @@ impl TracingRetriever {
         Ok((results, trace))
     }
 
-    /// Convert hybrid results to generic `SearchResult` for the `ExplainableRetriever` trait.
+    /// Convert hybrid results to generic `SearchResult` for the
+    /// `ExplainableRetriever` trait.
     fn to_search_results(hybrid_results: &[HybridSearchResult]) -> Vec<SearchResult> {
         hybrid_results
             .iter()

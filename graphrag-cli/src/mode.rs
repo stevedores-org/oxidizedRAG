@@ -1,6 +1,7 @@
 //! Input utilities for the TUI
 //!
-//! The input box automatically detects whether input is a query or slash command.
+//! The input box automatically detects whether input is a query or slash
+//! command.
 //! - Regular text: Natural language questions
 //! - Text starting with '/': Slash commands
 

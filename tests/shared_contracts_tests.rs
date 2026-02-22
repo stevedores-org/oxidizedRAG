@@ -1,8 +1,9 @@
 //! Cross-crate serialization tests for shared deployment contracts.
 //!
-//! These tests verify that the contract types defined in `graphrag_core::api::contracts`
-//! serialize to JSON and deserialize back correctly when used from outside the
-//! defining crate, ensuring wire-format compatibility between server and CLI.
+//! These tests verify that the contract types defined in
+//! `graphrag_core::api::contracts` serialize to JSON and deserialize back
+//! correctly when used from outside the defining crate, ensuring wire-format
+//! compatibility between server and CLI.
 //!
 //! Gated behind `#[cfg(feature = "api")]` because the contracts module lives
 //! inside the `api` feature of graphrag-core. Note: the `api` feature currently
@@ -11,11 +12,12 @@
 
 #![cfg(feature = "api")]
 
+use std::collections::HashMap;
+
 use graphrag_core::api::contracts::{
     HealthResponse, IndexDocument, IndexRequest, IndexResponse, QueryOptions, QueryRequest,
     QueryResponse, QueryResult,
 };
-use std::collections::HashMap;
 
 /// Helper: serialize a value to JSON and deserialize it back.
 fn roundtrip_json<T>(value: &T) -> T

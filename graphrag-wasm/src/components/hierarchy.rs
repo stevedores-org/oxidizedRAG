@@ -1,6 +1,7 @@
 //! # Hierarchical GraphRAG UI Components
 //!
-//! Components for exploring hierarchical community structures detected by the Leiden algorithm.
+//! Components for exploring hierarchical community structures detected by the
+//! Leiden algorithm.
 //!
 //! ## Components
 //!
@@ -11,8 +12,7 @@
 
 #![allow(dead_code)]
 
-use leptos::prelude::*;
-use leptos::ev::SubmitEvent;
+use leptos::{ev::SubmitEvent, prelude::*};
 use serde::{Deserialize, Serialize};
 
 /// Community data structure for UI display
@@ -325,7 +325,8 @@ pub fn HierarchyExplorer(
 
 /// Adaptive Query Panel Component
 ///
-/// Enhanced query interface with adaptive routing that shows query complexity analysis.
+/// Enhanced query interface with adaptive routing that shows query complexity
+/// analysis.
 ///
 /// # Props
 /// - `on_query` - Callback when query is submitted

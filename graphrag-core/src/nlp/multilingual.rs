@@ -1,6 +1,7 @@
 //! Multilingual Support
 //!
-//! This module provides language detection and language-specific text processing:
+//! This module provides language detection and language-specific text
+//! processing:
 //! - Automatic language detection using n-gram analysis
 //! - Language-specific tokenization and normalization
 //! - Multi-language entity extraction
@@ -19,8 +20,9 @@
 //! - Russian (ru)
 //! - Portuguese (pt)
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Supported languages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -103,7 +105,10 @@ impl Language {
 
     /// Check if language uses CJK (Chinese, Japanese, Korean) script
     pub fn is_cjk(&self) -> bool {
-        matches!(self, Language::Chinese | Language::Japanese | Language::Korean)
+        matches!(
+            self,
+            Language::Chinese | Language::Japanese | Language::Korean
+        )
     }
 
     /// Check if language is right-to-left
@@ -220,7 +225,10 @@ impl LanguageDetector {
 
         // French
         let mut french_model = LanguageModel::new();
-        french_model.train("le renard brun rapide saute par-dessus le chien paresseux", 3);
+        french_model.train(
+            "le renard brun rapide saute par-dessus le chien paresseux",
+            3,
+        );
         french_model.train("ceci est un test de la langue française", 3);
         french_model.train("ceci est du texte français", 3);
         french_model.train("bonjour comment allez-vous aujourd'hui", 3);
@@ -270,9 +278,7 @@ impl LanguageDetector {
             return DetectionResult {
                 language: Language::Chinese,
                 confidence: 0.9,
-                alternatives: vec![
-                    (Language::Japanese, 0.1),
-                ],
+                alternatives: vec![(Language::Japanese, 0.1)],
             };
         }
 
@@ -280,9 +286,7 @@ impl LanguageDetector {
             return DetectionResult {
                 language: Language::Japanese,
                 confidence: 0.9,
-                alternatives: vec![
-                    (Language::Chinese, 0.1),
-                ],
+                alternatives: vec![(Language::Chinese, 0.1)],
             };
         }
 
@@ -347,51 +351,66 @@ impl LanguageDetector {
 
     /// Check if text is likely Chinese (simplified or traditional)
     fn is_likely_chinese(&self, text: &str) -> bool {
-        let chinese_chars = text.chars().filter(|c| {
-            let code = *c as u32;
-            (0x4E00..=0x9FFF).contains(&code) // CJK Unified Ideographs
-        }).count();
+        let chinese_chars = text
+            .chars()
+            .filter(|c| {
+                let code = *c as u32;
+                (0x4E00..=0x9FFF).contains(&code) // CJK Unified Ideographs
+            })
+            .count();
 
         chinese_chars as f32 / text.chars().count() as f32 > 0.3
     }
 
     /// Check if text is likely Japanese (hiragana/katakana present)
     fn is_likely_japanese(&self, text: &str) -> bool {
-        let japanese_chars = text.chars().filter(|c| {
-            let code = *c as u32;
-            (0x3040..=0x309F).contains(&code) || // Hiragana
-            (0x30A0..=0x30FF).contains(&code)    // Katakana
-        }).count();
+        let japanese_chars = text
+            .chars()
+            .filter(|c| {
+                let code = *c as u32;
+                (0x3040..=0x309F).contains(&code) || // Hiragana
+            (0x30A0..=0x30FF).contains(&code) // Katakana
+            })
+            .count();
 
         japanese_chars > 0
     }
 
     /// Check if text is likely Korean (Hangul)
     fn is_likely_korean(&self, text: &str) -> bool {
-        let korean_chars = text.chars().filter(|c| {
-            let code = *c as u32;
-            (0xAC00..=0xD7AF).contains(&code) // Hangul Syllables
-        }).count();
+        let korean_chars = text
+            .chars()
+            .filter(|c| {
+                let code = *c as u32;
+                (0xAC00..=0xD7AF).contains(&code) // Hangul Syllables
+            })
+            .count();
 
         korean_chars as f32 / text.chars().count() as f32 > 0.3
     }
 
     /// Check if text is likely Arabic
     fn is_likely_arabic(&self, text: &str) -> bool {
-        let arabic_chars = text.chars().filter(|c| {
-            let code = *c as u32;
-            (0x0600..=0x06FF).contains(&code) // Arabic
-        }).count();
+        let arabic_chars = text
+            .chars()
+            .filter(|c| {
+                let code = *c as u32;
+                (0x0600..=0x06FF).contains(&code) // Arabic
+            })
+            .count();
 
         arabic_chars as f32 / text.chars().count() as f32 > 0.3
     }
 
     /// Check if text is likely Russian (Cyrillic)
     fn is_likely_russian(&self, text: &str) -> bool {
-        let cyrillic_chars = text.chars().filter(|c| {
-            let code = *c as u32;
-            (0x0400..=0x04FF).contains(&code) // Cyrillic
-        }).count();
+        let cyrillic_chars = text
+            .chars()
+            .filter(|c| {
+                let code = *c as u32;
+                (0x0400..=0x04FF).contains(&code) // Cyrillic
+            })
+            .count();
 
         cyrillic_chars as f32 / text.chars().count() as f32 > 0.3
     }
@@ -442,16 +461,18 @@ impl MultilingualProcessor {
         match language {
             Language::Arabic => {
                 // Remove Arabic diacritics
-                normalized = normalized.chars()
+                normalized = normalized
+                    .chars()
                     .filter(|c| {
                         let code = *c as u32;
                         !(0x064B..=0x0652).contains(&code) // Arabic diacritics
                     })
                     .collect();
-            }
+            },
             Language::Chinese | Language::Japanese => {
                 // Full-width to half-width conversion for ASCII characters
-                normalized = normalized.chars()
+                normalized = normalized
+                    .chars()
                     .map(|c| {
                         let code = c as u32;
                         if (0xFF01..=0xFF5E).contains(&code) {
@@ -461,8 +482,8 @@ impl MultilingualProcessor {
                         }
                     })
                     .collect();
-            }
-            _ => {}
+            },
+            _ => {},
         }
 
         normalized
@@ -478,13 +499,11 @@ impl MultilingualProcessor {
                     .filter(|c| !c.is_whitespace())
                     .map(|c| c.to_string())
                     .collect()
-            }
+            },
             _ => {
                 // Word-level tokenization
-                text.split_whitespace()
-                    .map(|s| s.to_string())
-                    .collect()
-            }
+                text.split_whitespace().map(|s| s.to_string()).collect()
+            },
         }
     }
 }

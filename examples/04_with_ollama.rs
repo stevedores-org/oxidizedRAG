@@ -1,10 +1,12 @@
 //! Ollama integration example for GraphRAG-rs
 //!
-//! This example shows how to use GraphRAG-rs with Ollama for local LLM processing.
-//! Prerequisites: Ollama must be installed and running with appropriate models.
+//! This example shows how to use GraphRAG-rs with Ollama for local LLM
+//! processing. Prerequisites: Ollama must be installed and running with
+//! appropriate models.
+
+use std::error::Error;
 
 use graphrag_rs::GraphRAG;
-use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("GraphRAG-rs with Ollama Example\n");
@@ -77,11 +79,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Ask various types of questions
     let questions = vec![
         ("What is quantum computing?", "Basic definition question"),
-        ("What are the main challenges facing quantum computing?", "Specific detail question"),
-        ("How do qubits differ from classical bits?", "Comparison question"),
-        ("What applications could benefit from quantum computing?", "Application question"),
-        ("What breakthrough did Google achieve in 2019?", "Fact retrieval question"),
-        ("How might quantum computing impact cryptography?", "Impact analysis question"),
+        (
+            "What are the main challenges facing quantum computing?",
+            "Specific detail question",
+        ),
+        (
+            "How do qubits differ from classical bits?",
+            "Comparison question",
+        ),
+        (
+            "What applications could benefit from quantum computing?",
+            "Application question",
+        ),
+        (
+            "What breakthrough did Google achieve in 2019?",
+            "Fact retrieval question",
+        ),
+        (
+            "How might quantum computing impact cryptography?",
+            "Impact analysis question",
+        ),
     ];
 
     println!("Asking questions using Ollama LLM:\n");
@@ -94,13 +111,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         match graphrag.ask(question) {
             Ok(answer) => {
                 println!("A: {answer}");
-            }
+            },
             Err(e) => {
                 println!("Error: {e}. Make sure Ollama is running and models are installed.");
                 println!("Install models with:");
                 println!("  ollama pull llama3.1:8b");
                 println!("  ollama pull nomic-embed-text");
-            }
+            },
         }
         println!("{}", "-".repeat(50));
     }
@@ -113,9 +130,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("1. Creating specialized GraphRAG instances:\n");
 
     // Analysis focused on factual extraction
-    let mut factual_graph = GraphRAG::builder()
-        .with_ollama()
-        .build()?;
+    let mut factual_graph = GraphRAG::builder().with_ollama().build()?;
 
     factual_graph.add_document_from_text(scientific_text)?;
 
@@ -125,9 +140,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // Analysis focused on creative interpretation
-    let mut creative_graph = GraphRAG::builder()
-        .with_ollama()
-        .build()?;
+    let mut creative_graph = GraphRAG::builder().with_ollama().build()?;
 
     creative_graph.add_document_from_text(scientific_text)?;
 

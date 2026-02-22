@@ -1,7 +1,8 @@
 //! WebLLM Integration Tests
 //!
-//! Tests for WebLLM bindings, model initialization, chat completions, and streaming.
-//! These tests require WebLLM to be available in the browser environment.
+//! Tests for WebLLM bindings, model initialization, chat completions, and
+//! streaming. These tests require WebLLM to be available in the browser
+//! environment.
 
 use graphrag_wasm::webllm::{get_recommended_models, is_webllm_available, ChatMessage, WebLLM};
 use wasm_bindgen_test::*;
@@ -85,8 +86,7 @@ async fn test_webllm_progress_tracking() {
         return;
     }
 
-    use std::cell::RefCell;
-    use std::rc::Rc;
+    use std::{cell::RefCell, rc::Rc};
 
     let progress_calls = Rc::new(RefCell::new(0));
     let progress_calls_clone = progress_calls.clone();
@@ -184,8 +184,7 @@ async fn test_streaming_chat() {
 
     let messages = vec![ChatMessage::user("Count from 1 to 5.")];
 
-    use std::cell::RefCell;
-    use std::rc::Rc;
+    use std::{cell::RefCell, rc::Rc};
 
     let chunks = Rc::new(RefCell::new(Vec::new()));
     let chunks_clone = chunks.clone();

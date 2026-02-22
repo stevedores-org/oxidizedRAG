@@ -22,9 +22,21 @@ fn main() {
     let sum2: f32 = emb2.iter().sum();
     let sum3: f32 = emb3.iter().sum();
 
-    println!("  ✓ Embedding 1 (ML): sum={:.4}, non-zero count={}", sum1, emb1.iter().filter(|&&x| x != 0.0).count());
-    println!("  ✓ Embedding 2 (Food): sum={:.4}, non-zero count={}", sum2, emb2.iter().filter(|&&x| x != 0.0).count());
-    println!("  ✓ Embedding 3 (ML): sum={:.4}, non-zero count={}", sum3, emb3.iter().filter(|&&x| x != 0.0).count());
+    println!(
+        "  ✓ Embedding 1 (ML): sum={:.4}, non-zero count={}",
+        sum1,
+        emb1.iter().filter(|&&x| x != 0.0).count()
+    );
+    println!(
+        "  ✓ Embedding 2 (Food): sum={:.4}, non-zero count={}",
+        sum2,
+        emb2.iter().filter(|&&x| x != 0.0).count()
+    );
+    println!(
+        "  ✓ Embedding 3 (ML): sum={:.4}, non-zero count={}",
+        sum3,
+        emb3.iter().filter(|&&x| x != 0.0).count()
+    );
 
     assert!(sum1.abs() > 0.01, "Embedding 1 should be non-zero");
     assert!(sum2.abs() > 0.01, "Embedding 2 should be non-zero");
@@ -41,15 +53,24 @@ fn main() {
     println!("  Similarity(Food, ML2): {:.4}", sim_2_3);
 
     // ML texts should be more similar to each other than to food
-    assert!(sim_1_3 > sim_1_2, "ML texts should be more similar to each other");
-    assert!(sim_1_3 > sim_2_3, "ML texts should be more similar to each other");
+    assert!(
+        sim_1_3 > sim_1_2,
+        "ML texts should be more similar to each other"
+    );
+    assert!(
+        sim_1_3 > sim_2_3,
+        "ML texts should be more similar to each other"
+    );
     println!("  ✓ Semantic similarity works correctly");
 
     // Test 3: Identical documents
     println!("\n🔁 Test 3: Identical Documents");
     let sim_self = cosine_similarity(&emb1, &emb1);
     println!("  Self-similarity: {:.6}", sim_self);
-    assert!((sim_self - 1.0).abs() < 0.001, "Identical documents should have similarity ~1.0");
+    assert!(
+        (sim_self - 1.0).abs() < 0.001,
+        "Identical documents should have similarity ~1.0"
+    );
     println!("  ✓ Self-similarity is 1.0");
 
     // Test 4: Empty embeddings
@@ -63,18 +84,48 @@ fn main() {
     // Test 5: Vector search simulation
     println!("\n🔍 Test 5: Vector Search Simulation");
     let docs = vec![
-        ("doc1", "Machine learning is a subset of artificial intelligence", hash_embedding("Machine learning is a subset of artificial intelligence", 384)),
-        ("doc2", "Baking cookies requires flour, sugar, and eggs", hash_embedding("Baking cookies requires flour, sugar, and eggs", 384)),
-        ("doc3", "Deep learning uses neural networks for pattern recognition", hash_embedding("Deep learning uses neural networks for pattern recognition", 384)),
-        ("doc4", "Italian pasta dishes are delicious", hash_embedding("Italian pasta dishes are delicious", 384)),
-        ("doc5", "Natural language processing enables computers to understand text", hash_embedding("Natural language processing enables computers to understand text", 384)),
+        (
+            "doc1",
+            "Machine learning is a subset of artificial intelligence",
+            hash_embedding(
+                "Machine learning is a subset of artificial intelligence",
+                384,
+            ),
+        ),
+        (
+            "doc2",
+            "Baking cookies requires flour, sugar, and eggs",
+            hash_embedding("Baking cookies requires flour, sugar, and eggs", 384),
+        ),
+        (
+            "doc3",
+            "Deep learning uses neural networks for pattern recognition",
+            hash_embedding(
+                "Deep learning uses neural networks for pattern recognition",
+                384,
+            ),
+        ),
+        (
+            "doc4",
+            "Italian pasta dishes are delicious",
+            hash_embedding("Italian pasta dishes are delicious", 384),
+        ),
+        (
+            "doc5",
+            "Natural language processing enables computers to understand text",
+            hash_embedding(
+                "Natural language processing enables computers to understand text",
+                384,
+            ),
+        ),
     ];
 
     let query = "artificial intelligence and machine learning";
     let query_emb = hash_embedding(query, 384);
 
     // Compute similarities and sort
-    let mut results: Vec<(&str, &str, f32)> = docs.iter()
+    let mut results: Vec<(&str, &str, f32)> = docs
+        .iter()
         .map(|(id, text, emb)| (*id, *text, cosine_similarity(&query_emb, emb)))
         .collect();
     results.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
@@ -88,8 +139,10 @@ fn main() {
 
     // Verify ML docs rank higher than food docs
     let top_result = results[0].0;
-    assert!(top_result == "doc1" || top_result == "doc3" || top_result == "doc5",
-        "Top result should be an ML document");
+    assert!(
+        top_result == "doc1" || top_result == "doc3" || top_result == "doc5",
+        "Top result should be an ML document"
+    );
     println!("\n  ✓ Vector search returns relevant results");
 
     // Test 6: Normalized embeddings
@@ -102,9 +155,18 @@ fn main() {
     println!("  L2 norm of embedding 2: {:.6}", norm2);
     println!("  L2 norm of embedding 3: {:.6}", norm3);
 
-    assert!((norm1 - 1.0).abs() < 0.001, "Embeddings should be L2 normalized");
-    assert!((norm2 - 1.0).abs() < 0.001, "Embeddings should be L2 normalized");
-    assert!((norm3 - 1.0).abs() < 0.001, "Embeddings should be L2 normalized");
+    assert!(
+        (norm1 - 1.0).abs() < 0.001,
+        "Embeddings should be L2 normalized"
+    );
+    assert!(
+        (norm2 - 1.0).abs() < 0.001,
+        "Embeddings should be L2 normalized"
+    );
+    assert!(
+        (norm3 - 1.0).abs() < 0.001,
+        "Embeddings should be L2 normalized"
+    );
     println!("  ✓ All embeddings are L2 normalized");
 
     println!("\n{}", "=".repeat(70));

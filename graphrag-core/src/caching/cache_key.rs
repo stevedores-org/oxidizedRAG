@@ -1,9 +1,11 @@
 //! Intelligent cache key generation for optimal hit rates
 
+use std::collections::HashMap;
+
+use sha2::{Digest, Sha256};
+
 use super::CacheResult;
 use crate::core::traits::GenerationParams;
-use sha2::{Digest, Sha256};
-use std::collections::HashMap;
 
 /// A cache key that uniquely identifies a request-response pair
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -152,14 +154,14 @@ impl CacheKeyGenerator {
         let key_components = match self.strategy {
             KeyStrategy::Simple => {
                 vec![normalized_prompt.clone()]
-            }
+            },
             KeyStrategy::WithParameters => {
                 let mut components = vec![normalized_prompt.clone()];
                 if let Some(params) = params {
                     components.push(self.serialize_params(params)?);
                 }
                 components
-            }
+            },
             KeyStrategy::Semantic => {
                 let semantic_prompt = self.apply_semantic_normalization(&normalized_prompt);
                 let mut components = vec![semantic_prompt];
@@ -167,7 +169,7 @@ impl CacheKeyGenerator {
                     components.push(self.serialize_params(params)?);
                 }
                 components
-            }
+            },
             KeyStrategy::ContentBased => {
                 let content_prompt = self.apply_content_normalization(&normalized_prompt);
                 let mut components = vec![content_prompt];
@@ -180,7 +182,7 @@ impl CacheKeyGenerator {
                     }
                 }
                 components
-            }
+            },
         };
 
         let combined_input = key_components.join("|");

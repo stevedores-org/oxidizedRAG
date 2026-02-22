@@ -30,7 +30,10 @@ impl DataProcessor {
             eprintln!("Processing: {}", input);
         }
         let words: Vec<&str> = input.split_whitespace().collect();
-        let truncated: Vec<&str> = words.into_iter().take(self.config.max_items.max(1)).collect();
+        let truncated: Vec<&str> = words
+            .into_iter()
+            .take(self.config.max_items.max(1))
+            .collect();
         truncated.join(" ")
     }
 }

@@ -3,8 +3,9 @@
 //! This example demonstrates the simplest way to use GraphRAG-rs
 //! to process a document and ask questions about it.
 
-use graphrag_rs::simple;
 use std::error::Error;
+
+use graphrag_rs::simple;
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("GraphRAG-rs Basic Usage Example\n");
@@ -37,7 +38,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("A: {}\n", answer);
 
     // Example 2: Another question
-    let answer2 = simple::answer(document, "How does deep learning relate to machine learning?")?;
+    let answer2 = simple::answer(
+        document,
+        "How does deep learning relate to machine learning?",
+    )?;
     println!("Q: How does deep learning relate to machine learning?");
     println!("A: {}\n", answer2);
 

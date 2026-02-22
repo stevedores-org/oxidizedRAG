@@ -17,10 +17,11 @@ pub mod surrealdb;
 #[cfg(feature = "incremental")]
 pub mod async_bridge;
 
-use crate::core::{Document, Entity, Result, TextChunk};
+use std::collections::HashMap;
+
 #[cfg(feature = "async")]
 use crate::core::{traits::Storage, GraphRAGError};
-use std::collections::HashMap;
+use crate::core::{Document, Entity, Result, TextChunk};
 
 /// In-memory storage implementation for development and testing
 #[derive(Debug, Default, Clone)]
@@ -117,7 +118,8 @@ pub struct StorageStats {
     pub metadata_count: usize,
 }
 
-// Implement the Storage trait for MemoryStorage (only when async feature is enabled)
+// Implement the Storage trait for MemoryStorage (only when async feature is
+// enabled)
 #[cfg(feature = "async")]
 impl Storage for MemoryStorage {
     type Entity = Entity;
@@ -170,8 +172,9 @@ impl Storage for MemoryStorage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use indexmap::IndexMap;
+
+    use super::*;
 
     #[test]
     fn test_memory_storage() {
