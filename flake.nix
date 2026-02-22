@@ -106,12 +106,6 @@
           nativeBuildInputs = with pkgs; [
             pkg-config
           ];
-
-          # qdrant-client's build.rs writes generated test files into its
-          # vendored source tree. By default Crane symlinks artifacts from the
-          # Nix store (read-only), causing "Permission denied" in build scripts.
-          # Copying instead of symlinking makes them writable.
-          doNotLinkInheritedArtifacts = true;
         };
 
         # Build workspace deps first (for caching)

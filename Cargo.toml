@@ -58,7 +58,9 @@ leptos_meta = { version = "0.8" }
 leptos_router = { version = "0.8" }
 
 # Vector databases
-qdrant-client = "1.11"
+# Pinned below 1.17: v1.17's build.rs writes into vendored source dir,
+# breaking Nix sandbox builds (read-only Nix store).
+qdrant-client = ">=1.11, <1.17"
 redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
 
 # GPU acceleration
