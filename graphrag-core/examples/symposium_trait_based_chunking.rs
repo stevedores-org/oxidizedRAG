@@ -115,7 +115,6 @@ fn demonstrate_hierarchical_chunking(document: &Document) -> (Vec<TextChunk>, Ch
     (chunks, metrics)
 }
 
-
 #[cfg(feature = "code-chunking")]
 fn demonstrate_tree_sitter_chunking() -> (Vec<TextChunk>, ChunkingMetrics) {
     println!("\n🔹 Tree-sitter AST Chunking (cAST approach)");

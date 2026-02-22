@@ -37,7 +37,7 @@ use_field_init_shorthand = true
 
 # String formatting
 format_strings = true
-format_raw_strings = false
+# format_raw_strings was removed in recent nightly
 
 # Pattern matching
 match_block_trailing_comma = true
@@ -59,8 +59,7 @@ binop_separator = "Front"
 # Code organization
 normalize_comments = true
 normalize_doc_attributes = true
-report_todo = "Always"
-report_fixme = "Always"
+# report_todo and report_fixme were removed in recent nightly
 
 # Experimental features (stable)
 inline_attribute_width = 0
