@@ -39,9 +39,23 @@
         pkgs = import nixpkgs { inherit system overlays; };
 
         rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-          extensions = [ "rust-src" "rust-analyzer" "rustfmt" "clippy" ];
+          extensions = [ "rust-src" "rust-analyzer" "clippy" ];
           targets = [ "wasm32-unknown-unknown" ];
         };
+
+        # Toolchain with nightly rustfmt — rustfmt.toml uses nightly-only options
+        # (imports_granularity, wrap_comments, normalize_comments, etc.).
+        # Crane dispatches rustfmt via its toolchain, so we need a dedicated
+        # craneLib instance that resolves to nightly rustfmt.
+        rustFmtToolchain = pkgs.rust-bin.stable.latest.default.override {
+          extensions = [ "rust-src" ];
+        };
+        nightlyRustfmt = pkgs.rust-bin.nightly.latest.rustfmt;
+        fmtToolchain = pkgs.symlinkJoin {
+          name = "rust-toolchain-with-nightly-fmt";
+          paths = [ nightlyRustfmt rustFmtToolchain ];
+        };
+        craneFmtLib = (crane.mkLib pkgs).overrideToolchain fmtToolchain;
 
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
 
@@ -77,8 +91,10 @@
             cargoClippyExtraArgs = "--all-targets -- -D warnings";
           });
 
-          fmt = craneLib.cargoFmt {
-            src = craneLib.cleanCargoSource ./.;
+          # Use craneFmtLib (nightly rustfmt) so Crane invokes nightly rustfmt
+          # through the toolchain, not the stable one bundled with rustToolchain.
+          fmt = craneFmtLib.cargoFmt {
+            src = craneFmtLib.cleanCargoSource ./.;
           };
 
           tests = craneLib.cargoNextest (commonArgs // {
@@ -116,6 +132,9 @@
           checks = self.checks.${system};
 
           packages = with pkgs; [
+            # Nightly rustfmt (rustfmt.toml uses nightly-only options)
+            nightlyRustfmt
+
             # Rust extras
             cargo-watch
             cargo-nextest
