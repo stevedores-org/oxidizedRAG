@@ -43,18 +43,52 @@
           targets = [ "wasm32-unknown-unknown" ];
         };
 
-        # Toolchain with nightly rustfmt — rustfmt.toml uses nightly-only options
+        # Nightly rustfmt — rustfmt.toml uses nightly-only options
         # (imports_granularity, wrap_comments, normalize_comments, etc.).
-        # Crane dispatches rustfmt via its toolchain, so we need a dedicated
-        # craneLib instance that resolves to nightly rustfmt.
+        #
+        # On Darwin, the standalone rustfmt component's binary links
+        # librustc_driver via @rpath (../lib relative to the binary).
+        # Since rust-overlay assembles toolchains with symlinks, the
+        # @rpath resolves to the standalone component's store path which
+        # has no lib/ dir. We fix this by wrapping the binaries with
+        # DYLD_FALLBACK_LIBRARY_PATH pointing to the nightly toolchain's
+        # lib/ directory (which does contain librustc_driver).
+        nightlyRustfmtRaw = pkgs.rust-bin.nightly.latest.rustfmt;
+        nightlyFmtToolchain = pkgs.rust-bin.nightly.latest.minimal.override {
+          extensions = [ "rustfmt" ];
+        };
+        nightlyRustfmt = if pkgs.stdenv.isDarwin then
+          pkgs.runCommand "nightly-rustfmt-wrapped" {
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+          } ''
+            mkdir -p $out/bin
+            for bin in rustfmt cargo-fmt; do
+              makeWrapper ${nightlyRustfmtRaw}/bin/$bin $out/bin/$bin \
+                --set DYLD_FALLBACK_LIBRARY_PATH "${nightlyFmtToolchain}/lib"
+            done
+          ''
+        else
+          nightlyRustfmtRaw;
+
+        # Crane fmt toolchain: overlay nightly rustfmt onto stable base
+        # so Crane dispatches nightly rustfmt through its toolchain.
         rustFmtToolchain = pkgs.rust-bin.stable.latest.default.override {
           extensions = [ "rust-src" ];
         };
-        nightlyRustfmt = pkgs.rust-bin.nightly.latest.rustfmt;
-        fmtToolchain = pkgs.symlinkJoin {
-          name = "rust-toolchain-with-nightly-fmt";
-          paths = [ nightlyRustfmt rustFmtToolchain ];
-        };
+        fmtToolchain = if pkgs.stdenv.isDarwin then
+          pkgs.symlinkJoin {
+            name = "rust-toolchain-with-nightly-fmt";
+            paths = [ nightlyRustfmt rustFmtToolchain ];
+            postBuild = ''
+              # Copy nightly libs so @rpath (../lib) resolves from bin/
+              cp -rn ${nightlyFmtToolchain}/lib/* $out/lib/ 2>/dev/null || true
+            '';
+          }
+        else
+          pkgs.symlinkJoin {
+            name = "rust-toolchain-with-nightly-fmt";
+            paths = [ nightlyRustfmtRaw rustFmtToolchain ];
+          };
         craneFmtLib = (crane.mkLib pkgs).overrideToolchain fmtToolchain;
 
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
