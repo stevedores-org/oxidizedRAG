@@ -1,6 +1,7 @@
 //! Embedding generation for GraphRAG
 //!
-//! This module provides embedding generation capabilities using various backends:
+//! This module provides embedding generation capabilities using various
+//! backends:
 //! - Hugging Face Hub models (via hf-hub crate)
 //! - Local models (ONNX, Candle)
 //! - API providers (OpenAI, Voyage AI, Cohere, etc.)
