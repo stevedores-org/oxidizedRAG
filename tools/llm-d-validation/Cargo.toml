@@ -1,0 +1,13 @@
+[package]
+name = "llm-d-validation"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "llm_d_validation"
+path = "src/lib.rs"
+
+[dependencies]
+serde.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true

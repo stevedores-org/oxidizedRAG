@@ -5,6 +5,9 @@ members = [
     "graphrag-server",
     "graphrag-cli",
     "graphrag-aivcs",
+
+    # Tools
+    "tools/llm-d-validation",
 ]
 exclude = ["examples/web-app"]
 resolver = "2"

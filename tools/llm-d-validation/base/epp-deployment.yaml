@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-pool-epp
+  namespace: llm-d-inference
+  labels:
+    app: llm-pool-epp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-pool-epp
+  template:
+    metadata:
+      labels:
+        app: llm-pool-epp
+    spec:
+      containers:
+        - name: epp
+          image: registry.k8s.io/gateway-api/epp:v0.3.0
+          env:
+            - name: POOL_NAME
+              value: llm-pool
+            - name: POOL_NAMESPACE
+              value: llm-d-inference
+          ports:
+            - containerPort: 9002
+              name: grpc
+          readinessProbe:
+            grpc:
+              port: 9002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
