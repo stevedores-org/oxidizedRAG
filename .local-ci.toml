@@ -1,9 +1,9 @@
 # local-ci configuration for oxidizedRAG
 # See: https://github.com/stevedores-org/local-ci
 #
-# NOTE: local-ci v0.1.0 uses built-in stage definitions and does not currently
-# parse this file. Keep this as forward-compatible documentation of desired
-# stage policy until schema-backed config loading lands in local-ci.
+# Schema: use "command" and "fix_command" (not cmd/fixcmd). See PR #126.
+# Note: rustfmt.toml uses nightly-only options; for fmt to pass use
+#   cargo +nightly fmt --all   (or run CI via Nix: nix flake check).
 #
 # Core stages run by default: fmt, clippy, test
 # Optional tool stages available below (requires installation):
@@ -19,49 +19,49 @@ skip_dirs = [".git", "target", ".github", "scripts", ".claude", "node_modules", 
 include_patterns = ["*.rs", "*.toml"]
 
 [stages.fmt]
-cmd = ["cargo", "fmt", "--all", "--", "--check"]
-fixcmd = ["cargo", "fmt", "--all"]
+command = ["cargo", "fmt", "--all", "--", "--check"]
+fix_command = ["cargo", "fmt", "--all"]
 timeout = 120
 enabled = true
 
 [stages.clippy]
-cmd = ["cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings"]
+command = ["cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings"]
 timeout = 600
 enabled = true
 
 [stages.test]
-cmd = ["cargo", "test", "--workspace"]
+command = ["cargo", "test", "--workspace"]
 timeout = 1200
 enabled = true
 
 [stages.check]
-cmd = ["cargo", "check", "--workspace"]
+command = ["cargo", "check", "--workspace"]
 timeout = 600
 enabled = false
 
 # Optional: Cargo tools (uncomment to enable)
 # Install with: cargo install cargo-deny
 [stages.deny]
-cmd = ["cargo", "deny", "check"]
+command = ["cargo", "deny", "check"]
 timeout = 300
 enabled = false
 
 # Install with: cargo install cargo-audit
 [stages.audit]
-cmd = ["cargo", "audit"]
+command = ["cargo", "audit"]
 timeout = 300
 enabled = false
 
 # Install with: cargo install cargo-machete
 [stages.machete]
-cmd = ["cargo", "machete"]
+command = ["cargo", "machete"]
 timeout = 300
 enabled = false
 
 # Install with: cargo install taplo-cli
 [stages.taplo]
-cmd = ["taplo", "format", "--check", "."]
-fixcmd = ["taplo", "format", "."]
+command = ["taplo", "format", "--check", "."]
+fix_command = ["taplo", "format", "."]
 timeout = 300
 enabled = false
 
