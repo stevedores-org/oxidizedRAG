@@ -6,7 +6,9 @@
 mod vllm_tests {
     use graphrag_core::core::traits::{AsyncLanguageModel, GenerationParams};
     use graphrag_core::embeddings::EmbeddingProvider;
-    use graphrag_core::vllm::{AsyncVllmGenerator, VllmConfig, VllmEmbeddingProvider};
+    use graphrag_core::vllm::{
+        AsyncVllmGenerator, ChatMessage, VllmClient, VllmConfig, VllmEmbeddingProvider,
+    };
     use serde_json::json;
     use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -20,6 +22,7 @@ mod vllm_tests {
             timeout_seconds: 5,
             max_tokens: Some(100),
             temperature: Some(0.7),
+            max_retries: 1, // 1 = no retries for fast tests
         }
     }
 
@@ -95,7 +98,7 @@ mod vllm_tests {
 
         let gen = AsyncVllmGenerator::new(make_config(&mock_server.uri()));
         let params = GenerationParams {
-            temperature: Some(0.5),
+            temperature: Some(0.2),
             max_tokens: Some(50usize),
             top_p: None,
             stop_sequences: None,
@@ -104,6 +107,14 @@ mod vllm_tests {
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "Parameterized response");
+
+        // Verify the request body contained the overridden params
+        let requests = mock_server.received_requests().await.unwrap();
+        assert_eq!(requests.len(), 1);
+        let body: serde_json::Value = serde_json::from_slice(&requests[0].body).unwrap();
+        assert_eq!(body["max_tokens"], json!(50));
+        let temp = body["temperature"].as_f64().unwrap();
+        assert!((temp - 0.2).abs() < 0.001, "temperature should be ~0.2, got {temp}");
     }
 
     #[tokio::test]
@@ -199,6 +210,90 @@ mod vllm_tests {
 
         assert!(result.is_ok(), "authed request should succeed: {:?}", result.err());
         assert_eq!(result.unwrap(), "authed response");
+    }
+
+    // ─── Multi-turn Messages Test ─────────────────────────────────────────
+
+    #[tokio::test]
+    async fn test_vllm_client_multi_turn_messages() {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("POST"))
+            .and(path("/v1/chat/completions"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(chat_response("I remember you said hello!")),
+            )
+            .expect(1)
+            .mount(&mock_server)
+            .await;
+
+        let client = VllmClient::new(make_config(&mock_server.uri()));
+        let messages = vec![
+            ChatMessage { role: "system".to_string(), content: "You are helpful.".to_string() },
+            ChatMessage { role: "user".to_string(), content: "Hello!".to_string() },
+            ChatMessage { role: "assistant".to_string(), content: "Hi there!".to_string() },
+            ChatMessage { role: "user".to_string(), content: "Do you remember what I said?".to_string() },
+        ];
+
+        let result = client.chat_completion_with_messages(&messages, None, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "I remember you said hello!");
+
+        // Verify all 4 messages were sent
+        let requests = mock_server.received_requests().await.unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&requests[0].body).unwrap();
+        let sent_messages = body["messages"].as_array().unwrap();
+        assert_eq!(sent_messages.len(), 4);
+        assert_eq!(sent_messages[0]["role"], "system");
+        assert_eq!(sent_messages[2]["role"], "assistant");
+    }
+
+    // ─── Retry Logic Tests ──────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn test_vllm_retries_on_transient_failure() {
+        let mock_server = MockServer::start().await;
+
+        // Mount a mock that expects 3 calls (all fail — testing retry exhaustion)
+        Mock::given(method("POST"))
+            .and(path("/v1/chat/completions"))
+            .respond_with(ResponseTemplate::new(500).set_body_string("Server Error"))
+            .expect(3) // should retry 3 times total
+            .mount(&mock_server)
+            .await;
+
+        let config = VllmConfig {
+            max_retries: 3,
+            ..make_config(&mock_server.uri())
+        };
+        let gen = AsyncVllmGenerator::new(config);
+        let result = gen.complete("retry test").await;
+
+        assert!(result.is_err(), "should fail after all retries exhausted");
+        let err_msg = format!("{:?}", result.unwrap_err());
+        assert!(
+            err_msg.contains("failed after 3 retries"),
+            "error should mention retry count, got: {err_msg}"
+        );
+    }
+
+    // ─── Uninitialized Embedding Provider Test ──────────────────────────
+
+    #[tokio::test]
+    async fn test_vllm_embedding_fails_without_initialize() {
+        let mock_server = MockServer::start().await;
+        // No mock needed — should fail before making any HTTP call
+
+        let provider = VllmEmbeddingProvider::new(make_config(&mock_server.uri()), 4);
+
+        let result = provider.embed("test").await;
+        assert!(result.is_err(), "embed should fail without initialize()");
+        let err_msg = format!("{:?}", result.unwrap_err());
+        assert!(err_msg.contains("not initialized"), "error should mention initialization, got: {err_msg}");
+
+        let batch_result = provider.embed_batch(&["a", "b"]).await;
+        assert!(batch_result.is_err(), "embed_batch should fail without initialize()");
     }
 
     // ─── Embedding Tests ─────────────────────────────────────────────────
