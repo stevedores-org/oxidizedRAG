@@ -3,10 +3,10 @@
 //! Provides content-addressed caching at the stage boundary, enabling
 //! incremental updates and avoiding recomputation of unchanged inputs.
 
-use super::{Stage, StageMeta, StageError, ContentHashable};
+use super::{ContentHashable, Stage, StageError, StageMeta};
 use async_trait::async_trait;
-use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 /// In-memory cache for stage outputs.
 ///
@@ -240,7 +240,11 @@ mod tests {
         let input = "hello".to_string();
         let result1 = cached.execute(input.clone()).await.unwrap();
         assert_eq!(result1, "HELLO");
-        assert_eq!(cache.len(), 1, "Cache should have 1 entry after first execution");
+        assert_eq!(
+            cache.len(),
+            1,
+            "Cache should have 1 entry after first execution"
+        );
 
         let result2 = cached.execute(input).await.unwrap();
         assert_eq!(result2, "HELLO");
@@ -259,7 +263,11 @@ mod tests {
         let result2 = cached.execute("world".to_string()).await.unwrap();
         assert_eq!(result2, "WORLD");
 
-        assert_eq!(cache.len(), 2, "Cache should have 2 entries for different inputs");
+        assert_eq!(
+            cache.len(),
+            2,
+            "Cache should have 2 entries for different inputs"
+        );
     }
 
     #[tokio::test]
@@ -272,8 +280,14 @@ mod tests {
         let result1 = cached.execute(input.clone()).await.unwrap();
         let result2 = cached.execute(input).await.unwrap();
 
-        assert_ne!(result1, result2, "Non-deterministic stage should return different results");
-        assert!(cache.is_empty(), "Cache should be empty for non-deterministic stage");
+        assert_ne!(
+            result1, result2,
+            "Non-deterministic stage should return different results"
+        );
+        assert!(
+            cache.is_empty(),
+            "Cache should be empty for non-deterministic stage"
+        );
     }
 
     #[tokio::test]
@@ -389,7 +403,10 @@ mod tests {
         let cached = CachedStage::new(stage, cache);
 
         let key = cached.cache_key(&"hello".to_string());
-        assert!(key.contains("mock-string@1.0.0"), "Key should include name and version");
+        assert!(
+            key.contains("mock-string@1.0.0"),
+            "Key should include name and version"
+        );
         assert!(key.contains(':'), "Key should use colon separator");
     }
 }

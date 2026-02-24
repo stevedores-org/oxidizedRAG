@@ -2,8 +2,8 @@
 
 use async_trait::async_trait;
 use graphrag_core::pipeline::{
-    Stage, StageMeta, StageError, CachedStage, StageCache, ContentHashable, ChunkBatch,
-    DocumentChunk, EmbeddingBatch, EmbeddingRecord,
+    CachedStage, ChunkBatch, ContentHashable, DocumentChunk, EmbeddingBatch, EmbeddingRecord,
+    Stage, StageCache, StageError, StageMeta,
 };
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -109,7 +109,11 @@ async fn test_cache_hit_reduces_executions() {
 
     // Second execution with same input (cache hit)
     let result2 = cached.execute(batch).await.unwrap();
-    assert_eq!(count.load(Ordering::SeqCst), 1, "Should not execute again (cache hit)");
+    assert_eq!(
+        count.load(Ordering::SeqCst),
+        1,
+        "Should not execute again (cache hit)"
+    );
 
     assert_eq!(result1, result2);
 }
@@ -153,7 +157,11 @@ async fn test_cache_miss_on_different_input() {
 
     // Second execution with different input (cache miss)
     let _result2 = cached.execute(batch2).await.unwrap();
-    assert_eq!(count.load(Ordering::SeqCst), 2, "Should execute for different input");
+    assert_eq!(
+        count.load(Ordering::SeqCst),
+        2,
+        "Should execute for different input"
+    );
 }
 
 #[tokio::test]
@@ -245,7 +253,11 @@ async fn test_shared_cache_across_stages() {
     assert_eq!(count2.load(Ordering::SeqCst), 1);
 
     // Shared cache should have 2 entries
-    assert_eq!(shared_cache.len(), 2, "Shared cache should have entries from both stages");
+    assert_eq!(
+        shared_cache.len(),
+        2,
+        "Shared cache should have entries from both stages"
+    );
 }
 
 #[tokio::test]
@@ -279,7 +291,11 @@ async fn test_cache_clear() {
 
     // Execute again (should not use cache)
     let _result2 = cached.execute(batch).await.unwrap();
-    assert_eq!(count.load(Ordering::SeqCst), 2, "Should execute again after cache clear");
+    assert_eq!(
+        count.load(Ordering::SeqCst),
+        2,
+        "Should execute again after cache clear"
+    );
 }
 
 #[test]

@@ -134,7 +134,7 @@ mod rocksdb_backend {
         fn get_stats(&self) -> CacheStats {
             CacheStats {
                 total_entries: 0, // RocksDB doesn't provide direct count
-                size_bytes: 0,     // Would need to iterate
+                size_bytes: 0,    // Would need to iterate
                 hits: self.stats.hits.load(Ordering::Relaxed),
                 misses: self.stats.misses.load(Ordering::Relaxed),
                 evictions: self.stats.evictions.load(Ordering::Relaxed),
@@ -148,11 +148,11 @@ mod rocksdb_backend {
                 Ok(Some(value)) => {
                     self.stats.hits.fetch_add(1, Ordering::Relaxed);
                     Ok(Some(value))
-                }
+                },
                 Ok(None) => {
                     self.stats.misses.fetch_add(1, Ordering::Relaxed);
                     Ok(None)
-                }
+                },
                 Err(e) => Err(format!("RocksDB get error: {}", e)),
             }
         }
@@ -189,8 +189,7 @@ mod rocksdb_backend {
         }
 
         fn compact(&self) -> Result<(), String> {
-            self.db
-                .compact_range(None::<&[u8]>, None::<&[u8]>);
+            self.db.compact_range(None::<&[u8]>, None::<&[u8]>);
             Ok(())
         }
     }
@@ -259,9 +258,7 @@ mod rocksdb_backend {
 
             // Store a large value (should be compressed)
             let large_value = vec![42u8; 10_000];
-            cache
-                .set("large".to_string(), large_value.clone())
-                .unwrap();
+            cache.set("large".to_string(), large_value.clone()).unwrap();
 
             let retrieved = cache.get("large").unwrap();
             assert_eq!(retrieved, Some(large_value));
@@ -274,12 +271,7 @@ mod rocksdb_backend {
 
             // Add and delete some data
             for i in 0..10 {
-                cache
-                    .set(
-                        format!("key-{}", i),
-                        vec![i as u8; 100],
-                    )
-                    .unwrap();
+                cache.set(format!("key-{}", i), vec![i as u8; 100]).unwrap();
             }
 
             for i in 0..5 {
