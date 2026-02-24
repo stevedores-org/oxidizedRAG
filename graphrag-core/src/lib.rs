@@ -78,6 +78,9 @@ pub mod builder;
 pub mod summarization;
 /// Ollama LLM integration
 pub mod ollama;
+/// vLLM / llm-d LLM integration
+#[cfg(feature = "vllm")]
+pub mod vllm;
 /// Natural language processing utilities
 pub mod nlp;
 /// Embedding generation and providers

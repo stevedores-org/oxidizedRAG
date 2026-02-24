@@ -99,6 +99,7 @@ corpus-processing = ["tracing", "async"]  # Requires tracing for logging and asy
 
 # LLM integrations
 ollama = ["ollama-rs", "async"]        # Ollama LLM support (requires async)
+vllm = ["ureq", "async"]              # vLLM / llm-d support (requires async + ureq)
 
 # Platform-specific features
 wasm = ["wasm-bindgen", "web-sys", "js-sys", "serde-wasm-bindgen", "getrandom"] # Browser WASM compatibility
@@ -237,6 +238,7 @@ getrandom = { version = "0.2", features = ["js"] }
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 pretty_assertions = "1.4"
+wiremock = "0.6"
 proptest = "1.4"
 tempfile = "3.8"
 
