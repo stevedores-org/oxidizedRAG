@@ -8,7 +8,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::collections::HashMap;
-use parking_lot::RwLock;
+use std::sync::RwLock;
 
 #[cfg(feature = "redis_storage")]
 use redis::{Commands, Connection};
@@ -85,7 +85,7 @@ where
 
     /// Get a value from the cache, returning None if not found or expired
     pub fn get(&self, key: &K) -> Option<V> {
-        let mut cache = self.cache.write();
+        let mut cache = self.cache.write().unwrap();
         if let Some(entry) = cache.get_mut(key) {
             if entry.is_expired() {
                 cache.remove(key);
@@ -100,7 +100,7 @@ where
 
     /// Put a value into the cache, evicting the oldest entry if at capacity
     pub fn put(&self, key: K, value: V) {
-        let mut cache = self.cache.write();
+        let mut cache = self.cache.write().unwrap();
 
         // Evict oldest entries if at capacity
         if cache.len() >= self.max_size && !cache.contains_key(&key) {
@@ -118,22 +118,22 @@ where
 
     /// Invalidate (remove) a specific entry from the cache
     pub fn invalidate(&self, key: &K) {
-        self.cache.write().remove(key);
+        self.cache.write().unwrap().remove(key);
     }
 
     /// Clear all entries from the cache
     pub fn clear(&self) {
-        self.cache.write().clear();
+        self.cache.write().unwrap().clear();
     }
 
     /// Get the current number of entries in the cache
     pub fn size(&self) -> usize {
-        self.cache.read().len()
+        self.cache.read().unwrap().len()
     }
 
     /// Get cache statistics including size, capacity, and access count
     pub fn stats(&self) -> CacheStats {
-        let cache = self.cache.read();
+        let cache = self.cache.read().unwrap();
         let total_accesses: u64 = cache.values().map(|e| e.access_count).sum();
         CacheStats {
             size: cache.len(),
@@ -292,18 +292,18 @@ where
     pub fn get(&self, key: &K) -> Option<V> {
         // Try L1 first
         if let Some(value) = self.l1.get(key) {
-            self.stats.write().l1_hits += 1;
+            self.stats.write().unwrap().l1_hits += 1;
             return Some(value);
         }
 
-        self.stats.write().l1_misses += 1;
+        self.stats.write().unwrap().l1_misses += 1;
 
         // Try L2 (Redis) if available
         #[cfg(feature = "redis_storage")]
         if let Some(l2) = &self.l2 {
             if let Ok(Some(bytes)) = l2.get(&key.to_string()) {
                 if let Ok(value) = bincode::deserialize::<V>(&bytes) {
-                    self.stats.write().l2_hits += 1;
+                    self.stats.write().unwrap().l2_hits += 1;
 
                     // Populate L1 cache
                     self.l1.put(key.clone(), value.clone());
@@ -311,7 +311,7 @@ where
                     return Some(value);
                 }
             }
-            self.stats.write().l2_misses += 1;
+            self.stats.write().unwrap().l2_misses += 1;
         }
 
         None
@@ -360,7 +360,7 @@ where
 
     /// Get comprehensive cache statistics
     pub fn stats(&self) -> DistributedCacheStats {
-        let mut stats = self.stats.read().clone();
+        let mut stats = self.stats.read().unwrap().clone();
         let l1_stats = self.l1.stats();
         stats.l1_size = l1_stats.size;
         stats.l1_capacity = l1_stats.capacity;
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn test_l1_cache() {
-        let cache = L1Cache::new(3, Some(Duration::from_secs(60)));
+        let cache: L1Cache<&str, &str> = L1Cache::new(3, Some(Duration::from_secs(60)));
 
         cache.put("key1", "value1");
         cache.put("key2", "value2");
