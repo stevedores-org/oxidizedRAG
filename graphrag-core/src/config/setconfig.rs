@@ -705,6 +705,38 @@ pub struct SemanticEntityConfig {
     pub confidence_threshold: f32,
 }
 
+/// ANN performance profile preset.
+///
+/// Each profile maps to tuned `ef_construction` / `ef_search` values that trade
+/// off between latency and recall.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AnnProfile {
+    /// Low ef values — minimal latency, lower recall.
+    Fast,
+    /// Default — good balance between latency and recall.
+    Balanced,
+    /// High ef values — maximum recall at the cost of latency.
+    RecallMax,
+}
+
+impl AnnProfile {
+    /// Return `(ef_construction, ef_search)` for this profile.
+    pub fn params(self) -> (usize, usize) {
+        match self {
+            AnnProfile::Fast => (100, 50),
+            AnnProfile::Balanced => (200, 100),
+            AnnProfile::RecallMax => (400, 300),
+        }
+    }
+}
+
+impl Default for AnnProfile {
+    fn default() -> Self {
+        AnnProfile::Balanced
+    }
+}
+
 /// Semantic retrieval configuration (vector search)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticRetrievalConfig {
@@ -716,13 +748,26 @@ pub struct SemanticRetrievalConfig {
     #[serde(default = "default_true")]
     pub use_hnsw: bool,
 
-    /// HNSW ef_construction parameter
+    /// HNSW ef_construction parameter (index build-time quality).
+    /// Overridden by `ann_profile` when set.
     #[serde(default = "default_hnsw_ef_construction")]
     pub hnsw_ef_construction: usize,
 
-    /// HNSW M parameter (connections per node)
+    /// HNSW ef_search parameter (query-time beam width).
+    /// Higher values improve recall at the cost of latency.
+    #[serde(default = "default_hnsw_ef_search")]
+    pub hnsw_ef_search: usize,
+
+    /// HNSW M parameter (max connections per node in the graph).
+    /// Note: instant-distance uses a compile-time M=32; this value is stored
+    /// for documentation and compatibility with other backends.
     #[serde(default = "default_hnsw_m")]
     pub hnsw_m: usize,
+
+    /// Optional ANN performance profile. When set, overrides
+    /// `hnsw_ef_construction` and `hnsw_ef_search` with tuned presets.
+    #[serde(default)]
+    pub ann_profile: Option<AnnProfile>,
 
     /// Top-k results
     #[serde(default = "default_top_k")]
@@ -1227,6 +1272,9 @@ fn default_semantic_retrieval_strategy() -> String {
 fn default_hnsw_ef_construction() -> usize {
     200
 }
+fn default_hnsw_ef_search() -> usize {
+    100
+}
 fn default_hnsw_m() -> usize {
     16
 }
@@ -1525,9 +1573,24 @@ impl Default for SemanticRetrievalConfig {
             strategy: default_semantic_retrieval_strategy(),
             use_hnsw: default_true(),
             hnsw_ef_construction: default_hnsw_ef_construction(),
+            hnsw_ef_search: default_hnsw_ef_search(),
             hnsw_m: default_hnsw_m(),
+            ann_profile: None,
             top_k: default_top_k(),
             similarity_threshold: default_semantic_similarity_threshold(),
+        }
+    }
+}
+
+impl SemanticRetrievalConfig {
+    /// Resolve the effective `(ef_construction, ef_search)` values.
+    ///
+    /// If `ann_profile` is set, its preset values override the per-field values.
+    pub fn effective_ann_params(&self) -> (usize, usize) {
+        if let Some(profile) = self.ann_profile {
+            profile.params()
+        } else {
+            (self.hnsw_ef_construction, self.hnsw_ef_search)
         }
     }
 }
@@ -1834,5 +1897,82 @@ impl SetConfig {
         };
 
         config
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ann_profile_fast_params() {
+        let (ef_c, ef_s) = AnnProfile::Fast.params();
+        assert_eq!(ef_c, 100);
+        assert_eq!(ef_s, 50);
+    }
+
+    #[test]
+    fn test_ann_profile_balanced_params() {
+        let (ef_c, ef_s) = AnnProfile::Balanced.params();
+        assert_eq!(ef_c, 200);
+        assert_eq!(ef_s, 100);
+    }
+
+    #[test]
+    fn test_ann_profile_recall_max_params() {
+        let (ef_c, ef_s) = AnnProfile::RecallMax.params();
+        assert_eq!(ef_c, 400);
+        assert_eq!(ef_s, 300);
+    }
+
+    #[test]
+    fn test_ann_profile_default_is_balanced() {
+        assert_eq!(AnnProfile::default(), AnnProfile::Balanced);
+    }
+
+    #[test]
+    fn test_effective_ann_params_without_profile() {
+        let config = SemanticRetrievalConfig {
+            hnsw_ef_construction: 150,
+            hnsw_ef_search: 80,
+            ann_profile: None,
+            ..Default::default()
+        };
+        assert_eq!(config.effective_ann_params(), (150, 80));
+    }
+
+    #[test]
+    fn test_effective_ann_params_profile_overrides_fields() {
+        let config = SemanticRetrievalConfig {
+            hnsw_ef_construction: 150,
+            hnsw_ef_search: 80,
+            ann_profile: Some(AnnProfile::RecallMax),
+            ..Default::default()
+        };
+        // Profile should override the per-field values
+        assert_eq!(config.effective_ann_params(), (400, 300));
+    }
+
+    #[test]
+    fn test_ann_profile_serde_roundtrip() {
+        let config = SemanticRetrievalConfig {
+            ann_profile: Some(AnnProfile::Fast),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&config).unwrap();
+        assert!(json.contains("\"fast\""), "AnnProfile::Fast should serialize as \"fast\"");
+
+        let deserialized: SemanticRetrievalConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.ann_profile, Some(AnnProfile::Fast));
+    }
+
+    #[test]
+    fn test_semantic_retrieval_config_defaults() {
+        let config = SemanticRetrievalConfig::default();
+        assert_eq!(config.hnsw_ef_construction, 200);
+        assert_eq!(config.hnsw_ef_search, 100);
+        assert_eq!(config.hnsw_m, 16);
+        assert!(config.ann_profile.is_none());
+        assert_eq!(config.effective_ann_params(), (200, 100));
     }
 }

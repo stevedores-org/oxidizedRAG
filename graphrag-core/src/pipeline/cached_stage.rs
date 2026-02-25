@@ -127,9 +127,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::pipeline::stage::StageError;
     use std::sync::atomic::{AtomicU64, Ordering};
 
-    /// A counting stage that tracks how many times process() is called.
+    /// A counting stage that tracks how many times execute() is called.
     struct CountingStage {
         call_count: AtomicU64,
     }
@@ -148,7 +149,7 @@ mod tests {
 
     #[async_trait]
     impl Stage<String, String> for CountingStage {
-        async fn execute(&self, input: String) -> std::result::Result<String, crate::pipeline::stage::StageError> {
+        async fn execute(&self, input: String) -> std::result::Result<String, StageError> {
             self.call_count.fetch_add(1, Ordering::Relaxed);
             Ok(format!("processed:{}", input))
         }
@@ -156,7 +157,7 @@ mod tests {
             "counting"
         }
         fn version(&self) -> &str {
-            "1.0"
+            "1.0.0"
         }
     }
 
