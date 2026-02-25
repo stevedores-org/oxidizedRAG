@@ -5,6 +5,29 @@
 
 use crate::core::{GraphRAGError, Result};
 
+/// Role of a chat message author (OpenAI-compatible).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Role {
+    /// System prompt setting assistant behavior.
+    System,
+    /// User input message.
+    User,
+    /// Assistant (model) response.
+    Assistant,
+    /// Tool/function call result.
+    Tool,
+}
+
+/// A single chat message with role and content.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ChatMessage {
+    /// The role of the message author.
+    pub role: Role,
+    /// The text content of the message.
+    pub content: String,
+}
+
 /// vLLM configuration
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VllmConfig {
@@ -22,6 +45,8 @@ pub struct VllmConfig {
     pub max_tokens: Option<u32>,
     /// Temperature for generation (0.0 - 2.0)
     pub temperature: Option<f32>,
+    /// Total number of attempts before giving up (1 = no retries)
+    pub max_attempts: u32,
 }
 
 impl Default for VllmConfig {
@@ -34,6 +59,7 @@ impl Default for VllmConfig {
             timeout_seconds: 30,
             max_tokens: Some(2000),
             temperature: Some(0.7),
+            max_attempts: 3,
         }
     }
 }
@@ -63,47 +89,112 @@ impl VllmClient {
         &self.config
     }
 
-    /// Generate a chat completion using the OpenAI-compatible endpoint.
+    /// Execute an HTTP POST with retry and exponential backoff.
+    ///
+    /// Returns the parsed JSON response on success. Retries up to
+    /// `config.max_attempts` times with `100ms * attempt` backoff between
+    /// failures. Uses `std::thread::sleep` — callers in async contexts should
+    /// wrap this in `tokio::task::spawn_blocking`.
+    #[cfg(feature = "ureq")]
+    fn post_with_retry(
+        &self,
+        endpoint: &str,
+        request_body: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let mut last_error = None;
+        for attempt in 1..=self.config.max_attempts {
+            let mut req = self
+                .client
+                .post(endpoint)
+                .set("Content-Type", "application/json");
+
+            if let Some(ref api_key) = self.config.api_key {
+                req = req.set("Authorization", &format!("Bearer {api_key}"));
+            }
+
+            match req.send_json(request_body) {
+                Ok(response) => {
+                    return response.into_json().map_err(|e| GraphRAGError::Generation {
+                        message: format!("Failed to parse vLLM response: {e}"),
+                    });
+                }
+                Err(e) => {
+                    log::warn!("vLLM request failed (attempt {attempt}/{max}): {e}",
+                        max = self.config.max_attempts);
+                    last_error = Some(e);
+
+                    if attempt < self.config.max_attempts {
+                        std::thread::sleep(std::time::Duration::from_millis(
+                            100 * u64::from(attempt),
+                        ));
+                    }
+                }
+            }
+        }
+
+        Err(GraphRAGError::Generation {
+            message: format!(
+                "vLLM API failed after {} attempts: {:?}",
+                self.config.max_attempts, last_error
+            ),
+        })
+    }
+
+    /// Generate a chat completion from a single user prompt.
     #[cfg(feature = "ureq")]
     pub fn chat_completion(&self, prompt: &str) -> Result<String> {
+        let messages = vec![ChatMessage {
+            role: Role::User,
+            content: prompt.to_string(),
+        }];
+        self.chat_completion_with_messages(&messages, None, None, None, None)
+    }
+
+    /// Generate a chat completion from structured multi-turn messages.
+    ///
+    /// Override parameters take precedence over config values when `Some`.
+    #[cfg(feature = "ureq")]
+    pub fn chat_completion_with_messages(
+        &self,
+        messages: &[ChatMessage],
+        max_tokens_override: Option<u32>,
+        temperature_override: Option<f32>,
+        top_p_override: Option<f32>,
+        stop_sequences: Option<&[String]>,
+    ) -> Result<String> {
         let endpoint = format!("{}/v1/chat/completions", self.config.base_url);
+
+        let messages_json: Vec<serde_json::Value> = messages
+            .iter()
+            .map(|m| serde_json::json!({"role": m.role, "content": m.content}))
+            .collect();
 
         let mut request_body = serde_json::json!({
             "model": self.config.model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
+            "messages": messages_json,
             "stream": false,
         });
 
-        if let Some(max_tokens) = self.config.max_tokens {
-            request_body["max_tokens"] = serde_json::json!(max_tokens);
-        }
-        if let Some(temperature) = self.config.temperature {
-            request_body["temperature"] = serde_json::json!(temperature);
-        }
+        let max_tokens = max_tokens_override.or(self.config.max_tokens);
+        let temperature = temperature_override.or(self.config.temperature);
 
-        let mut req = self
-            .client
-            .post(&endpoint)
-            .set("Content-Type", "application/json");
-
-        if let Some(ref api_key) = self.config.api_key {
-            req = req.set("Authorization", &format!("Bearer {api_key}"));
+        if let Some(mt) = max_tokens {
+            request_body["max_tokens"] = serde_json::json!(mt);
         }
-
-        let response = req.send_json(&request_body).map_err(|e| {
-            GraphRAGError::Generation {
-                message: format!("vLLM API request failed: {e}"),
+        if let Some(t) = temperature {
+            request_body["temperature"] = serde_json::json!(t);
+        }
+        if let Some(tp) = top_p_override {
+            request_body["top_p"] = serde_json::json!(tp);
+        }
+        if let Some(stop) = stop_sequences {
+            if !stop.is_empty() {
+                request_body["stop"] = serde_json::json!(stop);
             }
-        })?;
+        }
 
-        let json_response: serde_json::Value =
-            response.into_json().map_err(|e| GraphRAGError::Generation {
-                message: format!("Failed to parse vLLM response: {e}"),
-            })?;
+        let json_response = self.post_with_retry(&endpoint, &request_body)?;
 
-        // OpenAI format: choices[0].message.content
         json_response["choices"]
             .as_array()
             .and_then(|choices| choices.first())
@@ -130,25 +221,7 @@ impl VllmClient {
             "input": input_value,
         });
 
-        let mut req = self
-            .client
-            .post(&endpoint)
-            .set("Content-Type", "application/json");
-
-        if let Some(ref api_key) = self.config.api_key {
-            req = req.set("Authorization", &format!("Bearer {api_key}"));
-        }
-
-        let response = req.send_json(&request_body).map_err(|e| {
-            GraphRAGError::Generation {
-                message: format!("vLLM embeddings request failed: {e}"),
-            }
-        })?;
-
-        let json_response: serde_json::Value =
-            response.into_json().map_err(|e| GraphRAGError::Generation {
-                message: format!("Failed to parse vLLM embeddings response: {e}"),
-            })?;
+        let json_response = self.post_with_retry(&endpoint, &request_body)?;
 
         json_response["data"]
             .as_array()
@@ -171,6 +244,21 @@ impl VllmClient {
     /// Generate chat completion (fallback when ureq feature is disabled)
     #[cfg(not(feature = "ureq"))]
     pub fn chat_completion(&self, _prompt: &str) -> Result<String> {
+        Err(GraphRAGError::Generation {
+            message: "ureq feature required for vLLM integration".to_string(),
+        })
+    }
+
+    /// Generate chat completion with messages (fallback when ureq feature is disabled)
+    #[cfg(not(feature = "ureq"))]
+    pub fn chat_completion_with_messages(
+        &self,
+        _messages: &[ChatMessage],
+        _max_tokens_override: Option<u32>,
+        _temperature_override: Option<f32>,
+        _top_p_override: Option<f32>,
+        _stop_sequences: Option<&[String]>,
+    ) -> Result<String> {
         Err(GraphRAGError::Generation {
             message: "ureq feature required for vLLM integration".to_string(),
         })
@@ -201,6 +289,9 @@ impl VllmClient {
 }
 
 /// Async vLLM generator implementing `AsyncLanguageModel`.
+///
+/// Wraps sync `VllmClient` calls in `spawn_blocking` to avoid blocking the
+/// tokio runtime during retry backoff sleeps.
 #[cfg(feature = "async-traits")]
 pub struct AsyncVllmGenerator {
     client: VllmClient,
@@ -222,15 +313,39 @@ impl crate::core::traits::AsyncLanguageModel for AsyncVllmGenerator {
     type Error = GraphRAGError;
 
     async fn complete(&self, prompt: &str) -> Result<String> {
-        self.client.chat_completion(prompt)
+        let client = self.client.clone();
+        let prompt = prompt.to_string();
+        tokio::task::spawn_blocking(move || client.chat_completion(&prompt))
+            .await
+            .map_err(|e| GraphRAGError::Generation {
+                message: format!("spawn_blocking join error: {e}"),
+            })?
     }
 
     async fn complete_with_params(
         &self,
         prompt: &str,
-        _params: crate::core::traits::GenerationParams,
+        params: crate::core::traits::GenerationParams,
     ) -> Result<String> {
-        self.client.chat_completion(prompt)
+        let client = self.client.clone();
+        let messages = vec![ChatMessage {
+            role: Role::User,
+            content: prompt.to_string(),
+        }];
+        let stop = params.stop_sequences.clone();
+        tokio::task::spawn_blocking(move || {
+            client.chat_completion_with_messages(
+                &messages,
+                params.max_tokens.map(|n| n as u32),
+                params.temperature,
+                params.top_p,
+                stop.as_deref(),
+            )
+        })
+        .await
+        .map_err(|e| GraphRAGError::Generation {
+            message: format!("spawn_blocking join error: {e}"),
+        })?
     }
 
     async fn is_available(&self) -> bool {
@@ -276,7 +391,18 @@ impl crate::embeddings::EmbeddingProvider for VllmEmbeddingProvider {
     }
 
     async fn embed(&self, text: &str) -> Result<Vec<f32>> {
-        let results = self.client.embeddings(&[text])?;
+        if !self.initialized {
+            return Err(GraphRAGError::Generation {
+                message: "VllmEmbeddingProvider not initialized — call initialize() first".to_string(),
+            });
+        }
+        let client = self.client.clone();
+        let text = text.to_string();
+        let results = tokio::task::spawn_blocking(move || client.embeddings(&[text.as_str()]))
+            .await
+            .map_err(|e| GraphRAGError::Generation {
+                message: format!("spawn_blocking join error: {e}"),
+            })??;
         results
             .into_iter()
             .next()
@@ -286,7 +412,21 @@ impl crate::embeddings::EmbeddingProvider for VllmEmbeddingProvider {
     }
 
     async fn embed_batch(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>> {
-        self.client.embeddings(texts)
+        if !self.initialized {
+            return Err(GraphRAGError::Generation {
+                message: "VllmEmbeddingProvider not initialized — call initialize() first".to_string(),
+            });
+        }
+        let client = self.client.clone();
+        let owned: Vec<String> = texts.iter().map(|s| s.to_string()).collect();
+        tokio::task::spawn_blocking(move || {
+            let refs: Vec<&str> = owned.iter().map(|s| s.as_str()).collect();
+            client.embeddings(&refs)
+        })
+        .await
+        .map_err(|e| GraphRAGError::Generation {
+            message: format!("spawn_blocking join error: {e}"),
+        })?
     }
 
     fn dimensions(&self) -> usize {
