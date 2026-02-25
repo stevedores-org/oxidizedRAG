@@ -88,7 +88,7 @@ where
     I: Serialize + Hash + Send + Sync + 'static,
     O: Serialize + DeserializeOwned + Clone + Send + Sync + 'static,
 {
-    async fn process(&self, input: I) -> Result<O> {
+    async fn execute(&self, input: I) -> std::result::Result<O, crate::pipeline::stage::StageError> {
         let key = Self::cache_key(&input);
 
         // Check cache
@@ -102,7 +102,7 @@ where
         }
 
         // Cache miss — run inner stage
-        let output = self.inner.process(input).await?;
+        let output = self.inner.execute(input).await?;
 
         // Store in cache
         #[cfg(feature = "caching")]
@@ -116,16 +116,17 @@ where
     }
 
     fn name(&self) -> &str {
-        // Delegate to inner stage name with a prefix would lose the &str lifetime,
-        // so we just delegate directly.
         self.inner.name()
+    }
+
+    fn version(&self) -> &str {
+        self.inner.version()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::Result;
     use std::sync::atomic::{AtomicU64, Ordering};
 
     /// A counting stage that tracks how many times process() is called.
@@ -147,12 +148,15 @@ mod tests {
 
     #[async_trait]
     impl Stage<String, String> for CountingStage {
-        async fn process(&self, input: String) -> Result<String> {
+        async fn execute(&self, input: String) -> std::result::Result<String, crate::pipeline::stage::StageError> {
             self.call_count.fetch_add(1, Ordering::Relaxed);
             Ok(format!("processed:{}", input))
         }
         fn name(&self) -> &str {
             "counting"
+        }
+        fn version(&self) -> &str {
+            "1.0"
         }
     }
 
@@ -165,7 +169,7 @@ mod tests {
             Duration::from_secs(60),
         );
 
-        let result = cached.process("hello".to_string()).await.unwrap();
+        let result = cached.execute("hello".to_string()).await.unwrap();
         assert_eq!(result, "processed:hello");
         assert_eq!(inner.calls(), 1);
     }
@@ -181,12 +185,12 @@ mod tests {
         );
 
         // First call — miss
-        let r1 = cached.process("hello".to_string()).await.unwrap();
+        let r1 = cached.execute("hello".to_string()).await.unwrap();
         assert_eq!(r1, "processed:hello");
         assert_eq!(inner.calls(), 1);
 
         // Second call — hit
-        let r2 = cached.process("hello".to_string()).await.unwrap();
+        let r2 = cached.execute("hello".to_string()).await.unwrap();
         assert_eq!(r2, "processed:hello");
         assert_eq!(inner.calls(), 1); // inner not called again
     }
@@ -201,14 +205,14 @@ mod tests {
             Duration::from_millis(50), // Very short TTL
         );
 
-        cached.process("hello".to_string()).await.unwrap();
+        cached.execute("hello".to_string()).await.unwrap();
         assert_eq!(inner.calls(), 1);
 
         // Wait for TTL to expire
         tokio::time::sleep(Duration::from_millis(100)).await;
 
         // moka eviction may require a get after expiry
-        cached.process("hello".to_string()).await.unwrap();
+        cached.execute("hello".to_string()).await.unwrap();
         // After TTL, inner should be called again
         assert!(inner.calls() >= 2);
     }
