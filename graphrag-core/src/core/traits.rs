@@ -62,6 +62,11 @@ pub trait Storage {
 
     /// Batch operations for performance
     fn store_entities_batch(&mut self, entities: Vec<Self::Entity>) -> Result<Vec<String>>;
+
+    /// Fetch multiple entities by IDs in a single operation (avoids N+1 queries)
+    fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Self::Entity>>> {
+        ids.iter().map(|id| self.retrieve_entity(id)).collect()
+    }
 }
 
 /// Async storage abstraction for non-blocking storage operations
@@ -103,6 +108,15 @@ pub trait AsyncStorage: Send + Sync {
 
     /// Batch operations for performance
     async fn store_entities_batch(&mut self, entities: Vec<Self::Entity>) -> Result<Vec<String>>;
+
+    /// Fetch multiple entities by IDs in a single operation (avoids N+1 queries)
+    async fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Self::Entity>>> {
+        let mut results = Vec::with_capacity(ids.len());
+        for id in ids {
+            results.push(self.retrieve_entity(id).await?);
+        }
+        Ok(results)
+    }
 
     /// Health check for storage connection
     async fn health_check(&self) -> Result<bool> {
@@ -210,6 +224,9 @@ pub trait VectorStore {
         threshold: f32,
     ) -> Result<Vec<SearchResult>>;
 
+    /// Fetch multiple vectors by IDs in a single operation (avoids N+1 queries)
+    fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Vec<f32>>>>;
+
     /// Remove a vector by ID
     fn remove_vector(&mut self, id: &str) -> Result<bool>;
 
@@ -270,6 +287,16 @@ pub trait AsyncVectorStore: Send + Sync {
         Ok(results)
     }
 
+    /// Fetch multiple vectors by IDs in a single operation (avoids N+1 queries)
+    async fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Vec<f32>>>> {
+        let mut results = Vec::with_capacity(ids.len());
+        for _id in ids {
+            // Default: no per-ID fetch — backends should override with efficient batch fetch
+            results.push(None);
+        }
+        Ok(results)
+    }
+
     /// Remove a vector by ID
     async fn remove_vector(&mut self, id: &str) -> Result<bool>;
 
@@ -311,6 +338,33 @@ pub struct SearchResult {
     pub distance: f32,
     /// Optional metadata associated with the vector
     pub metadata: Option<HashMap<String, String>>,
+}
+
+/// Metrics collected from a batch operation
+#[derive(Debug, Clone)]
+pub struct BatchMetrics {
+    /// Number of items in the batch
+    pub batch_size: usize,
+    /// Total wall-clock time for the batch operation
+    pub total_duration: std::time::Duration,
+    /// Average latency per item
+    pub latency_per_item: std::time::Duration,
+}
+
+impl BatchMetrics {
+    /// Create metrics from a batch operation
+    pub fn from_batch(batch_size: usize, total_duration: std::time::Duration) -> Self {
+        let latency_per_item = if batch_size > 0 {
+            total_duration / batch_size as u32
+        } else {
+            std::time::Duration::ZERO
+        };
+        Self {
+            batch_size,
+            total_duration,
+            latency_per_item,
+        }
+    }
 }
 
 /// Entity extraction abstraction for identifying entities in text

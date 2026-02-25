@@ -234,6 +234,26 @@ impl VectorIndex {
         self.embeddings.get(id)
     }
 
+    /// Fetch multiple vectors by their IDs in a single operation (avoids N+1 queries)
+    pub fn fetch_many(&self, ids: &[&str]) -> Vec<Option<&Vec<f32>>> {
+        ids.iter()
+            .map(|id| self.embeddings.get(*id))
+            .collect()
+    }
+
+    /// Query top-k most similar vectors (convenience wrapper with metrics)
+    pub fn query_topk(
+        &self,
+        query: &[f32],
+        k: usize,
+    ) -> Result<(Vec<(String, f32)>, crate::core::traits::BatchMetrics)> {
+        let start = std::time::Instant::now();
+        let results = self.search(query, k)?;
+        let duration = start.elapsed();
+        let metrics = crate::core::traits::BatchMetrics::from_batch(results.len(), duration);
+        Ok((results, metrics))
+    }
+
     /// Batch add multiple vectors in parallel with proper synchronization
     pub fn batch_add_vectors(&mut self, vectors: Vec<(String, Vec<f32>)>) -> Result<()> {
         #[cfg(feature = "parallel-processing")]
