@@ -329,7 +329,7 @@ impl QdrantStore {
             .unwrap_or(0) as usize;
 
         let vectors = info.result.as_ref()
-            .and_then(|c| c.points_count)
+            .and_then(|c| c.indexed_vectors_count)
             .unwrap_or(0) as usize;
 
         Ok((count, vectors))

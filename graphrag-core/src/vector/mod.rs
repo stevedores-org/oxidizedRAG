@@ -49,6 +49,24 @@ impl Point for Vector {
     }
 }
 
+/// HNSW tuning parameters for building and querying the ANN index.
+#[derive(Debug, Clone, Copy)]
+pub struct AnnConfig {
+    /// Build-time beam width (higher = better index quality, slower build).
+    pub ef_construction: usize,
+    /// Query-time beam width (higher = better recall, slower queries).
+    pub ef_search: usize,
+}
+
+impl Default for AnnConfig {
+    fn default() -> Self {
+        Self {
+            ef_construction: 200,
+            ef_search: 100,
+        }
+    }
+}
+
 /// Vector index for semantic search
 pub struct VectorIndex {
     #[cfg(feature = "vector-hnsw")]
@@ -56,16 +74,29 @@ pub struct VectorIndex {
     #[cfg(not(feature = "vector-hnsw"))]
     index: Option<()>, // Placeholder when HNSW is not available
     embeddings: HashMap<String, Vec<f32>>,
+    ann_config: AnnConfig,
     #[cfg(feature = "parallel-processing")]
     parallel_processor: Option<ParallelProcessor>,
 }
 
 impl VectorIndex {
-    /// Create a new vector index
+    /// Create a new vector index with default ANN parameters.
     pub fn new() -> Self {
         Self {
             index: None,
             embeddings: HashMap::new(),
+            ann_config: AnnConfig::default(),
+            #[cfg(feature = "parallel-processing")]
+            parallel_processor: None,
+        }
+    }
+
+    /// Create a new vector index with explicit ANN tuning parameters.
+    pub fn with_ann_config(ann_config: AnnConfig) -> Self {
+        Self {
+            index: None,
+            embeddings: HashMap::new(),
+            ann_config,
             #[cfg(feature = "parallel-processing")]
             parallel_processor: None,
         }
@@ -77,8 +108,14 @@ impl VectorIndex {
         Self {
             index: None,
             embeddings: HashMap::new(),
+            ann_config: AnnConfig::default(),
             parallel_processor: Some(parallel_processor),
         }
+    }
+
+    /// Get the current ANN configuration.
+    pub fn ann_config(&self) -> &AnnConfig {
+        &self.ann_config
     }
 
     /// Add a vector to the index
@@ -111,7 +148,9 @@ impl VectorIndex {
 
             let values: Vec<String> = self.embeddings.keys().cloned().collect();
 
-            let builder = Builder::default();
+            let builder = Builder::default()
+                .ef_construction(self.ann_config.ef_construction)
+                .ef_search(self.ann_config.ef_search);
             let index = builder.build(points, values);
 
             self.index = Some(index);
@@ -946,6 +985,72 @@ mod tests {
         // Each embedding should be different
         assert_ne!(embeddings[0], embeddings[1]);
         assert_ne!(embeddings[1], embeddings[2]);
+    }
+
+    #[test]
+    fn test_ann_config_defaults() {
+        let config = AnnConfig::default();
+        assert_eq!(config.ef_construction, 200);
+        assert_eq!(config.ef_search, 100);
+    }
+
+    #[test]
+    fn test_vector_index_with_ann_config() {
+        let config = AnnConfig {
+            ef_construction: 400,
+            ef_search: 300,
+        };
+        let index = VectorIndex::with_ann_config(config);
+        assert_eq!(index.ann_config().ef_construction, 400);
+        assert_eq!(index.ann_config().ef_search, 300);
+    }
+
+    #[test]
+    fn test_ann_config_affects_build() {
+        // Build two indices with different configs and verify both work
+        for (ef_c, ef_s) in [(50, 25), (200, 100), (400, 300)] {
+            let config = AnnConfig {
+                ef_construction: ef_c,
+                ef_search: ef_s,
+            };
+            let mut index = VectorIndex::with_ann_config(config);
+            index
+                .add_vector("a".to_string(), vec![1.0, 0.0, 0.0])
+                .unwrap();
+            index
+                .add_vector("b".to_string(), vec![0.0, 1.0, 0.0])
+                .unwrap();
+            index
+                .add_vector("c".to_string(), vec![0.9, 0.1, 0.0])
+                .unwrap();
+            index.build_index().unwrap();
+
+            let results = index.search(&[1.0, 0.0, 0.0], 2).unwrap();
+            assert!(!results.is_empty(), "search should return results with ef_c={ef_c}");
+            assert_eq!(results[0].0, "a", "nearest neighbour should be 'a' with ef_c={ef_c}");
+        }
+    }
+
+    #[test]
+    fn test_high_recall_config_returns_all_neighbours() {
+        let config = AnnConfig {
+            ef_construction: 400,
+            ef_search: 300,
+        };
+        let mut index = VectorIndex::with_ann_config(config);
+
+        // Add 20 random-ish vectors
+        for i in 0..20 {
+            let angle = (i as f32) * std::f32::consts::PI / 10.0;
+            index
+                .add_vector(format!("v{i}"), vec![angle.cos(), angle.sin(), 0.0])
+                .unwrap();
+        }
+        index.build_index().unwrap();
+
+        let results = index.search(&[1.0, 0.0, 0.0], 20).unwrap();
+        // With high ef_search, all 20 vectors should be retrievable
+        assert_eq!(results.len(), 20);
     }
 
     #[test]
