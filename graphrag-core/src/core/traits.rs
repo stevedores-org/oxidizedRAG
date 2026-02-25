@@ -167,7 +167,11 @@ pub trait AsyncEmbedder: Send + Sync {
     async fn embed_batch(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>>;
 
     /// Generate embeddings for multiple texts with concurrency control
-    async fn embed_batch_concurrent(&self, texts: &[&str], max_concurrent: usize) -> Result<Vec<Vec<f32>>> {
+    async fn embed_batch_concurrent(
+        &self,
+        texts: &[&str],
+        max_concurrent: usize,
+    ) -> Result<Vec<Vec<f32>>> {
         if max_concurrent <= 1 {
             return self.embed_batch(texts).await;
         }
@@ -191,11 +195,12 @@ pub trait AsyncEmbedder: Send + Sync {
 
     /// Health check for embedding service
     async fn health_check(&self) -> Result<bool> {
-        self.is_ready().await.then_some(true).ok_or_else(|| {
-            crate::core::GraphRAGError::Retrieval {
+        self.is_ready()
+            .await
+            .then_some(true)
+            .ok_or_else(|| crate::core::GraphRAGError::Retrieval {
                 message: "Embedding service health check failed".to_string(),
-            }
-        })
+            })
     }
 }
 
@@ -248,13 +253,22 @@ pub trait AsyncVectorStore: Send + Sync {
     type Error: std::error::Error + Send + Sync + 'static;
 
     /// Add a vector with associated ID and metadata
-    async fn add_vector(&mut self, id: String, vector: Vec<f32>, metadata: VectorMetadata) -> Result<()>;
+    async fn add_vector(
+        &mut self,
+        id: String,
+        vector: Vec<f32>,
+        metadata: VectorMetadata,
+    ) -> Result<()>;
 
     /// Add multiple vectors in batch
     async fn add_vectors_batch(&mut self, vectors: VectorBatch) -> Result<()>;
 
     /// Add vectors with concurrency control for large batches
-    async fn add_vectors_batch_concurrent(&mut self, vectors: VectorBatch, max_concurrent: usize) -> Result<()> {
+    async fn add_vectors_batch_concurrent(
+        &mut self,
+        vectors: VectorBatch,
+        max_concurrent: usize,
+    ) -> Result<()> {
         if max_concurrent <= 1 {
             return self.add_vectors_batch(vectors).await;
         }
@@ -278,7 +292,11 @@ pub trait AsyncVectorStore: Send + Sync {
     ) -> Result<Vec<SearchResult>>;
 
     /// Search multiple queries concurrently
-    async fn search_batch(&self, query_vectors: &[Vec<f32>], k: usize) -> Result<Vec<Vec<SearchResult>>> {
+    async fn search_batch(
+        &self,
+        query_vectors: &[Vec<f32>],
+        k: usize,
+    ) -> Result<Vec<Vec<SearchResult>>> {
         let mut results = Vec::with_capacity(query_vectors.len());
         for query in query_vectors {
             let search_results = self.search(query, k).await?;
@@ -416,7 +434,11 @@ pub trait AsyncEntityExtractor: Send + Sync {
     }
 
     /// Extract entities from multiple texts with concurrency control
-    async fn extract_batch_concurrent(&self, texts: &[&str], max_concurrent: usize) -> Result<Vec<Vec<Self::Entity>>> {
+    async fn extract_batch_concurrent(
+        &self,
+        texts: &[&str],
+        max_concurrent: usize,
+    ) -> Result<Vec<Vec<Self::Entity>>> {
         if max_concurrent <= 1 {
             return self.extract_batch(texts).await;
         }
@@ -497,7 +519,11 @@ pub trait AsyncRetriever: Send + Sync {
     ) -> Result<Vec<Self::Result>>;
 
     /// Perform multiple search queries concurrently
-    async fn search_batch(&self, queries: Vec<Self::Query>, k: usize) -> Result<Vec<Vec<Self::Result>>> {
+    async fn search_batch(
+        &self,
+        queries: Vec<Self::Query>,
+        k: usize,
+    ) -> Result<Vec<Vec<Self::Result>>> {
         let mut results = Vec::with_capacity(queries.len());
         for query in queries {
             let search_results = self.search(query, k).await?;
@@ -594,7 +620,11 @@ pub trait AsyncLanguageModel: Send + Sync {
     }
 
     /// Generate multiple text completions with concurrency control
-    async fn complete_batch_concurrent(&self, prompts: &[&str], max_concurrent: usize) -> Result<Vec<String>> {
+    async fn complete_batch_concurrent(
+        &self,
+        prompts: &[&str],
+        max_concurrent: usize,
+    ) -> Result<Vec<String>> {
         if max_concurrent <= 1 {
             return self.complete_batch(prompts).await;
         }
@@ -611,7 +641,10 @@ pub trait AsyncLanguageModel: Send + Sync {
     }
 
     /// Generate streaming completion (if supported)
-    async fn complete_streaming(&self, prompt: &str) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String>> + Send>>> {
+    async fn complete_streaming(
+        &self,
+        prompt: &str,
+    ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String>> + Send>>> {
         // Default implementation converts regular completion to stream
         let result = self.complete(prompt).await?;
         let stream = futures::stream::once(async move { Ok(result) });
@@ -757,7 +790,10 @@ pub trait AsyncGraphStore: Send + Sync {
     async fn add_edge(&mut self, from_id: &str, to_id: &str, edge: Self::Edge) -> Result<String>;
 
     /// Add multiple edges in batch
-    async fn add_edges_batch(&mut self, edges: Vec<(String, String, Self::Edge)>) -> Result<Vec<String>> {
+    async fn add_edges_batch(
+        &mut self,
+        edges: Vec<(String, String, Self::Edge)>,
+    ) -> Result<Vec<String>> {
         let mut ids = Vec::with_capacity(edges.len());
         for (from_id, to_id, edge) in edges {
             let id = self.add_edge(&from_id, &to_id, edge).await?;
@@ -796,7 +832,11 @@ pub trait AsyncGraphStore: Send + Sync {
     async fn traverse(&self, start_id: &str, max_depth: usize) -> Result<Vec<Self::Node>>;
 
     /// Perform multiple graph traversals concurrently
-    async fn traverse_batch(&self, start_ids: &[&str], max_depth: usize) -> Result<Vec<Vec<Self::Node>>> {
+    async fn traverse_batch(
+        &self,
+        start_ids: &[&str],
+        max_depth: usize,
+    ) -> Result<Vec<Vec<Self::Node>>> {
         let mut results = Vec::with_capacity(start_ids.len());
         for start_id in start_ids {
             let traversal = self.traverse(start_id, max_depth).await?;
@@ -994,9 +1034,11 @@ pub trait AsyncConfigProvider: Send + Sync {
     async fn default_config(&self) -> Self::Config;
 
     /// Watch for configuration changes
-    async fn watch_changes(&self) -> Result<Pin<Box<dyn futures::Stream<Item = Result<Self::Config>> + Send + 'static>>>
+    async fn watch_changes(
+        &self,
+    ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<Self::Config>> + Send + 'static>>>
     where
-        Self::Config: 'static
+        Self::Config: 'static,
     {
         // Default implementation - no change watching
         let stream = futures::stream::empty::<Result<Self::Config>>();
@@ -1053,23 +1095,23 @@ pub trait AsyncMetricsCollector: Send + Sync {
         for metric in metrics {
             match metric {
                 MetricRecord::Counter { name, value, tags } => {
-                    let tags_refs: Option<Vec<(&str, &str)>> = tags.as_ref().map(|t| {
-                        t.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect()
-                    });
+                    let tags_refs: Option<Vec<(&str, &str)>> = tags
+                        .as_ref()
+                        .map(|t| t.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect());
                     self.counter(name, *value, tags_refs.as_deref()).await;
-                }
+                },
                 MetricRecord::Gauge { name, value, tags } => {
-                    let tags_refs: Option<Vec<(&str, &str)>> = tags.as_ref().map(|t| {
-                        t.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect()
-                    });
+                    let tags_refs: Option<Vec<(&str, &str)>> = tags
+                        .as_ref()
+                        .map(|t| t.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect());
                     self.gauge(name, *value, tags_refs.as_deref()).await;
-                }
+                },
                 MetricRecord::Histogram { name, value, tags } => {
-                    let tags_refs: Option<Vec<(&str, &str)>> = tags.as_ref().map(|t| {
-                        t.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect()
-                    });
+                    let tags_refs: Option<Vec<(&str, &str)>> = tags
+                        .as_ref()
+                        .map(|t| t.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect());
                     self.histogram(name, *value, tags_refs.as_deref()).await;
-                }
+                },
             }
         }
     }
@@ -1204,18 +1246,27 @@ pub trait AsyncSerializer: Send + Sync {
     async fn serialize<T: serde::Serialize + Send + Sync>(&self, data: &T) -> Result<String>;
 
     /// Deserialize data from string
-    async fn deserialize<T: serde::de::DeserializeOwned + Send + Sync>(&self, data: &str) -> Result<T>;
+    async fn deserialize<T: serde::de::DeserializeOwned + Send + Sync>(
+        &self,
+        data: &str,
+    ) -> Result<T>;
 
     /// Serialize data to bytes
     #[allow(clippy::disallowed_names)]
-    async fn serialize_bytes<T: serde::Serialize + Send + Sync>(&self, data: &T) -> Result<Vec<u8>> {
+    async fn serialize_bytes<T: serde::Serialize + Send + Sync>(
+        &self,
+        data: &T,
+    ) -> Result<Vec<u8>> {
         let string = self.serialize(data).await?;
         Ok(string.into_bytes())
     }
 
     /// Deserialize data from bytes
     #[allow(clippy::disallowed_names)]
-    async fn deserialize_bytes<T: serde::de::DeserializeOwned + Send + Sync>(&self, data: &[u8]) -> Result<T> {
+    async fn deserialize_bytes<T: serde::de::DeserializeOwned + Send + Sync>(
+        &self,
+        data: &[u8],
+    ) -> Result<T> {
         let string = String::from_utf8(data.to_vec()).map_err(|e| {
             crate::core::GraphRAGError::Serialization {
                 message: format!("Invalid UTF-8 data: {e}"),
@@ -1226,7 +1277,10 @@ pub trait AsyncSerializer: Send + Sync {
 
     /// Serialize multiple objects in batch
     #[allow(clippy::disallowed_names)]
-    async fn serialize_batch<T: serde::Serialize + Send + Sync>(&self, data: &[T]) -> Result<Vec<String>> {
+    async fn serialize_batch<T: serde::Serialize + Send + Sync>(
+        &self,
+        data: &[T],
+    ) -> Result<Vec<String>> {
         let mut results = Vec::with_capacity(data.len());
         for item in data {
             let serialized = self.serialize(item).await?;
@@ -1308,7 +1362,10 @@ pub mod sync_to_async {
             storage.list_entities()
         }
 
-        async fn store_entities_batch(&mut self, entities: Vec<Self::Entity>) -> Result<Vec<String>> {
+        async fn store_entities_batch(
+            &mut self,
+            entities: Vec<Self::Entity>,
+        ) -> Result<Vec<String>> {
             let mut storage = self.0.lock().await;
             storage.store_entities_batch(entities)
         }
@@ -1329,7 +1386,11 @@ pub mod sync_to_async {
             self.0.complete(prompt)
         }
 
-        async fn complete_with_params(&self, prompt: &str, params: GenerationParams) -> Result<String> {
+        async fn complete_with_params(
+            &self,
+            prompt: &str,
+            params: GenerationParams,
+        ) -> Result<String> {
             self.0.complete_with_params(prompt, params)
         }
 
@@ -1354,7 +1415,11 @@ pub mod sync_to_async {
             (**self).complete(prompt).await
         }
 
-        async fn complete_with_params(&self, prompt: &str, params: GenerationParams) -> Result<String> {
+        async fn complete_with_params(
+            &self,
+            prompt: &str,
+            params: GenerationParams,
+        ) -> Result<String> {
             (**self).complete_with_params(prompt, params).await
         }
 
@@ -1370,11 +1435,20 @@ pub mod sync_to_async {
             (**self).complete_batch(prompts).await
         }
 
-        async fn complete_batch_concurrent(&self, prompts: &[&str], max_concurrent: usize) -> Result<Vec<String>> {
-            (**self).complete_batch_concurrent(prompts, max_concurrent).await
+        async fn complete_batch_concurrent(
+            &self,
+            prompts: &[&str],
+            max_concurrent: usize,
+        ) -> Result<Vec<String>> {
+            (**self)
+                .complete_batch_concurrent(prompts, max_concurrent)
+                .await
         }
 
-        async fn complete_streaming(&self, prompt: &str) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String>> + Send>>> {
+        async fn complete_streaming(
+            &self,
+            prompt: &str,
+        ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String>> + Send>>> {
             (**self).complete_streaming(prompt).await
         }
 
@@ -1398,10 +1472,7 @@ pub mod async_utils {
     use std::time::Duration;
 
     /// Timeout wrapper for any async operation
-    pub async fn with_timeout<F, T>(
-        future: F,
-        timeout: Duration,
-    ) -> Result<T>
+    pub async fn with_timeout<F, T>(future: F, timeout: Duration) -> Result<T>
     where
         F: Future<Output = Result<T>>,
     {
@@ -1434,7 +1505,7 @@ pub mod async_utils {
                         return Err(err);
                     }
                     tokio::time::sleep(delay).await;
-                }
+                },
             }
         }
     }
@@ -1487,10 +1558,20 @@ pub mod async_utils {
 
 /// Type aliases for common async trait objects
 /// Type-erased async language model for dynamic dispatch
-pub type BoxedAsyncLanguageModel = Box<dyn AsyncLanguageModel<Error = crate::core::GraphRAGError> + Send + Sync>;
+pub type BoxedAsyncLanguageModel =
+    Box<dyn AsyncLanguageModel<Error = crate::core::GraphRAGError> + Send + Sync>;
 /// Type-erased async embedder for dynamic dispatch
-pub type BoxedAsyncEmbedder = Box<dyn AsyncEmbedder<Error = crate::core::GraphRAGError> + Send + Sync>;
+pub type BoxedAsyncEmbedder =
+    Box<dyn AsyncEmbedder<Error = crate::core::GraphRAGError> + Send + Sync>;
 /// Type-erased async vector store for dynamic dispatch
-pub type BoxedAsyncVectorStore = Box<dyn AsyncVectorStore<Error = crate::core::GraphRAGError> + Send + Sync>;
+pub type BoxedAsyncVectorStore =
+    Box<dyn AsyncVectorStore<Error = crate::core::GraphRAGError> + Send + Sync>;
 /// Type-erased async retriever for dynamic dispatch
-pub type BoxedAsyncRetriever = Box<dyn AsyncRetriever<Query = String, Result = crate::retrieval::SearchResult, Error = crate::core::GraphRAGError> + Send + Sync>;
+pub type BoxedAsyncRetriever = Box<
+    dyn AsyncRetriever<
+            Query = String,
+            Result = crate::retrieval::SearchResult,
+            Error = crate::core::GraphRAGError,
+        > + Send
+        + Sync,
+>;

@@ -17,9 +17,9 @@ pub mod surrealdb;
 #[cfg(feature = "incremental")]
 pub mod async_bridge;
 
-use crate::core::{Document, Entity, Result, TextChunk};
 #[cfg(feature = "async")]
 use crate::core::{traits::Storage, GraphRAGError};
+use crate::core::{Document, Entity, Result, TextChunk};
 use std::collections::HashMap;
 
 /// In-memory storage implementation for development and testing
@@ -87,23 +87,17 @@ impl MemoryStorage {
 
     /// Fetch multiple entities by IDs in a single operation (avoids N+1 queries)
     pub fn fetch_many_entities(&self, ids: &[&str]) -> Vec<Option<&Entity>> {
-        ids.iter()
-            .map(|id| self.entities.get(*id))
-            .collect()
+        ids.iter().map(|id| self.entities.get(*id)).collect()
     }
 
     /// Fetch multiple documents by IDs in a single operation (avoids N+1 queries)
     pub fn fetch_many_documents(&self, ids: &[&str]) -> Vec<Option<&Document>> {
-        ids.iter()
-            .map(|id| self.documents.get(*id))
-            .collect()
+        ids.iter().map(|id| self.documents.get(*id)).collect()
     }
 
     /// Fetch multiple chunks by IDs in a single operation (avoids N+1 queries)
     pub fn fetch_many_chunks(&self, ids: &[&str]) -> Vec<Option<&TextChunk>> {
-        ids.iter()
-            .map(|id| self.chunks.get(*id))
-            .collect()
+        ids.iter().map(|id| self.chunks.get(*id)).collect()
     }
 
     /// Clear all data

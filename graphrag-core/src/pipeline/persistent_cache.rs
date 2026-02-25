@@ -181,7 +181,12 @@ mod rocksdb_backend {
         }
 
         /// Store a value with an explicit TTL (overrides default).
-        pub fn set_with_ttl(&self, key: String, value: Vec<u8>, ttl_secs: u64) -> Result<(), String> {
+        pub fn set_with_ttl(
+            &self,
+            key: String,
+            value: Vec<u8>,
+            ttl_secs: u64,
+        ) -> Result<(), String> {
             let expiry = if ttl_secs == 0 {
                 0
             } else {
@@ -211,7 +216,9 @@ mod rocksdb_backend {
                     }
                 }
             }
-            self.stats.evictions.fetch_add(removed as u64, Ordering::Relaxed);
+            self.stats
+                .evictions
+                .fetch_add(removed as u64, Ordering::Relaxed);
             Ok(removed)
         }
     }
@@ -235,11 +242,11 @@ mod rocksdb_backend {
                         self.stats.misses.fetch_add(1, Ordering::Relaxed);
                         Ok(None)
                     }
-                }
+                },
                 Ok(None) => {
                     self.stats.misses.fetch_add(1, Ordering::Relaxed);
                     Ok(None)
-                }
+                },
                 Err(e) => Err(format!("RocksDB get error: {}", e)),
             }
         }
@@ -274,7 +281,7 @@ mod rocksdb_backend {
                     } else {
                         Ok(false)
                     }
-                }
+                },
                 Ok(None) => Ok(false),
                 Err(e) => Err(format!("RocksDB contains error: {}", e)),
             }
@@ -341,8 +348,7 @@ mod rocksdb_backend {
         }
 
         fn compact(&self) -> Result<(), String> {
-            self.db
-                .compact_range(None::<&[u8]>, None::<&[u8]>);
+            self.db.compact_range(None::<&[u8]>, None::<&[u8]>);
             Ok(())
         }
     }
@@ -411,9 +417,7 @@ mod rocksdb_backend {
 
             // Store a large value (should be compressed)
             let large_value = vec![42u8; 10_000];
-            cache
-                .set("large".to_string(), large_value.clone())
-                .unwrap();
+            cache.set("large".to_string(), large_value.clone()).unwrap();
 
             let retrieved = cache.get("large").unwrap();
             assert_eq!(retrieved, Some(large_value));
@@ -426,12 +430,7 @@ mod rocksdb_backend {
 
             // Add and delete some data
             for i in 0..10 {
-                cache
-                    .set(
-                        format!("key-{}", i),
-                        vec![i as u8; 100],
-                    )
-                    .unwrap();
+                cache.set(format!("key-{}", i), vec![i as u8; 100]).unwrap();
             }
 
             for i in 0..5 {
@@ -504,7 +503,9 @@ mod rocksdb_backend {
             let cache = RocksDBCache::new(dir.path()).unwrap();
 
             // Set with explicit TTL of 1 second
-            cache.set_with_ttl("ephemeral".to_string(), vec![1, 2, 3], 1).unwrap();
+            cache
+                .set_with_ttl("ephemeral".to_string(), vec![1, 2, 3], 1)
+                .unwrap();
             // Should be readable immediately
             assert!(cache.get("ephemeral").unwrap().is_some());
 
@@ -529,14 +530,20 @@ mod rocksdb_backend {
             let past = now_epoch_secs().saturating_sub(10);
             for i in 0..3 {
                 let encoded = encode_value(&[i as u8], past);
-                cache.db.put(format!("expired-{}", i).as_bytes(), &encoded).unwrap();
+                cache
+                    .db
+                    .put(format!("expired-{}", i).as_bytes(), &encoded)
+                    .unwrap();
             }
 
             // Insert 2 entries that are NOT expired
             let future = now_epoch_secs() + 3600;
             for i in 0..2 {
                 let encoded = encode_value(&[i as u8], future);
-                cache.db.put(format!("live-{}", i).as_bytes(), &encoded).unwrap();
+                cache
+                    .db
+                    .put(format!("live-{}", i).as_bytes(), &encoded)
+                    .unwrap();
             }
 
             let removed = cache.sweep_expired().unwrap();

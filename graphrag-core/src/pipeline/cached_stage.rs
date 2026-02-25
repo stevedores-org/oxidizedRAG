@@ -223,11 +223,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_miss() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         let result = cached.execute("hello".to_string()).await.unwrap();
         assert_eq!(result, "processed:hello");
@@ -238,11 +234,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_hit() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         // First call — miss
         let r1 = cached.execute("hello".to_string()).await.unwrap();
@@ -312,12 +304,8 @@ mod tests {
         l2.set(key, value).unwrap();
 
         // Create CachedStage without L1 cache populated
-        let cached = CachedStage::with_dual_mode_cache(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-            l2,
-        );
+        let cached =
+            CachedStage::with_dual_mode_cache(inner.clone(), 100, Duration::from_secs(60), l2);
 
         // Should hit L2 without calling inner
         let result = cached.execute("hello".to_string()).await.unwrap();
@@ -328,11 +316,7 @@ mod tests {
     #[tokio::test]
     async fn test_version_delegation() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         assert_eq!(cached.name(), "counting");
         assert_eq!(cached.version(), "1.0.0");

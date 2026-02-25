@@ -1,6 +1,6 @@
-use crate::{GraphRAGError, Result};
 #[cfg(feature = "parallel-processing")]
 use crate::parallel::ParallelProcessor;
+use crate::{GraphRAGError, Result};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
@@ -275,9 +275,7 @@ impl VectorIndex {
 
     /// Fetch multiple vectors by their IDs in a single operation (avoids N+1 queries)
     pub fn fetch_many(&self, ids: &[&str]) -> Vec<Option<&Vec<f32>>> {
-        ids.iter()
-            .map(|id| self.embeddings.get(*id))
-            .collect()
+        ids.iter().map(|id| self.embeddings.get(*id)).collect()
     }
 
     /// Query top-k most similar vectors (convenience wrapper with metrics)
@@ -350,7 +348,7 @@ impl VectorIndex {
                         self.add_vector(id, embedding)?;
                     }
                     return Ok(());
-                }
+                },
             };
 
             // Check for duplicate IDs and resolve conflicts
@@ -443,9 +441,7 @@ impl VectorIndex {
             // Pre-collect embeddings for efficient parallel access
             let embedding_vec: Vec<(String, Vec<f32>)> = ids
                 .iter()
-                .filter_map(|id| {
-                    self.embeddings.get(id).map(|emb| (id.clone(), emb.clone()))
-                })
+                .filter_map(|id| self.embeddings.get(id).map(|emb| (id.clone(), emb.clone())))
                 .collect();
 
             if embedding_vec.len() < 2 {
@@ -475,19 +471,17 @@ impl VectorIndex {
 
                         // Only store similarities above a threshold to save memory
                         if similarity > 0.1 {
-                            local_similarities.insert((first_id.clone(), second_id.clone()), similarity);
+                            local_similarities
+                                .insert((first_id.clone(), second_id.clone()), similarity);
                         }
                     }
 
                     local_similarities
                 })
-                .reduce(
-                    HashMap::new,
-                    |mut acc, chunk_similarities| {
-                        acc.extend(chunk_similarities);
-                        acc
-                    }
-                );
+                .reduce(HashMap::new, |mut acc, chunk_similarities| {
+                    acc.extend(chunk_similarities);
+                    acc
+                });
 
             println!(
                 "Computed {} similarities from {} vectors in parallel",
@@ -730,9 +724,10 @@ impl EmbeddingGenerator {
                     let mut local_generator = EmbeddingGenerator::new(self.dimension);
                     local_generator.word_vectors = self.word_vectors.clone(); // Share cached words
 
-                    chunk.iter().map(|&text| {
-                        local_generator.generate_embedding(text)
-                    }).collect::<Vec<_>>()
+                    chunk
+                        .iter()
+                        .map(|&text| local_generator.generate_embedding(text))
+                        .collect::<Vec<_>>()
                 })
                 .flatten()
                 .collect();
@@ -1026,8 +1021,14 @@ mod tests {
             index.build_index().unwrap();
 
             let results = index.search(&[1.0, 0.0, 0.0], 2).unwrap();
-            assert!(!results.is_empty(), "search should return results with ef_c={ef_c}");
-            assert_eq!(results[0].0, "a", "nearest neighbour should be 'a' with ef_c={ef_c}");
+            assert!(
+                !results.is_empty(),
+                "search should return results with ef_c={ef_c}"
+            );
+            assert_eq!(
+                results[0].0, "a",
+                "nearest neighbour should be 'a' with ef_c={ef_c}"
+            );
         }
     }
 
