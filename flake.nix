@@ -7,8 +7,8 @@
   # flake.nix and flake.lock files before merging.
 
   nixConfig = {
-    extra-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
-    extra-trusted-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
+    extra-substituters = [ "https://nix-cache.stevedores.org" ];
+    extra-trusted-public-keys = [ "stevedores-cache-1:bXLxkipycRWproIJnk8pPWNFdgVfeV+I2mJXCoW4/ag=" ];
   };
 
   # NOTE: Inputs are pinned to exact commits via flake.lock (committed to repo).
@@ -125,9 +125,6 @@
             wasm-bindgen-cli
             trunk
 
-            # Nix cache
-            attic-client
-
             # Bun (for docs-site)
             bun
 
@@ -153,10 +150,6 @@
             echo "  just doc        # docs build"
             echo "  just ci         # full local CI"
             echo "  just flake-check"
-            echo ""
-            echo "Nix Cache (Attic):"
-            echo "  attic login stevedores https://nix-cache.stevedores.org \$ATTIC_TOKEN"
-            echo "  attic push stevedores <store-path>"
             echo ""
           '';
         };
