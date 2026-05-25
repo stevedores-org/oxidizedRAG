@@ -7,8 +7,8 @@
   # flake.nix and flake.lock files before merging.
 
   nixConfig = {
-    extra-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
-    extra-trusted-substituters = [ "https://nix-cache.stevedores.org/stevedores" ];
+    extra-substituters = [ "https://nix-cache.stevedores.org" ];
+    extra-trusted-substituters = [ "https://nix-cache.stevedores.org" ];
     extra-trusted-public-keys = [ "stevedores-cache-1:bXLxkipycRWproIJnk8pPWNFdgVfeV+I2mJXCoW4/ag=" ];
   };
 
@@ -90,7 +90,7 @@
 
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
-            cargoExtraArgs = "--workspace --benches --no-run";
+            cargoExtraArgs = "--workspace --benches";
           });
 
           doc = craneLib.cargoDoc (commonArgs // {

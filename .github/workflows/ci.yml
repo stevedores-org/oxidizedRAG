@@ -17,8 +17,8 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v14
         with:
           extra-conf: |
-            extra-substituters = https://nix-cache.stevedores.org/stevedores
-            extra-trusted-substituters = https://nix-cache.stevedores.org/stevedores
+            extra-substituters = https://nix-cache.stevedores.org
+            extra-trusted-substituters = https://nix-cache.stevedores.org
             extra-trusted-public-keys = stevedores-cache-1:bXLxkipycRWproIJnk8pPWNFdgVfeV+I2mJXCoW4/ag=
 
       - name: Flake check
