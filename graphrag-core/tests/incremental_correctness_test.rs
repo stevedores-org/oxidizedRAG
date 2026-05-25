@@ -4,6 +4,8 @@
 //! to graphs built from scratch, and that delete/rollback operations
 //! maintain consistency.
 
+#![cfg(feature = "incremental")]
+
 use graphrag_core::core::{Entity, EntityId, KnowledgeGraph, Relationship};
 use graphrag_core::graph::incremental::{
     ChangeData, ChangeRecord, ChangeType, ConflictResolver, ConflictStrategy, DeltaStatus,
