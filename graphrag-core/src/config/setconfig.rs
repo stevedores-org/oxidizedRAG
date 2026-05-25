@@ -711,10 +711,12 @@ pub struct SemanticEntityConfig {
 /// off between latency and recall.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[derive(Default)]
 pub enum AnnProfile {
     /// Low ef values — minimal latency, lower recall.
     Fast,
     /// Default — good balance between latency and recall.
+    #[default]
     Balanced,
     /// High ef values — maximum recall at the cost of latency.
     RecallMax,
@@ -731,11 +733,6 @@ impl AnnProfile {
     }
 }
 
-impl Default for AnnProfile {
-    fn default() -> Self {
-        AnnProfile::Balanced
-    }
-}
 
 /// Semantic retrieval configuration (vector search)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -797,6 +794,7 @@ pub struct SemanticGraphConfig {
 /// Algorithmic/Classic NLP pipeline configuration
 /// Uses pattern matching, TF-IDF, and keyword-based methods
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct AlgorithmicPipelineConfig {
     /// Enable algorithmic pipeline
     #[serde(default)]
@@ -1605,17 +1603,6 @@ impl Default for SemanticGraphConfig {
     }
 }
 
-impl Default for AlgorithmicPipelineConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            embeddings: AlgorithmicEmbeddingsConfig::default(),
-            entity_extraction: AlgorithmicEntityConfig::default(),
-            retrieval: AlgorithmicRetrievalConfig::default(),
-            graph_construction: AlgorithmicGraphConfig::default(),
-        }
-    }
-}
 
 impl Default for AlgorithmicEmbeddingsConfig {
     fn default() -> Self {

@@ -605,6 +605,6 @@ mod tests {
         let links = linker.link_entities(&graph).unwrap();
 
         // Should link similar location names
-        assert!(links.len() > 0, "Expected some entities to be linked");
+        assert!(!links.is_empty(), "Expected some entities to be linked");
     }
 }

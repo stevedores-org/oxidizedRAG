@@ -241,7 +241,7 @@ impl LLMEntityExtractor {
         if let Some(start) = text.find("```json") {
             let json_start = start + 7; // length of ```json
             if let Some(end) = text[json_start..].find("```") {
-                return Some(&text[json_start..json_start + end].trim());
+                return Some(text[json_start..json_start + end].trim());
             }
         }
 

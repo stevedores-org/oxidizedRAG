@@ -639,7 +639,7 @@ mod tests {
         let result = traversal.bfs(&graph, &source).unwrap();
 
         // Should discover all connected entities
-        assert!(result.entities.len() >= 1);
+        assert!(!result.entities.is_empty());
         assert!(result.distances.contains_key(&source));
     }
 
@@ -652,7 +652,7 @@ mod tests {
         let result = traversal.dfs(&graph, &source).unwrap();
 
         // Should discover entities through DFS
-        assert!(result.entities.len() >= 1);
+        assert!(!result.entities.is_empty());
         assert!(result.distances.contains_key(&source));
     }
 

@@ -149,6 +149,7 @@ pub struct ZeroCostApproachConfig {
 /// Configuration for LazyGraphRAG, an efficient approach for large-scale knowledge graphs.
 /// This configuration enables lazy loading and processing of graph components.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Default)]
 pub struct LazyGraphRAGConfig {
     /// Whether LazyGraphRAG is enabled
     pub enabled: bool,
@@ -253,6 +254,7 @@ pub struct LazyRelevanceScoringConfig {
 /// End-to-End GraphRAG configuration for comprehensive knowledge graph construction.
 /// This configuration enables fine-grained control over the entire pipeline from text to knowledge graph.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Default)]
 pub struct E2GraphRAGConfig {
     /// Whether the E2E GraphRAG pipeline is enabled
     pub enabled: bool,
@@ -506,6 +508,7 @@ pub struct SearchRankingConfig {
 /// Enables semantic search using embeddings and similarity scoring
 /// for finding conceptually related content.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Default)]
 pub struct VectorSearchConfig {
     /// Whether vector similarity search is enabled
     pub enabled: bool,
@@ -662,18 +665,6 @@ impl Default for ZeroCostApproachConfig {
 }
 
 // Default implementations for sub-configs (simplified for now)
-impl Default for LazyGraphRAGConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            concept_extraction: Default::default(),
-            co_occurrence: Default::default(),
-            indexing: Default::default(),
-            query_expansion: Default::default(),
-            relevance_scoring: Default::default(),
-        }
-    }
-}
 impl Default for ConceptExtractionConfig {
     fn default() -> Self {
         Self {
@@ -729,17 +720,6 @@ impl Default for LazyRelevanceScoringConfig {
             batch_size: 10,
             temperature: 0.2,
             max_tokens_per_score: 30,
-        }
-    }
-}
-impl Default for E2GraphRAGConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            ner_extraction: Default::default(),
-            keyword_extraction: Default::default(),
-            graph_construction: Default::default(),
-            indexing: Default::default(),
         }
     }
 }
@@ -842,11 +822,6 @@ impl Default for HybridStrategyConfig {
                 fallback_to_algorithmic: true,
             },
         }
-    }
-}
-impl Default for VectorSearchConfig {
-    fn default() -> Self {
-        Self { enabled: false }
     }
 }
 impl Default for KeywordSearchConfig {

@@ -10,8 +10,11 @@ use std::fmt;
 /// Error type for stage execution.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StageError {
+    /// Name of the stage that produced the error.
     pub stage_name: String,
+    /// Short human-readable error message.
     pub message: String,
+    /// Optional additional context describing the error.
     pub details: Option<String>,
 }
 

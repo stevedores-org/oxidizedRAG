@@ -5,11 +5,14 @@ use std::collections::HashMap;
 /// Identifies a stage by name and version.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct StageId {
+    /// Stage name (unique within a version).
     pub name: String,
+    /// Stage version string.
     pub version: String,
 }
 
 impl StageId {
+    /// Construct a `StageId` from name and version.
     pub fn new(name: impl Into<String>, version: impl Into<String>) -> Self {
         Self {
             name: name.into(),

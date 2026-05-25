@@ -431,7 +431,7 @@ async fn test_approach_with_config(
 
         // Create text chunks
         let text_processor = TextProcessor::new(600, 150)?;
-        let chunks = text_processor.chunk_text(&doc)?;
+        let chunks = text_processor.chunk_text(doc)?;
         println!("   Created {} chunks", chunks.len());
 
         // Add document to GraphRAG
