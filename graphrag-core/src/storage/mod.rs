@@ -17,9 +17,9 @@ pub mod surrealdb;
 #[cfg(feature = "incremental")]
 pub mod async_bridge;
 
-use crate::core::{Document, Entity, Result, TextChunk};
 #[cfg(feature = "async")]
 use crate::core::{traits::Storage, GraphRAGError};
+use crate::core::{Document, Entity, Result, TextChunk};
 use std::collections::HashMap;
 
 /// In-memory storage implementation for development and testing
