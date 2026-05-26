@@ -49,6 +49,10 @@ where
     ///
     /// `max_capacity` controls maximum number of cached entries.
     /// `ttl` is the time-to-live for each cache entry.
+    // `max_capacity` is only read under `#[cfg(feature = "caching")]`. Do NOT prefix with
+    // `_` — a previous `clippy --fix` did that and silently broke compilation when the
+    // `caching` feature was enabled. The cfg_attr keeps the unused-var lint quiet when
+    // the feature is off, without touching the parameter name.
     #[cfg_attr(not(feature = "caching"), allow(unused_variables))]
     pub fn new(inner: Arc<dyn Stage<I, O>>, max_capacity: u64, ttl: Duration) -> Self {
         Self {
@@ -69,6 +73,7 @@ where
     ///
     /// When moka (L1) misses, the L2 cache is checked before running the inner stage.
     /// Results are written to both L1 and L2.
+    // See `new()` above re: `max_capacity` naming under feature flags.
     #[cfg_attr(not(feature = "caching"), allow(unused_variables))]
     pub fn with_dual_mode_cache(
         inner: Arc<dyn Stage<I, O>>,

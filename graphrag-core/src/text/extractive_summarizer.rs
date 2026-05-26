@@ -254,8 +254,8 @@ impl ExtractiveSummarizer {
 
             // Check if adding this sentence would exceed limit
             if current_length + sentence_len < max_length {
-                // +1 for space
                 selected_indices.push(idx);
+                // +1 accounts for the joining space
                 current_length += sentence_len + 1;
             }
 
