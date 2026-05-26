@@ -88,7 +88,10 @@ where
     I: Serialize + Hash + Send + Sync + 'static,
     O: Serialize + DeserializeOwned + Clone + Send + Sync + 'static,
 {
-    async fn execute(&self, input: I) -> std::result::Result<O, crate::pipeline::stage::StageError> {
+    async fn execute(
+        &self,
+        input: I,
+    ) -> std::result::Result<O, crate::pipeline::stage::StageError> {
         let key = Self::cache_key(&input);
 
         // Check cache
@@ -148,7 +151,10 @@ mod tests {
 
     #[async_trait]
     impl Stage<String, String> for CountingStage {
-        async fn execute(&self, input: String) -> std::result::Result<String, crate::pipeline::stage::StageError> {
+        async fn execute(
+            &self,
+            input: String,
+        ) -> std::result::Result<String, crate::pipeline::stage::StageError> {
             self.call_count.fetch_add(1, Ordering::Relaxed);
             Ok(format!("processed:{}", input))
         }
@@ -163,11 +169,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_miss() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         let result = cached.execute("hello".to_string()).await.unwrap();
         assert_eq!(result, "processed:hello");
@@ -178,11 +180,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_hit() {
         let inner = Arc::new(CountingStage::new());
-        let cached = CachedStage::new(
-            inner.clone(),
-            100,
-            Duration::from_secs(60),
-        );
+        let cached = CachedStage::new(inner.clone(), 100, Duration::from_secs(60));
 
         // First call — miss
         let r1 = cached.execute("hello".to_string()).await.unwrap();
