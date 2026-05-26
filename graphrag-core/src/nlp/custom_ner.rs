@@ -136,7 +136,7 @@ impl CustomNER {
         }
 
         self.rules.push(rule);
-        self.rules.sort_by(|a, b| b.priority.cmp(&a.priority));
+        self.rules.sort_by_key(|r| std::cmp::Reverse(r.priority));
     }
 
     /// Extract entities from text

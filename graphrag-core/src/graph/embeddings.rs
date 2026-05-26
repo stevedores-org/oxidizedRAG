@@ -598,7 +598,7 @@ mod tests {
         assert_eq!(walks.len(), 5); // 5 nodes * 1 walk per node
         for walk in &walks {
             assert!(walk.len() <= 5);
-            assert!(walk.len() > 0);
+            assert!(!walk.is_empty());
         }
     }
 }

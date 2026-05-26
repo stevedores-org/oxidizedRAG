@@ -556,7 +556,7 @@ impl GraphRAG {
             // This is a simplified version - in production we'd store the mapping
             community_groups
                 .entry(*community_id)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(format!("node_{}", node_idx.index()));
         }
 

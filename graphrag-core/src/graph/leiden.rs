@@ -15,6 +15,13 @@ use std::collections::{HashMap, HashSet};
 
 use crate::Result;
 
+/// Result of `hierarchical_leiden`: per-level community assignments plus the
+/// parent-pointer map describing the resulting community hierarchy.
+type HierarchicalLeidenResult = (
+    HashMap<usize, HashMap<NodeIndex, usize>>,
+    HashMap<usize, Option<usize>>,
+);
+
 /// Metadata about an entity in the graph
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EntityMetadata {
@@ -155,7 +162,7 @@ impl HierarchicalCommunities {
         for meta in &metadata {
             by_type
                 .entry(meta.entity_type.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(meta);
         }
 
@@ -511,10 +518,7 @@ impl LeidenCommunityDetector {
     fn hierarchical_leiden(
         &self,
         graph: &Graph<String, f32, Undirected>,
-    ) -> Result<(
-        HashMap<usize, HashMap<NodeIndex, usize>>,
-        HashMap<usize, Option<usize>>,
-    )> {
+    ) -> Result<HierarchicalLeidenResult> {
         let mut levels = HashMap::new();
         let hierarchy = HashMap::new();
 
@@ -736,12 +740,10 @@ impl LeidenCommunityDetector {
         let sigma_tot_from = self.total_degree_of_community(graph, from_community, communities);
 
         // Delta Q using Newman's modularity formula
-        let delta = ((k_i_in_to as f32 - k_i_in_from as f32) / total_edges)
+        ((k_i_in_to as f32 - k_i_in_from as f32) / total_edges)
             - self.config.resolution
                 * degree
-                * ((sigma_tot_to - sigma_tot_from + degree) / (total_edges * total_edges));
-
-        delta
+                * ((sigma_tot_to - sigma_tot_from + degree) / (total_edges * total_edges))
     }
 
     /// Count edges from node to a specific community

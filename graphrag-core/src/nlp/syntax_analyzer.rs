@@ -365,9 +365,9 @@ impl SyntaxAnalyzer {
             .unwrap_or(0);
 
         // Find subject (noun/pronoun before verb)
-        for i in 0..root_idx {
+        for (i, token) in tokens.iter().enumerate().take(root_idx) {
             if matches!(
-                tokens[i].pos,
+                token.pos,
                 POSTag::Noun | POSTag::ProperNoun | POSTag::Pronoun
             ) {
                 dependencies.push(Dependency {
@@ -380,8 +380,8 @@ impl SyntaxAnalyzer {
         }
 
         // Find object (noun after verb)
-        for i in (root_idx + 1)..tokens.len() {
-            if matches!(tokens[i].pos, POSTag::Noun | POSTag::ProperNoun) {
+        for (i, token) in tokens.iter().enumerate().skip(root_idx + 1) {
+            if matches!(token.pos, POSTag::Noun | POSTag::ProperNoun) {
                 dependencies.push(Dependency {
                     head: root_idx,
                     dependent: i,

@@ -149,16 +149,12 @@ impl TracingRetriever {
             stage_name: "fusion".to_string(),
             duration: search_duration / 3,
             candidates_produced: results.len(),
-            score_breakdown: if let Some(top) = results.first() {
-                Some(ScoreBreakdown {
-                    vector_score: top.semantic_score,
-                    graph_score: 0.0,
-                    keyword_score: top.keyword_score,
-                    final_score: top.score,
-                })
-            } else {
-                None
-            },
+            score_breakdown: results.first().map(|top| ScoreBreakdown {
+                vector_score: top.semantic_score,
+                graph_score: 0.0,
+                keyword_score: top.keyword_score,
+                final_score: top.score,
+            }),
         });
 
         let total_duration = total_start.elapsed();

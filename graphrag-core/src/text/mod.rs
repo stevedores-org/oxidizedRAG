@@ -476,7 +476,7 @@ impl TextProcessor {
         }
 
         let mut sorted_words: Vec<_> = word_counts.into_iter().collect();
-        sorted_words.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted_words.sort_by_key(|w| std::cmp::Reverse(w.1));
 
         sorted_words
             .into_iter()

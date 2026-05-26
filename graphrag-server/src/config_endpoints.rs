@@ -46,7 +46,7 @@ pub async fn set_config(
         .config_manager
         .set_from_json(&config_json)
         .await
-        .map_err(|e| ApiError::BadRequest(e))?;
+        .map_err(ApiError::BadRequest)?;
 
     // Get the validated config
     let config = state

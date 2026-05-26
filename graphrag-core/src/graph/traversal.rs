@@ -60,15 +60,34 @@ pub struct GraphTraversal {
     config: TraversalConfig,
 }
 
+/// Accumulator state passed through the recursive DFS helper.
+#[derive(Default)]
+struct DfsState {
+    visited: HashSet<EntityId>,
+    distances: HashMap<EntityId, usize>,
+    discovered_entities: Vec<Entity>,
+    discovered_relationships: Vec<Relationship>,
+}
+
+/// Accumulator state passed through the recursive path-finding helper.
+#[derive(Default)]
+struct FindPathsState {
+    current_path: Vec<EntityId>,
+    visited: HashSet<EntityId>,
+    all_paths: Vec<Vec<EntityId>>,
+    discovered_relationships: Vec<Relationship>,
+}
+
+impl Default for GraphTraversal {
+    fn default() -> Self {
+        Self::new(TraversalConfig::default())
+    }
+}
+
 impl GraphTraversal {
     /// Create a new graph traversal system
     pub fn new(config: TraversalConfig) -> Self {
         Self { config }
-    }
-
-    /// Create with default configuration
-    pub fn default() -> Self {
-        Self::new(TraversalConfig::default())
     }
 
     /// Breadth-First Search (BFS) from a source entity
@@ -148,26 +167,14 @@ impl GraphTraversal {
     /// # Returns
     /// TraversalResult with entities, relationships, and discovered paths
     pub fn dfs(&self, graph: &KnowledgeGraph, source: &EntityId) -> Result<TraversalResult> {
-        let mut visited = HashSet::new();
-        let mut distances = HashMap::new();
-        let mut discovered_entities = Vec::new();
-        let mut discovered_relationships = Vec::new();
-
-        self.dfs_recursive(
-            graph,
-            source,
-            0,
-            &mut visited,
-            &mut distances,
-            &mut discovered_entities,
-            &mut discovered_relationships,
-        )?;
+        let mut state = DfsState::default();
+        self.dfs_recursive(graph, source, 0, &mut state)?;
 
         Ok(TraversalResult {
-            entities: discovered_entities,
-            relationships: discovered_relationships,
+            entities: state.discovered_entities,
+            relationships: state.discovered_relationships,
             paths: Vec::new(), // Basic DFS doesn't track paths
-            distances,
+            distances: state.distances,
         })
     }
 
@@ -177,10 +184,7 @@ impl GraphTraversal {
         graph: &KnowledgeGraph,
         current_id: &EntityId,
         depth: usize,
-        visited: &mut HashSet<EntityId>,
-        distances: &mut HashMap<EntityId, usize>,
-        discovered_entities: &mut Vec<Entity>,
-        discovered_relationships: &mut Vec<Relationship>,
+        state: &mut DfsState,
     ) -> Result<()> {
         // Stop if max depth reached
         if depth >= self.config.max_depth {
@@ -188,16 +192,16 @@ impl GraphTraversal {
         }
 
         // Skip if already visited (avoid cycles)
-        if visited.contains(current_id) {
+        if state.visited.contains(current_id) {
             return Ok(());
         }
 
-        visited.insert(current_id.clone());
-        distances.insert(current_id.clone(), depth);
+        state.visited.insert(current_id.clone());
+        state.distances.insert(current_id.clone(), depth);
 
         // Add current entity
         if let Some(entity) = graph.get_entity(current_id) {
-            discovered_entities.push(entity.clone());
+            state.discovered_entities.push(entity.clone());
         }
 
         // Recursively visit neighbors
@@ -208,17 +212,9 @@ impl GraphTraversal {
                 continue;
             }
 
-            if !visited.contains(&neighbor_id) {
-                discovered_relationships.push(relationship);
-                self.dfs_recursive(
-                    graph,
-                    &neighbor_id,
-                    depth + 1,
-                    visited,
-                    distances,
-                    discovered_entities,
-                    discovered_relationships,
-                )?;
+            if !state.visited.contains(&neighbor_id) {
+                state.discovered_relationships.push(relationship);
+                self.dfs_recursive(graph, &neighbor_id, depth + 1, state)?;
             }
         }
 
@@ -383,25 +379,16 @@ impl GraphTraversal {
         source: &EntityId,
         target: &EntityId,
     ) -> Result<TraversalResult> {
-        let mut all_paths = Vec::new();
-        let mut current_path = vec![source.clone()];
-        let mut visited = HashSet::new();
-        let mut discovered_relationships = Vec::new();
+        let mut state = FindPathsState {
+            current_path: vec![source.clone()],
+            ..FindPathsState::default()
+        };
 
-        self.find_paths_recursive(
-            graph,
-            source,
-            target,
-            &mut current_path,
-            &mut visited,
-            &mut all_paths,
-            &mut discovered_relationships,
-            0,
-        )?;
+        self.find_paths_recursive(graph, source, target, &mut state, 0)?;
 
         // Collect all unique entities from paths
         let mut unique_entities = HashSet::new();
-        for path in &all_paths {
+        for path in &state.all_paths {
             unique_entities.extend(path.iter().cloned());
         }
 
@@ -412,8 +399,8 @@ impl GraphTraversal {
 
         Ok(TraversalResult {
             entities: discovered_entities,
-            relationships: discovered_relationships,
-            paths: all_paths,
+            relationships: state.discovered_relationships,
+            paths: state.all_paths,
             distances: HashMap::new(),
         })
     }
@@ -424,24 +411,21 @@ impl GraphTraversal {
         graph: &KnowledgeGraph,
         current: &EntityId,
         target: &EntityId,
-        current_path: &mut Vec<EntityId>,
-        visited: &mut HashSet<EntityId>,
-        all_paths: &mut Vec<Vec<EntityId>>,
-        discovered_relationships: &mut Vec<Relationship>,
+        state: &mut FindPathsState,
         depth: usize,
     ) -> Result<()> {
         // Stop if max depth or max paths reached
-        if depth >= self.config.max_depth || all_paths.len() >= self.config.max_paths {
+        if depth >= self.config.max_depth || state.all_paths.len() >= self.config.max_paths {
             return Ok(());
         }
 
         // Found target - save path
         if current == target {
-            all_paths.push(current_path.clone());
+            state.all_paths.push(state.current_path.clone());
             return Ok(());
         }
 
-        visited.insert(current.clone());
+        state.visited.insert(current.clone());
 
         let neighbors = self.get_neighbors(graph, current);
 
@@ -450,26 +434,17 @@ impl GraphTraversal {
                 continue;
             }
 
-            if !visited.contains(&neighbor_id) {
-                current_path.push(neighbor_id.clone());
-                discovered_relationships.push(relationship);
+            if !state.visited.contains(&neighbor_id) {
+                state.current_path.push(neighbor_id.clone());
+                state.discovered_relationships.push(relationship);
 
-                self.find_paths_recursive(
-                    graph,
-                    &neighbor_id,
-                    target,
-                    current_path,
-                    visited,
-                    all_paths,
-                    discovered_relationships,
-                    depth + 1,
-                )?;
+                self.find_paths_recursive(graph, &neighbor_id, target, state, depth + 1)?;
 
-                current_path.pop();
+                state.current_path.pop();
             }
         }
 
-        visited.remove(current);
+        state.visited.remove(current);
 
         Ok(())
     }
@@ -597,10 +572,10 @@ mod tests {
             0.9,
         );
 
-        graph.add_entity(entity_a);
-        graph.add_entity(entity_b);
-        graph.add_entity(entity_c);
-        graph.add_entity(entity_d);
+        let _ = graph.add_entity(entity_a);
+        let _ = graph.add_entity(entity_b);
+        let _ = graph.add_entity(entity_c);
+        let _ = graph.add_entity(entity_d);
 
         // Add relationships
         let _ = graph.add_relationship(Relationship {
@@ -639,7 +614,7 @@ mod tests {
         let result = traversal.bfs(&graph, &source).unwrap();
 
         // Should discover all connected entities
-        assert!(result.entities.len() >= 1);
+        assert!(!result.entities.is_empty());
         assert!(result.distances.contains_key(&source));
     }
 
@@ -652,7 +627,7 @@ mod tests {
         let result = traversal.dfs(&graph, &source).unwrap();
 
         // Should discover entities through DFS
-        assert!(result.entities.len() >= 1);
+        assert!(!result.entities.is_empty());
         assert!(result.distances.contains_key(&source));
     }
 
