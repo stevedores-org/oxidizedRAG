@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/yourusername/graphrag-rs/graphrag-config.schema.json",
+  "$id": "https://github.com/stevedores-org/oxidizedRAG/graphrag-config.schema.json",
   "title": "GraphRAG Configuration",
   "description": "GraphRAG configuration schema aligned with TOML structure",
   "type": "object",
