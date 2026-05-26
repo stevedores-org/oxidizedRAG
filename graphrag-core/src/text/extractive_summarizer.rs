@@ -291,12 +291,7 @@ impl ExtractiveSummarizer {
             end -= 1;
         }
 
-        while end > 0
-            && !sentence
-                .chars()
-                .nth(end)
-                .is_some_and(|c| c.is_whitespace())
-        {
+        while end > 0 && !sentence.chars().nth(end).is_some_and(|c| c.is_whitespace()) {
             end -= 1;
         }
 

@@ -1102,18 +1102,15 @@ impl RetrievalSystem {
         // Apply query-specific score adjustments
         for result in &mut results {
             match analysis.query_type {
-                QueryType::EntityFocused
-                    if result.result_type == ResultType::Entity => {
-                        result.score *= 1.2;
-                    },
-                QueryType::Conceptual
-                    if result.result_type == ResultType::HierarchicalSummary => {
-                        result.score *= 1.1;
-                    },
-                QueryType::Relationship
-                    if result.entities.len() > 1 => {
-                        result.score *= 1.15;
-                    },
+                QueryType::EntityFocused if result.result_type == ResultType::Entity => {
+                    result.score *= 1.2;
+                },
+                QueryType::Conceptual if result.result_type == ResultType::HierarchicalSummary => {
+                    result.score *= 1.1;
+                },
+                QueryType::Relationship if result.entities.len() > 1 => {
+                    result.score *= 1.15;
+                },
                 _ => {},
             }
 

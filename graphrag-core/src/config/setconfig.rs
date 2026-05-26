@@ -733,7 +733,6 @@ impl AnnProfile {
     }
 }
 
-
 /// Semantic retrieval configuration (vector search)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticRetrievalConfig {
@@ -793,8 +792,7 @@ pub struct SemanticGraphConfig {
 
 /// Algorithmic/Classic NLP pipeline configuration
 /// Uses pattern matching, TF-IDF, and keyword-based methods
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AlgorithmicPipelineConfig {
     /// Enable algorithmic pipeline
     #[serde(default)]
@@ -1602,7 +1600,6 @@ impl Default for SemanticGraphConfig {
         }
     }
 }
-
 
 impl Default for AlgorithmicEmbeddingsConfig {
     fn default() -> Self {
