@@ -678,8 +678,8 @@ impl App {
                 let mut lines = vec![
                     format!(
                         "🔍 Entities{}",
-                        if filter.is_some() {
-                            format!(" (filtered by '{}')", filter.unwrap())
+                        if let Some(f) = filter.as_ref() {
+                            format!(" (filtered by '{f}')")
                         } else {
                             String::new()
                         }

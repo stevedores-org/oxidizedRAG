@@ -85,7 +85,6 @@ mod tests {
     use super::*;
     use std::io::Write;
     use tempfile::NamedTempFile;
-    use tokio;
 
     #[tokio::test]
     async fn test_load_valid_toml_config() {

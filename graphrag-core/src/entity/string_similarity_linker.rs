@@ -214,11 +214,11 @@ impl StringSimilarityLinker {
         let mut matrix = vec![vec![0; len2 + 1]; len1 + 1];
 
         // Initialize first row and column
-        for i in 0..=len1 {
-            matrix[i][0] = i;
+        for (i, row) in matrix.iter_mut().enumerate() {
+            row[0] = i;
         }
-        for j in 0..=len2 {
-            matrix[0][j] = j;
+        for (j, cell) in matrix[0].iter_mut().enumerate() {
+            *cell = j;
         }
 
         let s1_chars: Vec<char> = s1.chars().collect();
@@ -605,6 +605,6 @@ mod tests {
         let links = linker.link_entities(&graph).unwrap();
 
         // Should link similar location names
-        assert!(links.len() > 0, "Expected some entities to be linked");
+        assert!(!links.is_empty(), "Expected some entities to be linked");
     }
 }

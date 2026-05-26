@@ -103,8 +103,8 @@ async fn test_indexeddb_delete() {
     let db = IndexedDBStore::new("test-delete", 1).await.unwrap();
 
     // Put data
-    let data = serde_json::json!({"test": "data"});
-    db.put("deletions", "item1", &data).await.unwrap();
+    let payload = serde_json::json!({"test": "data"});
+    db.put("deletions", "item1", &payload).await.unwrap();
 
     // Verify it exists
     let exists: Result<serde_json::Value, _> = db.get("deletions", "item1").await;
@@ -125,8 +125,8 @@ async fn test_indexeddb_clear() {
 
     // Put multiple items
     for i in 0..5 {
-        let data = serde_json::json!({"id": i, "value": format!("item_{}", i)});
-        db.put("clearable", &format!("item{}", i), &data)
+        let payload = serde_json::json!({"id": i, "value": format!("item_{}", i)});
+        db.put("clearable", &format!("item{}", i), &payload)
             .await
             .unwrap();
     }
@@ -193,8 +193,8 @@ async fn test_indexeddb_concurrent() {
 
     // Launch concurrent put operations
     for i in 0..10 {
-        let data = serde_json::json!({"id": i, "value": i * 10});
-        let result = db.put("concurrent", &format!("item{}", i), &data).await;
+        let payload = serde_json::json!({"id": i, "value": i * 10});
+        let result = db.put("concurrent", &format!("item{}", i), &payload).await;
         assert!(result.is_ok());
     }
 
@@ -296,8 +296,11 @@ async fn test_cache_multiple_entries() {
 
     // Put multiple entries
     for i in 0..5 {
-        let data = format!("Model data {}", i).into_bytes();
-        cache.put(&format!("model{}.bin", i), &data).await.unwrap();
+        let payload = format!("Model data {}", i).into_bytes();
+        cache
+            .put(&format!("model{}.bin", i), &payload)
+            .await
+            .unwrap();
     }
 
     // Verify all exist
@@ -307,9 +310,9 @@ async fn test_cache_multiple_entries() {
 
     // Retrieve and verify content
     for i in 0..5 {
-        let data = cache.get(&format!("model{}.bin", i)).await.unwrap();
+        let payload = cache.get(&format!("model{}.bin", i)).await.unwrap();
         let expected = format!("Model data {}", i).into_bytes();
-        assert_eq!(data, expected);
+        assert_eq!(payload, expected);
     }
 }
 
@@ -325,8 +328,8 @@ async fn test_cache_update() {
     cache.put("updateable.bin", b"version 2").await.unwrap();
 
     // Verify update
-    let data = cache.get("updateable.bin").await.unwrap();
-    assert_eq!(data, b"version 2");
+    let payload = cache.get("updateable.bin").await.unwrap();
+    assert_eq!(payload, b"version 2");
 }
 
 /// Test: Binary data preservation
@@ -343,8 +346,8 @@ async fn test_cache_binary_data() {
 
     // Verify exact binary match
     assert_eq!(retrieved.len(), 256);
-    for i in 0..=255 {
-        assert_eq!(retrieved[i], i as u8);
+    for (i, &byte) in retrieved.iter().enumerate() {
+        assert_eq!(byte, i as u8);
     }
 }
 
@@ -367,7 +370,7 @@ async fn test_storage_estimation() {
             assert!(quota > 0);
 
             // Percentage should be between 0 and 100
-            assert!(percentage >= 0.0 && percentage <= 100.0);
+            assert!((0.0..=100.0).contains(&percentage));
 
             // Usage should not exceed quota
             assert!(usage <= quota);

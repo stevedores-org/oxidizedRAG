@@ -858,21 +858,15 @@ impl GraphRAG {
         // Use a simple approach: repeatedly remove until no more found
         let mut result = text.to_string();
 
-        loop {
-            // Find opening tag
-            if let Some(start) = result.find("<think>") {
-                // Find corresponding closing tag
-                if let Some(end) = result[start..].find("</think>") {
-                    // Remove the entire block
-                    let end_pos = start + end + "</think>".len();
-                    result.replace_range(start..end_pos, "");
-                } else {
-                    // No closing tag found, just remove opening tag
-                    result.replace_range(start..start + "<think>".len(), "");
-                    break;
-                }
+        while let Some(start) = result.find("<think>") {
+            // Find corresponding closing tag
+            if let Some(end) = result[start..].find("</think>") {
+                // Remove the entire block
+                let end_pos = start + end + "</think>".len();
+                result.replace_range(start..end_pos, "");
             } else {
-                // No more opening tags
+                // No closing tag found: strip the orphan opening tag and stop
+                result.replace_range(start..start + "<think>".len(), "");
                 break;
             }
         }

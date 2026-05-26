@@ -205,7 +205,7 @@ async fn test_batch_upsert_performance() {
 
     // Measure batch upsert
     let batch: Vec<Entity> = (base_count..(base_count + batch_size))
-        .map(|i| create_test_entity(i))
+        .map(create_test_entity)
         .collect();
 
     let start = Instant::now();

@@ -541,6 +541,6 @@ mod tests {
         let graph = create_test_graph();
         let coeff = graph.clustering_coefficient();
 
-        assert!(coeff >= 0.0 && coeff <= 1.0);
+        assert!((0.0..=1.0).contains(&coeff));
     }
 }

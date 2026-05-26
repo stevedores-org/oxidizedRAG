@@ -189,7 +189,7 @@ impl WorkspaceManager {
         }
 
         // Sort by modification time (newest first)
-        workspaces.sort_by(|a, b| b.metadata.modified_at.cmp(&a.metadata.modified_at));
+        workspaces.sort_by_key(|w| std::cmp::Reverse(w.metadata.modified_at));
 
         Ok(workspaces)
     }

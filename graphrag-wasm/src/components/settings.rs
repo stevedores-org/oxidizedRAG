@@ -56,6 +56,7 @@ pub struct UserSettings {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[allow(clippy::upper_case_acronyms)] // ONNX is the established product spelling
 pub enum EmbeddingProviderType {
     ONNX,       // Local ONNX Runtime Web
     OpenAI,     // OpenAI API
@@ -217,7 +218,7 @@ pub fn SettingsPanel() -> impl IntoView {
                     set_saving.set(false);
 
                     // Clear success message after 3 seconds
-                    let status_setter = set_save_status.clone();
+                    let status_setter = set_save_status;
                     spawn_local(async move {
                         gloo_timers::future::TimeoutFuture::new(3000).await;
                         status_setter.set(String::new());

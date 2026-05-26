@@ -13,9 +13,8 @@ wasm_bindgen_test_configure!(run_in_browser);
 fn test_voy_availability() {
     let available = check_voy_available();
     web_sys::console::log_1(&format!("Voy available: {}", available).into());
-
-    // Test passes regardless, but logs the result
-    assert!(available || !available);
+    // Smoke test: exercising check_voy_available without panicking is the test.
+    // See TODO: replace with a real assertion once the host-vs-browser split is decided.
 }
 
 /// Test 2: Create index from embeddings
@@ -123,7 +122,7 @@ async fn test_serialization() {
     assert!(serialized.is_ok(), "Should serialize successfully");
 
     let json = serialized.unwrap();
-    assert!(json.len() > 0, "Serialized JSON should not be empty");
+    assert!(!json.is_empty(), "Serialized JSON should not be empty");
 
     web_sys::console::log_1(&format!("Serialized: {}", json).into());
 }

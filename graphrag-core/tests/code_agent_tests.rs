@@ -241,7 +241,10 @@ mod code_retrieval {
             .expect("Failed to build graph");
 
         let results: Vec<_> = graph.entities().collect();
-        assert!(results.len() > 0, "Should expand queries across documents");
+        assert!(
+            !results.is_empty(),
+            "Should expand queries across documents"
+        );
     }
 
     #[test]
@@ -385,6 +388,7 @@ mod performance_baselines {
     /// Override via env vars: OXIDIZED_INDEXING_THRESHOLD_MS, etc.
     const DEFAULT_INDEXING_THRESHOLD_MS: u128 = 5000;
     const DEFAULT_QUERY_THRESHOLD_MS: u128 = 1000;
+    #[allow(dead_code)] // Threshold for chunking baseline test (not yet wired up)
     const DEFAULT_CHUNKING_THRESHOLD_MS: u128 = 2000;
 
     #[test]
@@ -749,10 +753,9 @@ mod e2e_agent_workflows {
             .collect();
 
         // Generate suggestion based on retrieved context
-        let suggestion = format!(
-            "Based on existing structure, suggested implementation: \
-             impl Calculator {{ pub fn multiply(&self, a: i32, b: i32) -> i32 {{ a * b }} }}"
-        );
+        let suggestion = "Based on existing structure, suggested implementation: \
+             impl Calculator { pub fn multiply(&self, a: i32, b: i32) -> i32 { a * b } }"
+            .to_string();
 
         assert!(
             !suggestion.is_empty(),

@@ -25,6 +25,7 @@ struct ChunkingMetrics {
     avg_chunk_size: f64,
     min_chunk_size: usize,
     max_chunk_size: usize,
+    #[allow(dead_code)] // Recorded for future report extensions
     total_chars: usize,
     processing_time_ms: u64,
 }

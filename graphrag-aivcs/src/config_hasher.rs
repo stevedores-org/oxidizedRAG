@@ -62,7 +62,7 @@ impl RagConfigDigest {
                 }
                 Value::Object(sorted_map)
             },
-            Value::Array(arr) => Value::Array(arr.iter().map(|v| Self::canonicalize(v)).collect()),
+            Value::Array(arr) => Value::Array(arr.iter().map(Self::canonicalize).collect()),
             other => other.clone(),
         }
     }

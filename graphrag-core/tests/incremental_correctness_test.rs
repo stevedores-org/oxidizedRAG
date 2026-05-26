@@ -227,7 +227,7 @@ async fn test_consistency_report_detects_issues() {
 
     assert!(report.orphaned_entities.len() >= 2, "Should detect orphans");
     assert!(
-        report.missing_embeddings.len() >= 1,
+        !report.missing_embeddings.is_empty(),
         "Should detect missing embedding"
     );
 }
@@ -256,7 +256,7 @@ async fn test_batch_upsert_entities() {
     let graph = KnowledgeGraph::new();
     let mut store = ProductionGraphStore::new(graph, config, resolver);
 
-    let entities: Vec<Entity> = (0..50).map(|i| create_test_entity(i)).collect();
+    let entities: Vec<Entity> = (0..50).map(create_test_entity).collect();
     let ids = store
         .batch_upsert_entities(entities, ConflictStrategy::KeepNew)
         .await
