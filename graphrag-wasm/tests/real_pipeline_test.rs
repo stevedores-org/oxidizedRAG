@@ -114,7 +114,7 @@ async fn test_real_vector_search() {
 
         // Similarity should be between 0 and 1
         assert!(
-            similarity >= 0.0 && similarity <= 1.0,
+            (0.0..=1.0).contains(&similarity),
             "Similarity should be in [0,1] range"
         );
     }

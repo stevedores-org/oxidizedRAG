@@ -316,6 +316,7 @@ pub struct ApiKeyRequest {
 
 /// API Error types with OpenAPI documentation
 #[derive(Debug, Clone, Serialize, Deserialize, ApiErrorComponent)]
+#[allow(clippy::duplicated_attributes)] // `status(...)` repetition is the macro's vocabulary
 #[openapi_error(
     status(code = 400, description = "Bad Request - Invalid input or parameters"),
     status(

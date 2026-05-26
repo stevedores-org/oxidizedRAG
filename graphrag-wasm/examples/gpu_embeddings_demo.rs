@@ -355,6 +355,7 @@ pub async fn example_graphrag_integration() -> Result<String, JsValue> {
 
 /// Initialize WASM module
 #[wasm_bindgen(start)]
+#[allow(clippy::main_recursion)] // wasm_bindgen(start) macro expansion confuses the lint
 pub fn main() {
     console_error_panic_hook::set_once();
     wasm_logger::init(wasm_logger::Config::default());

@@ -6,7 +6,6 @@
 
 use graphrag_core::Config;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

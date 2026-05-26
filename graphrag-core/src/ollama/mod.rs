@@ -197,10 +197,7 @@ impl AsyncLanguageModel for AsyncOllamaGenerator {
                 "{}:{}/api/version",
                 self.client.config.host, self.client.config.port
             );
-            match self.client.client.get(&endpoint).call() {
-                Ok(_) => true,
-                Err(_) => false,
-            }
+            self.client.client.get(&endpoint).call().is_ok()
         }
         #[cfg(not(feature = "ureq"))]
         {

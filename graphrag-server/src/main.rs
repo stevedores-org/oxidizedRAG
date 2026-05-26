@@ -41,7 +41,6 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing_subscriber;
 
 mod models;
 use models::*;

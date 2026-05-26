@@ -36,7 +36,7 @@ async fn test_complete_rag_pipeline() {
         .unwrap();
 
     // Step 3: Add documents
-    let documents = vec![
+    let documents = [
         "GraphRAG combines knowledge graphs with retrieval-augmented generation",
         "WASM enables running ML models directly in the browser",
         "Vector databases enable semantic search over embeddings",
@@ -99,7 +99,7 @@ async fn test_storage_quota() {
         );
 
         assert!(quota > 0);
-        assert!(percentage >= 0.0 && percentage <= 100.0);
+        assert!((0.0..=100.0).contains(&percentage));
     }
 }
 
@@ -190,7 +190,7 @@ async fn test_hybrid_search() {
     let mut graph = GraphRAG::new(384).unwrap();
 
     // Add documents with different types
-    let docs = vec![
+    let docs = [
         ("concept", "Machine learning is a field of AI"),
         ("definition", "Vector embeddings represent semantic meaning"),
         ("example", "BERT is a transformer-based model"),

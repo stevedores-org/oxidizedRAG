@@ -171,7 +171,7 @@ mod tests {
         let config: TestConfig = parse_json5_str(json5_str).unwrap();
         assert_eq!(config.name, "test");
         assert_eq!(config.value, 42);
-        assert_eq!(config.enabled, true);
+        assert!(config.enabled);
     }
 
     #[test]
