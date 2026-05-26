@@ -19,6 +19,7 @@ use graphrag_core::text::RustCodeChunkingStrategy;
 
 /// Metrics for comparing chunking strategies
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ChunkingMetrics {
     strategy_name: String,
     num_chunks: usize,

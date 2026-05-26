@@ -158,6 +158,7 @@ pub enum Operation {
 
 /// Data associated with a change
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(clippy::large_enum_variant)]
 pub enum ChangeData {
     /// Entity data
     Entity(Entity),

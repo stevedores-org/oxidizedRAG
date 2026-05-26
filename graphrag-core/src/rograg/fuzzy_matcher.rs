@@ -604,11 +604,11 @@ impl FuzzyMatcher {
 
         let mut matrix = vec![vec![0; len2 + 1]; len1 + 1];
 
-        for (i, item) in matrix.iter_mut().enumerate().take(len1 + 1) {
-            item[0] = i;
+        for (i, row) in matrix.iter_mut().enumerate() {
+            row[0] = i;
         }
-        for j in 0..=len2 {
-            matrix[0][j] = j;
+        for (j, cell) in matrix[0].iter_mut().enumerate() {
+            *cell = j;
         }
 
         for i in 1..=len1 {

@@ -385,6 +385,7 @@ mod performance_baselines {
     /// Override via env vars: OXIDIZED_INDEXING_THRESHOLD_MS, etc.
     const DEFAULT_INDEXING_THRESHOLD_MS: u128 = 5000;
     const DEFAULT_QUERY_THRESHOLD_MS: u128 = 1000;
+    #[allow(dead_code)]
     const DEFAULT_CHUNKING_THRESHOLD_MS: u128 = 2000;
 
     #[test]

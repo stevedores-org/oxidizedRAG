@@ -49,7 +49,8 @@ where
     ///
     /// `max_capacity` controls maximum number of cached entries.
     /// `ttl` is the time-to-live for each cache entry.
-    pub fn new(inner: Arc<dyn Stage<I, O>>, _max_capacity: u64, ttl: Duration) -> Self {
+    #[cfg_attr(not(feature = "caching"), allow(unused_variables))]
+    pub fn new(inner: Arc<dyn Stage<I, O>>, max_capacity: u64, ttl: Duration) -> Self {
         Self {
             inner,
             #[cfg(feature = "caching")]
@@ -68,9 +69,10 @@ where
     ///
     /// When moka (L1) misses, the L2 cache is checked before running the inner stage.
     /// Results are written to both L1 and L2.
+    #[cfg_attr(not(feature = "caching"), allow(unused_variables))]
     pub fn with_dual_mode_cache(
         inner: Arc<dyn Stage<I, O>>,
-        _max_capacity: u64,
+        max_capacity: u64,
         ttl: Duration,
         l2: Arc<DualModeCache>,
     ) -> Self {

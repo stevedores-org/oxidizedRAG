@@ -22,6 +22,7 @@ pub fn fixture_document(filename: &str) -> Document {
 }
 
 /// Index fixture files into a GraphRAG knowledge graph
+#[allow(dead_code)]
 pub fn index_fixtures(filenames: &[&str], chunk_size: usize) -> Result<KnowledgeGraph> {
     let mut graph = KnowledgeGraph::new();
     let processor = TextProcessor::new(chunk_size, chunk_size / 5)?;

@@ -2,6 +2,8 @@
 //!
 //! Validates that incremental updates cost <5% of a full rebuild.
 
+#![cfg(feature = "incremental")]
+
 use graphrag_core::core::{Entity, EntityId, KnowledgeGraph, Relationship};
 use graphrag_core::graph::incremental::{
     ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
@@ -203,7 +205,7 @@ async fn test_batch_upsert_performance() {
 
     // Measure batch upsert
     let batch: Vec<Entity> = (base_count..(base_count + batch_size))
-        .map(|i| create_test_entity(i))
+        .map(create_test_entity)
         .collect();
 
     let start = Instant::now();

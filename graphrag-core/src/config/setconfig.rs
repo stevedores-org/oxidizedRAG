@@ -1775,10 +1775,11 @@ impl SetConfig {
 
     /// Convert to the existing Config format for compatibility
     pub fn to_graphrag_config(&self) -> crate::Config {
-        let mut config = crate::Config::default();
-
         // Map pipeline approach (semantic/algorithmic/hybrid)
-        config.approach = self.mode.approach.clone();
+        let mut config = crate::Config {
+            approach: self.mode.approach.clone(),
+            ..crate::Config::default()
+        };
 
         // Map text processing
         config.text.chunk_size = self.pipeline.text_extraction.chunk_size;
