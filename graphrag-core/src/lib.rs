@@ -343,7 +343,7 @@ impl GraphRAG {
     ///   (regex + capitalization) for fast, resource-efficient processing.
     /// - **Hybrid** (config.approach = "hybrid"): Combines both approaches with weighted fusion.
     ///
-    /// The selection is controlled by `config.approach` and mapped from TomlConfig's [mode] section.
+    /// The selection is controlled by `config.approach` and mapped from TomlConfig's `[mode]` section.
     #[cfg(feature = "async")]
     pub async fn build_graph(&mut self) -> Result<()> {
         use indicatif::{ProgressBar, ProgressStyle};

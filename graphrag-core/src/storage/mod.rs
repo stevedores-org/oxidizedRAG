@@ -6,9 +6,9 @@
 //! ## Backends
 //!
 //! - [`MemoryStorage`] — in-memory storage for development/testing
-//! - [`surrealdb::SurrealDeltaStorage`] — SurrealDB-backed delta persistence
+//! - `surrealdb::SurrealDeltaStorage` — SurrealDB-backed delta persistence
 //!   (requires `surrealdb-storage` feature)
-//! - [`async_bridge::AsyncKnowledgeGraph`] — sync/async bridge for incremental
+//! - `async_bridge::AsyncKnowledgeGraph` — sync/async bridge for incremental
 //!   updates (requires `incremental` feature)
 
 #[cfg(feature = "surrealdb-storage")]
