@@ -1403,7 +1403,7 @@ pub mod sync_to_async {
         }
     }
 
-    /// Blanket implementation for Box<T> where T implements AsyncLanguageModel
+    /// Blanket implementation for `Box<T>` where `T` implements `AsyncLanguageModel`
     #[async_trait]
     impl<T> AsyncLanguageModel for Box<T>
     where

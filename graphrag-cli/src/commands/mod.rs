@@ -1,11 +1,11 @@
 //! Slash command system for the TUI
 //!
 //! Provides parsing and execution of slash commands like:
-//! - /config <file>
-//! - /load <file>
-//! - /stats
-//! - /entities [filter]
-//! - /workspace <name>
+//! - `/config <file>`
+//! - `/load <file>`
+//! - `/stats`
+//! - `/entities [filter]`
+//! - `/workspace <name>`
 
 use color_eyre::eyre::{eyre, Result};
 use std::path::PathBuf;
