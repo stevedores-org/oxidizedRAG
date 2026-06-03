@@ -92,6 +92,11 @@ cross-encoder = []
 # Structured code chunking using tree-sitter
 code-chunking = ["tree-sitter", "tree-sitter-rust"]
 
+# Multimodal RAG primitives (types + traits for cross-modal embedding,
+# storage, ingestion, search). Foundation for the #145 epic; impls live
+# behind their own feature flags (gemini, sqlite-vector, ...) in later PRs.
+multimodal = []
+
 # Neural embeddings feature
 neural-embeddings = ["dirs", "candle-core", "candle-nn", "candle-transformers"]
 
