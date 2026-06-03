@@ -29,6 +29,7 @@
 //! - [`search`] — [`search::CrossModalSearcher`] trait, [`search::SearchError`]
 
 pub mod embedding;
+pub mod fakes;
 pub mod ingest;
 pub mod search;
 pub mod store;
