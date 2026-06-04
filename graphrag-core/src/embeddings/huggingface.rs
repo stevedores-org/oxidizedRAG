@@ -304,7 +304,7 @@ mod tests {
                     message.contains("not implemented"),
                     "expected unimplemented message, got: {message}"
                 );
-            }
+            },
             other => panic!("expected Embedding error, got: {other:?}"),
         }
     }
