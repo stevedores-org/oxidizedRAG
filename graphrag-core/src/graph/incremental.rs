@@ -891,13 +891,18 @@ impl UpdateMonitor {
         affected_entities: usize,
         affected_relationships: usize,
     ) {
-        let mut log = self.operations_log.lock();
-        if let Some(entry) = log.iter_mut().find(|e| &e.operation_id == operation_id) {
-            entry.end_time = Some(Instant::now());
-            entry.success = Some(success);
-            entry.error_message = error;
-            entry.affected_entities = affected_entities;
-            entry.affected_relationships = affected_relationships;
+        {
+            // Scope the lock guard so it is released before `update_performance_stats`,
+            // which re-acquires `operations_log`. `parking_lot::Mutex` is not reentrant,
+            // so holding the guard across that call would deadlock.
+            let mut log = self.operations_log.lock();
+            if let Some(entry) = log.iter_mut().find(|e| &e.operation_id == operation_id) {
+                entry.end_time = Some(Instant::now());
+                entry.success = Some(success);
+                entry.error_message = error;
+                entry.affected_entities = affected_entities;
+                entry.affected_relationships = affected_relationships;
+            }
         }
 
         // Update performance stats
