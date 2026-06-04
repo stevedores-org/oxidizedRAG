@@ -242,8 +242,7 @@ mod tests {
 
     #[test]
     fn test_new_embeddings() {
-        let embeddings =
-            HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
+        let embeddings = HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
 
         assert_eq!(
             embeddings.model_id,
@@ -282,8 +281,7 @@ mod tests {
     /// happily consume.
     #[tokio::test]
     async fn embed_returns_err_when_not_initialized() {
-        let embeddings =
-            HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
+        let embeddings = HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
         let result = embeddings.embed("hello world").await;
         assert!(matches!(result, Err(GraphRAGError::Embedding { .. })));
     }
@@ -304,7 +302,7 @@ mod tests {
                     message.contains("not implemented"),
                     "expected unimplemented message, got: {message}"
                 );
-            }
+            },
             other => panic!("expected Embedding error, got: {other:?}"),
         }
     }
