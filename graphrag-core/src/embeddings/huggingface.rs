@@ -209,7 +209,7 @@ impl EmbeddingProvider for HuggingFaceEmbeddings {
             message: concat!(
                 "HuggingFace local embedding generation via Candle is not implemented yet ",
                 "(issue #167). Use HttpEmbeddingProvider::{openai, voyage_ai, cohere, ",
-                "jina_ai, mistral, together_ai} for a working provider."
+                "jina_ai, mistral, together_ai} for a working provider.",
             )
             .to_string(),
         })
@@ -304,7 +304,7 @@ mod tests {
                     message.contains("not implemented"),
                     "expected unimplemented message, got: {message}"
                 );
-            },
+            }
             other => panic!("expected Embedding error, got: {other:?}"),
         }
     }
