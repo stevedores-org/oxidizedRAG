@@ -168,17 +168,32 @@ mod tests {
 
     #[test]
     fn content_type_dispatches_per_variant() {
-        assert_eq!(MultimodalContent::Text("hi".into()).content_type(), ContentType::Text);
         assert_eq!(
-            MultimodalContent::Image { bytes: vec![1], mime: "image/png".into() }.content_type(),
+            MultimodalContent::Text("hi".into()).content_type(),
+            ContentType::Text
+        );
+        assert_eq!(
+            MultimodalContent::Image {
+                bytes: vec![1],
+                mime: "image/png".into()
+            }
+            .content_type(),
             ContentType::Image
         );
         assert_eq!(
-            MultimodalContent::Audio { bytes: vec![1], mime: "audio/mpeg".into() }.content_type(),
+            MultimodalContent::Audio {
+                bytes: vec![1],
+                mime: "audio/mpeg".into()
+            }
+            .content_type(),
             ContentType::Audio
         );
         assert_eq!(
-            MultimodalContent::Video { bytes: vec![1], mime: "video/mp4".into() }.content_type(),
+            MultimodalContent::Video {
+                bytes: vec![1],
+                mime: "video/mp4".into()
+            }
+            .content_type(),
             ContentType::Video
         );
         assert_eq!(
@@ -191,10 +206,20 @@ mod tests {
     fn byte_len_matches_payload() {
         assert_eq!(MultimodalContent::Text("hello".into()).byte_len(), 5);
         assert_eq!(
-            MultimodalContent::Image { bytes: vec![0; 32], mime: "image/png".into() }.byte_len(),
+            MultimodalContent::Image {
+                bytes: vec![0; 32],
+                mime: "image/png".into()
+            }
+            .byte_len(),
             32
         );
-        assert_eq!(MultimodalContent::Pdf { bytes: vec![0; 100] }.byte_len(), 100);
+        assert_eq!(
+            MultimodalContent::Pdf {
+                bytes: vec![0; 100]
+            }
+            .byte_len(),
+            100
+        );
     }
 
     #[test]

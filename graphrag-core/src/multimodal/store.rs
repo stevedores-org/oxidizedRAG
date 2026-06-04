@@ -124,7 +124,10 @@ mod tests {
 
     #[test]
     fn dimension_mismatch_error_carries_expected_and_actual() {
-        let err = VectorStoreError::DimensionMismatch { expected: 1408, actual: 1536 };
+        let err = VectorStoreError::DimensionMismatch {
+            expected: 1408,
+            actual: 1536,
+        };
         let msg = err.to_string();
         assert!(msg.contains("1408"));
         assert!(msg.contains("1536"));

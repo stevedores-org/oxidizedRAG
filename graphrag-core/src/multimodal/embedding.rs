@@ -115,11 +115,7 @@ mod tests {
         let info = ModelInfo {
             name: "gemini-embedding-2-preview".into(),
             dimensions: 1408,
-            supported_types: vec![
-                ContentType::Text,
-                ContentType::Image,
-                ContentType::Audio,
-            ],
+            supported_types: vec![ContentType::Text, ContentType::Image, ContentType::Audio],
         };
         let json = serde_json::to_string(&info).expect("serialize");
         let back: ModelInfo = serde_json::from_str(&json).expect("deserialize");
