@@ -7,8 +7,7 @@
 //! - Select LLM model for that provider
 //! - Cache settings in IndexedDB
 
-use leptos::prelude::*;
-use leptos::task::spawn_local;
+use leptos::{prelude::*, task::spawn_local};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use web_sys::{Event, HtmlInputElement, HtmlSelectElement};

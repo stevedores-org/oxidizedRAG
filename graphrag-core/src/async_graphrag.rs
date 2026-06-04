@@ -3,6 +3,10 @@
 //! This module provides a complete async implementation of the GraphRAG system
 //! that leverages all async traits for maximum performance and scalability.
 
+use std::{collections::HashMap, sync::Arc};
+
+use tokio::sync::RwLock;
+
 use crate::{
     config::Config,
     core::{
@@ -13,9 +17,6 @@ use crate::{
     retrieval::SearchResult,
     summarization::{DocumentTree, HierarchicalConfig, LLMClient, QueryResult},
 };
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 type SharedAsyncLanguageModel = Arc<dyn AsyncLanguageModel<Error = GraphRAGError> + Send + Sync>;
 
@@ -194,7 +195,8 @@ impl AsyncGraphRAG {
         let chunks: Vec<_> = graph.chunks().cloned().collect();
         let mut total_entities = 0;
 
-        // For each chunk, extract entities (would use AsyncEntityExtractor in full implementation)
+        // For each chunk, extract entities (would use AsyncEntityExtractor in full
+        // implementation)
         for chunk in &chunks {
             // Simulate async entity extraction
             let entities = self.extract_entities_async(chunk).await?;
@@ -404,7 +406,10 @@ impl AsyncGraphRAG {
         values.insert("question".to_string(), question.to_string());
 
         let template = PromptTemplate::new(
-            "Context:\n{context}\n\nQuestion: {question}\n\nBased on the provided context, please answer the question. If the context doesn't contain enough information, please say so.".to_string()
+            "Context:\n{context}\n\nQuestion: {question}\n\nBased on the provided context, please \
+             answer the question. If the context doesn't contain enough information, please say \
+             so."
+            .to_string(),
         );
 
         template.fill(&values)
@@ -418,7 +423,8 @@ impl AsyncGraphRAG {
         );
 
         // Process documents sequentially for now to avoid borrowing issues
-        // In a production implementation, you'd use channels or other concurrency patterns
+        // In a production implementation, you'd use channels or other concurrency
+        // patterns
         for document in documents {
             self.add_document(document).await?;
         }
@@ -523,9 +529,11 @@ pub struct AsyncPerformanceStats {
 pub enum AsyncHealthStatus {
     /// All async components are functioning normally with no issues detected
     Healthy,
-    /// Some async components are experiencing issues but the system remains operational
+    /// Some async components are experiencing issues but the system remains
+    /// operational
     Degraded,
-    /// Critical async components have failed and the system is not functioning properly
+    /// Critical async components have failed and the system is not functioning
+    /// properly
     Unhealthy,
 }
 

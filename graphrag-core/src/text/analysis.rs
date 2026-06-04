@@ -3,9 +3,11 @@
 //! This module provides algorithms for analyzing text structure, including
 //! heading detection, section numbering extraction, and statistical analysis.
 
-use crate::text::document_structure::{SectionNumber, SectionNumberFormat};
-use regex::Regex;
 use std::sync::OnceLock;
+
+use regex::Regex;
+
+use crate::text::document_structure::{SectionNumber, SectionNumberFormat};
 
 /// Text analyzer for structural analysis
 pub struct TextAnalyzer;
@@ -293,7 +295,8 @@ impl TextAnalyzer {
         }
     }
 
-    /// Extract potential title from text (first non-empty line or ALL CAPS line)
+    /// Extract potential title from text (first non-empty line or ALL CAPS
+    /// line)
     pub fn extract_title(text: &str) -> Option<String> {
         for line in text.lines().take(10) {
             // Check first 10 lines

@@ -1,16 +1,17 @@
 //! Status bar component with color-coded indicators
 
-use crate::{
-    action::{Action, StatusType},
-    theme::Theme,
-    ui::Spinner,
-};
 use ratatui::{
     layout::{Alignment, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame,
+};
+
+use crate::{
+    action::{Action, StatusType},
+    theme::Theme,
+    ui::Spinner,
 };
 
 /// Status bar with indicator

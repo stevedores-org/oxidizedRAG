@@ -1,16 +1,17 @@
 // Allow dead code for configuration structures used for TOML parsing
 #![allow(dead_code)]
 
-use crate::config::Config;
-use crate::core::{GraphRAGError, Result};
-use std::fs;
-use std::path::Path;
-
-#[cfg(feature = "toml-support")]
-use toml;
+use std::{fs, path::Path};
 
 #[cfg(feature = "serde_json")]
 use serde_json;
+#[cfg(feature = "toml-support")]
+use toml;
+
+use crate::{
+    config::Config,
+    core::{GraphRAGError, Result},
+};
 
 /// Configuration file format
 #[derive(Debug, Clone)]

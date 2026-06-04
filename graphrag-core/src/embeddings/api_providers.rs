@@ -1,13 +1,16 @@
-//! API-based embedding providers (OpenAI, Voyage AI, Cohere, Jina AI, Mistral, etc.)
+//! API-based embedding providers (OpenAI, Voyage AI, Cohere, Jina AI, Mistral,
+//! etc.)
 //!
 //! This module provides embedding generation using external API services.
 //! All providers implement the `EmbeddingProvider` trait for consistency.
 
-use crate::core::error::{GraphRAGError, Result};
-use crate::embeddings::{EmbeddingConfig, EmbeddingProvider, EmbeddingProviderType};
-
 #[cfg(feature = "ureq")]
 use ureq;
+
+use crate::{
+    core::error::{GraphRAGError, Result},
+    embeddings::{EmbeddingConfig, EmbeddingProvider, EmbeddingProviderType},
+};
 
 /// Generic HTTP-based embedding provider
 pub struct HttpEmbeddingProvider {

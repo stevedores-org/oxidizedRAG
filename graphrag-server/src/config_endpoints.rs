@@ -1,11 +1,13 @@
 //! Configuration endpoints for GraphRAG Server
 //!
-//! These endpoints allow dynamic configuration of the GraphRAG pipeline via JSON REST API
+//! These endpoints allow dynamic configuration of the GraphRAG pipeline via
+//! JSON REST API
+
+use actix_web::web::{Data, Json};
+use serde_json::json;
 
 use super::{config_handler, AppState};
 use crate::models::ApiError;
-use actix_web::web::{Data, Json};
-use serde_json::json;
 
 /// GET /api/config - Get current configuration
 pub async fn get_config(state: Data<AppState>) -> Result<Json<serde_json::Value>, ApiError> {

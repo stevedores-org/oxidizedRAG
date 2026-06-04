@@ -70,11 +70,16 @@ impl CacheStats {
 
 #[cfg(feature = "persistent-cache")]
 mod rocksdb_backend {
+    use std::{
+        path::{Path, PathBuf},
+        sync::{
+            atomic::{AtomicU64, Ordering},
+            Arc,
+        },
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
     use super::{CacheStats, PersistentCacheBackend};
-    use std::path::{Path, PathBuf};
-    use std::sync::atomic::{AtomicU64, Ordering};
-    use std::sync::Arc;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     /// 8-byte big-endian expiry timestamp prefix on stored values.
     /// Layout: [expiry_epoch_secs: u64 BE][raw_value_bytes...]
@@ -355,8 +360,9 @@ mod rocksdb_backend {
 
     #[cfg(test)]
     mod tests {
-        use super::*;
         use tempfile::TempDir;
+
+        use super::*;
 
         #[test]
         fn test_rocksdb_cache_new() {

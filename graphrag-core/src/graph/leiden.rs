@@ -1,17 +1,19 @@
 //! Leiden community detection algorithm
 //!
 //! Improves upon Louvain algorithm by adding a refinement phase that prevents
-//! poorly connected communities. Implements hierarchical clustering for multi-level
-//! community structure.
+//! poorly connected communities. Implements hierarchical clustering for
+//! multi-level community structure.
 //!
 //! Reference: "From Louvain to Leiden: guaranteeing well-connected communities"
 //! Traag, Waltman & van Eck (2019)
 
-use petgraph::graph::{Graph, NodeIndex};
-use petgraph::Undirected;
-use rand::rngs::StdRng;
-use rand::SeedableRng;
 use std::collections::{HashMap, HashSet};
+
+use petgraph::{
+    graph::{Graph, NodeIndex},
+    Undirected,
+};
+use rand::{rngs::StdRng, SeedableRng};
 
 use crate::Result;
 
@@ -306,8 +308,9 @@ impl HierarchicalCommunities {
         if level > 0 {
             context_parts.push(String::new());
             context_parts.push("## Sub-community Summaries:".to_string());
-            // Would need to track parent-child relationships to list sub-communities
-            // This is left as a TODO for full hierarchical implementation
+            // Would need to track parent-child relationships to list
+            // sub-communities This is left as a TODO for full
+            // hierarchical implementation
         }
 
         context_parts.join("\n")
@@ -315,8 +318,8 @@ impl HierarchicalCommunities {
 
     /// Retrieve relevant communities using adaptive query routing
     ///
-    /// Automatically selects the appropriate hierarchical level based on query complexity
-    /// and returns matching community summaries.
+    /// Automatically selects the appropriate hierarchical level based on query
+    /// complexity and returns matching community summaries.
     ///
     /// # Arguments
     /// * `query` - User query string
@@ -328,10 +331,10 @@ impl HierarchicalCommunities {
     ///
     /// # Example
     /// ```no_run
-    /// use graphrag_core::query::AdaptiveRoutingConfig;
-    /// use graphrag_core::graph::leiden::HierarchicalCommunities;
-    /// use petgraph::graph::Graph;
     /// use std::collections::HashMap;
+    ///
+    /// use graphrag_core::{graph::leiden::HierarchicalCommunities, query::AdaptiveRoutingConfig};
+    /// use petgraph::graph::Graph;
     ///
     /// let mut communities = HierarchicalCommunities {
     ///     levels: HashMap::new(),
@@ -410,7 +413,8 @@ impl HierarchicalCommunities {
 
     /// Retrieve with detailed query analysis
     ///
-    /// Returns both the retrieval results and the query analysis that determined the level.
+    /// Returns both the retrieval results and the query analysis that
+    /// determined the level.
     ///
     /// # Arguments
     /// * `query` - User query string

@@ -11,12 +11,13 @@
 //!
 //! Run with: cargo run --example tom_sawyer_workspace
 
+use std::fs;
+
 use graphrag_core::{
     persistence::WorkspaceManager, ChunkId, Document, DocumentId, Entity, EntityId, KnowledgeGraph,
     Relationship, TextChunk,
 };
 use indexmap::IndexMap;
-use std::fs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("📚 Tom Sawyer Workspace Persistence Test\n");

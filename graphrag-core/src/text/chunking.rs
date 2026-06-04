@@ -1,8 +1,10 @@
-// Advanced text chunking with hierarchical boundary preservation (2024 best practices)
-// Shared utility module implementing state-of-the-art chunking strategies
+// Advanced text chunking with hierarchical boundary preservation (2024 best
+// practices) Shared utility module implementing state-of-the-art chunking
+// strategies
 
-/// Hierarchical text chunking following LangChain RecursiveCharacterTextSplitter approach
-/// with semantic boundary preservation for optimal RAG performance
+/// Hierarchical text chunking following LangChain
+/// RecursiveCharacterTextSplitter approach with semantic boundary preservation
+/// for optimal RAG performance
 pub struct HierarchicalChunker {
     /// Hierarchical separators in order of preference
     separators: Vec<String>,
@@ -245,7 +247,8 @@ impl HierarchicalChunker {
         pos
     }
 
-    /// Find a safe character boundary within a slice at or before the given position
+    /// Find a safe character boundary within a slice at or before the given
+    /// position
     fn find_char_boundary_in_slice(&self, text: &str, mut pos: usize) -> usize {
         pos = pos.min(text.len());
         while pos > 0 && !text.is_char_boundary(pos) {
@@ -268,15 +271,17 @@ mod tests {
     #[test]
     fn test_hierarchical_chunking() {
         let chunker = HierarchicalChunker::new();
-        let text = "This is a test document.\n\nIt has multiple paragraphs. Each paragraph should be preserved as much as possible. This helps maintain semantic coherence in the chunks.";
+        let text = "This is a test document.\n\nIt has multiple paragraphs. Each paragraph should \
+                    be preserved as much as possible. This helps maintain semantic coherence in \
+                    the chunks.";
 
         let chunks = chunker.chunk_text(text, 100, 20);
 
         assert!(!chunks.is_empty(), "Chunks should not be empty");
 
         // The chunker respects \n\n as highest priority separator
-        // With min_chunk_size=50, first paragraph (26 chars: "This is a test document.")
-        // is too short and will be filtered out
+        // With min_chunk_size=50, first paragraph (26 chars: "This is a test
+        // document.") is too short and will be filtered out
         // The second paragraph is long enough (128 chars) and will be chunked
 
         // Verify that we got meaningful chunks from the second paragraph
@@ -330,7 +335,8 @@ mod tests {
     #[test]
     fn test_word_boundary_preservation() {
         let chunker = HierarchicalChunker::new();
-        let text = "This is a very long sentence that should be split at word boundaries rather than in the middle of words.";
+        let text = "This is a very long sentence that should be split at word boundaries rather \
+                    than in the middle of words.";
 
         let chunks = chunker.chunk_text(text, 50, 10);
 

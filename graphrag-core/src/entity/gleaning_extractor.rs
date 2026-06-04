@@ -3,8 +3,12 @@
 //! This module implements iterative gleaning refinement using actual LLM calls,
 //! not pattern matching. Based on Microsoft GraphRAG and LightRAG research.
 //!
-//! Expected performance: 15-30 seconds per chunk per round. For a 1000-page book
-//! with 4 gleaning rounds, expect 2-4 hours of processing time.
+//! Expected performance: 15-30 seconds per chunk per round. For a 1000-page
+//! book with 4 gleaning rounds, expect 2-4 hours of processing time.
+
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{Entity, Relationship, Result, TextChunk},
@@ -14,8 +18,6 @@ use crate::{
     },
     ollama::OllamaClient,
 };
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Configuration for gleaning-based entity extraction
 #[derive(Debug, Clone)]
@@ -26,7 +28,8 @@ pub struct GleaningConfig {
     pub completion_threshold: f64,
     /// Minimum confidence for extracted entities (0.0-1.0)
     pub entity_confidence_threshold: f64,
-    /// Whether to use LLM for completion checking (always true for real gleaning)
+    /// Whether to use LLM for completion checking (always true for real
+    /// gleaning)
     pub use_llm_completion_check: bool,
     /// Entity types to extract
     pub entity_types: Vec<String>,
@@ -71,8 +74,9 @@ pub struct ExtractionCompletionStatus {
 
 /// Entity extractor with iterative gleaning refinement using TRUE LLM calls
 ///
-/// This is the REAL implementation that makes actual LLM API calls for every extraction.
-/// It replaces the fake pattern-based extraction with genuine language model inference.
+/// This is the REAL implementation that makes actual LLM API calls for every
+/// extraction. It replaces the fake pattern-based extraction with genuine
+/// language model inference.
 pub struct GleaningEntityExtractor {
     llm_extractor: LLMEntityExtractor,
     config: GleaningConfig,
@@ -96,10 +100,12 @@ impl GleaningEntityExtractor {
         }
     }
 
-    /// Extract entities with iterative refinement (gleaning) using TRUE LLM calls
+    /// Extract entities with iterative refinement (gleaning) using TRUE LLM
+    /// calls
     ///
     /// This is the REAL implementation that makes actual LLM API calls.
-    /// Expected time: 15-30 seconds per round = 60-120 seconds total for 4 rounds per chunk.
+    /// Expected time: 15-30 seconds per round = 60-120 seconds total for 4
+    /// rounds per chunk.
     ///
     /// # Performance
     /// - 1 chunk, 4 rounds: ~2 minutes
@@ -223,8 +229,8 @@ impl GleaningEntityExtractor {
 
     /// Merge entity data using length-based strategy (LightRAG approach)
     ///
-    /// When multiple rounds produce the same entity, keep the version with the longer description
-    /// as it likely contains more information.
+    /// When multiple rounds produce the same entity, keep the version with the
+    /// longer description as it likely contains more information.
     fn merge_entity_data(
         &self,
         existing: Vec<EntityData>,
@@ -247,7 +253,8 @@ impl GleaningEntityExtractor {
                     // Keep the entity with the longer description (more information)
                     if new_entity.description.len() > existing_entity.description.len() {
                         tracing::debug!(
-                            "📝 Merging entity '{}': keeping longer description ({} chars vs {} chars)",
+                            "📝 Merging entity '{}': keeping longer description ({} chars vs {} \
+                             chars)",
                             new_entity.name,
                             new_entity.description.len(),
                             existing_entity.description.len()
@@ -255,7 +262,8 @@ impl GleaningEntityExtractor {
                         merged.insert(key, new_entity);
                     } else {
                         tracing::debug!(
-                            "📝 Entity '{}' already exists with longer description, keeping existing",
+                            "📝 Entity '{}' already exists with longer description, keeping \
+                             existing",
                             new_entity.name
                         );
                     }
@@ -503,7 +511,9 @@ mod tests {
         TextChunk::new(
             ChunkId::new("test_chunk".to_string()),
             DocumentId::new("test_doc".to_string()),
-            "Tom Sawyer is a young boy who lives in St. Petersburg with his Aunt Polly. Tom is best friends with Huckleberry Finn.".to_string(),
+            "Tom Sawyer is a young boy who lives in St. Petersburg with his Aunt Polly. Tom is \
+             best friends with Huckleberry Finn."
+                .to_string(),
             0,
             120,
         )
@@ -539,7 +549,7 @@ mod tests {
             EntityData {
                 name: "Tom Sawyer".to_string(),
                 entity_type: "PERSON".to_string(),
-                description: "A young boy who lives in St. Petersburg".to_string(), // Longer description
+                description: "A young boy who lives in St. Petersburg".to_string(), /* Longer description */
             },
             EntityData {
                 name: "Huck Finn".to_string(),
@@ -552,7 +562,8 @@ mod tests {
 
         assert_eq!(merged.len(), 2); // Tom (merged) and Huck
         let tom = merged.iter().find(|e| e.name == "Tom Sawyer").unwrap();
-        assert!(tom.description.len() > 10); // Should have the longer description
+        assert!(tom.description.len() > 10); // Should have the longer
+                                             // description
     }
 
     #[test]
@@ -568,7 +579,8 @@ mod tests {
 
     #[test]
     fn test_normalize_name_multi_word_regression() {
-        // Regression test for multi-word normalization ensuring underscores are preserved
+        // Regression test for multi-word normalization ensuring underscores are
+        // preserved
         let ollama_config = OllamaConfig::default();
         let ollama_client = OllamaClient::new(ollama_config);
         let config = GleaningConfig::default();

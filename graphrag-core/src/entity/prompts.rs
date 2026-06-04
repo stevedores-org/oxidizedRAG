@@ -170,7 +170,8 @@ pub struct ExtractionOutput {
 pub struct EntityData {
     /// The name/identifier of the extracted entity
     pub name: String,
-    /// The type/category of the entity (e.g., "PERSON", "ORGANIZATION", "CONCEPT")
+    /// The type/category of the entity (e.g., "PERSON", "ORGANIZATION",
+    /// "CONCEPT")
     #[serde(rename = "type")]
     pub entity_type: String,
     /// Description of the entity's role or significance in the context

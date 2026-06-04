@@ -1,18 +1,21 @@
 //! High-performance cached LLM client implementation
 
-use super::stats::SharedCacheStatistics;
-use super::{
-    CacheConfig, CacheEntry, CacheError, CacheHealth, CacheKey, CacheKeyGenerator, CacheMetrics,
-    CacheResult, CacheStatistics, CacheWarmer, WarmingConfig,
-};
-use crate::core::traits::{GenerationParams, LanguageModel, ModelInfo};
-use crate::core::Result;
+use std::{sync::Arc, time::Instant};
+
 use moka::future::Cache;
-use std::sync::Arc;
-use std::time::Instant;
 use tokio::sync::RwLock;
 
-/// High-performance cached LLM client that wraps any LanguageModel implementation
+use super::{
+    stats::SharedCacheStatistics, CacheConfig, CacheEntry, CacheError, CacheHealth, CacheKey,
+    CacheKeyGenerator, CacheMetrics, CacheResult, CacheStatistics, CacheWarmer, WarmingConfig,
+};
+use crate::core::{
+    traits::{GenerationParams, LanguageModel, ModelInfo},
+    Result,
+};
+
+/// High-performance cached LLM client that wraps any LanguageModel
+/// implementation
 pub struct CachedLLMClient<T: LanguageModel> {
     /// The underlying LLM client
     inner: Arc<T>,
@@ -184,7 +187,8 @@ impl<T: LanguageModel + Send + Sync> CachedLLMClient<T> {
     pub async fn clear_cache(&self) {
         self.cache.invalidate_all();
         // Reset statistics but keep current tracking
-        // Don't reset current_size as invalidate_all will trigger eviction events
+        // Don't reset current_size as invalidate_all will trigger eviction
+        // events
     }
 
     /// Remove a specific entry from cache
@@ -254,8 +258,8 @@ impl<T: LanguageModel + Send + Sync> CachedLLMClient<T> {
         // implement a separate persistence layer
 
         // For now, we return an empty vector as moka doesn't expose entry iteration
-        // In a real implementation, you'd maintain a separate index or use a different cache
-        // that supports iteration
+        // In a real implementation, you'd maintain a separate index or use a different
+        // cache that supports iteration
 
         Ok(entries)
     }
@@ -339,7 +343,8 @@ impl<T: LanguageModel + Send + Sync> LanguageModel for CachedLLMClient<T> {
         })
     }
 
-    /// Complete a prompt with parameters and caching support (synchronous version)
+    /// Complete a prompt with parameters and caching support (synchronous
+    /// version)
     fn complete_with_params(&self, prompt: &str, params: GenerationParams) -> Result<String> {
         tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async {
@@ -421,8 +426,7 @@ impl<T: LanguageModel> Clone for CachedLLMClient<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::traits::GenerationParams;
-    use crate::generation::MockLLM;
+    use crate::{core::traits::GenerationParams, generation::MockLLM};
 
     #[tokio::test]
     async fn test_cached_client_creation() {

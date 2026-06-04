@@ -1,6 +1,7 @@
 //! Symposium GraphRAG with Full LLM Processing + Hierarchical Summarization
 //!
-//! This example demonstrates the complete workflow using the convenient GraphRAG API:
+//! This example demonstrates the complete workflow using the convenient
+//! GraphRAG API:
 //! 1. Loading configuration from JSON5
 //! 2. Processing Plato's Symposium with full LLM pipeline
 //! 3. Entity extraction with gleaning (4 rounds)
@@ -19,12 +20,15 @@
 //!
 //! Expected:
 //! - Processing time: 4-7 minutes (LLM extraction + gleaning + summarization)
-//! - Indexing cost: ~$6-12 (LLM calls for extraction, embeddings, and summaries)
+//! - Indexing cost: ~$6-12 (LLM calls for extraction, embeddings, and
+//!   summaries)
 //! - Query cost: ~$0.50 per query (embeddings + LLM generation)
-//! - Quality: ~95% (maximum philosophical depth with hierarchical understanding)
+//! - Quality: ~95% (maximum philosophical depth with hierarchical
+//!   understanding)
+
+use std::time::Instant;
 
 use graphrag_core::GraphRAG;
-use std::time::Instant;
 use tracing::{debug, error, info, span, Level};
 
 #[tokio::main]
@@ -49,7 +53,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!(document = "docs-example/Symposium.txt", "Input document");
 
     info!(
-        config_details = "LLM-based entity extraction with gleaning (4 rounds), Semantic embeddings (nomic-embed-text), Hierarchical summarization (progressive: extractive → abstractive)",
+        config_details = "LLM-based entity extraction with gleaning (4 rounds), Semantic \
+                          embeddings (nomic-embed-text), Hierarchical summarization (progressive: \
+                          extractive → abstractive)",
         "Configuration details"
     );
 
@@ -60,7 +66,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let start_time = Instant::now();
 
-    // Use the convenient API: load config + process document + build graph in one call
+    // Use the convenient API: load config + process document + build graph in one
+    // call
     info!("Step 2/4: Reading and chunking document...");
     info!("Step 3/4: Building knowledge graph (entity extraction with LLM)...");
     info!("Step 4/4: Generating hierarchical summaries (progressive strategy)...");

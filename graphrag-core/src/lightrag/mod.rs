@@ -7,8 +7,8 @@
 //! - High-level: Broader topics, themes, concepts (abstract)
 //! - Low-level: Specific entities, attributes, details (concrete)
 //!
-//! Reference: "LightRAG: Simple and Fast Retrieval-Augmented Generation" (EMNLP 2025)
-//! Paper: arXiv:2410.05779
+//! Reference: "LightRAG: Simple and Fast Retrieval-Augmented Generation" (EMNLP
+//! 2025) Paper: arXiv:2410.05779
 //!
 //! ## LazyGraphRAG
 //!
@@ -38,17 +38,14 @@ pub use dual_retrieval::{
     DualLevelRetriever, DualRetrievalConfig, DualRetrievalResults, MergeStrategy, SemanticSearcher,
 };
 pub use graph_indexer::{ExtractedEntity, ExtractedRelationship, ExtractionResult, GraphIndexer};
-pub use keyword_extraction::{DualLevelKeywords, KeywordExtractor, KeywordExtractorConfig};
-
-#[cfg(feature = "lazygraphrag")]
-pub use query_refinement::{QueryRefinementConfig, QueryRefiner, RefinedQuery};
-
 #[cfg(feature = "lazygraphrag")]
 pub use iterative_deepening::{
     DepthResults, IterativeDeepeningSearch, SearchConfig, SearchResults, StopReason,
 };
-
+pub use keyword_extraction::{DualLevelKeywords, KeywordExtractor, KeywordExtractorConfig};
 #[cfg(feature = "lazygraphrag")]
 pub use lazy_pipeline::{
     GraphStatistics, LazyGraphRAGPipeline, LazyPipelineConfig, PipelineStatistics,
 };
+#[cfg(feature = "lazygraphrag")]
+pub use query_refinement::{QueryRefinementConfig, QueryRefiner, RefinedQuery};

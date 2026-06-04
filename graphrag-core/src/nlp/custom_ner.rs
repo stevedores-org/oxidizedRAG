@@ -1,6 +1,7 @@
 //! Custom NER Training Pipeline
 //!
-//! This module provides a framework for training custom Named Entity Recognition models:
+//! This module provides a framework for training custom Named Entity
+//! Recognition models:
 //! - Pattern-based entity extraction
 //! - Dictionary/gazetteer matching
 //! - Rule-based extraction
@@ -14,9 +15,10 @@
 //! - Custom product names
 //! - Technical jargon extraction
 
+use std::collections::{HashMap, HashSet};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 
 /// Entity type definition
 #[derive(Debug, Clone, Serialize, Deserialize)]

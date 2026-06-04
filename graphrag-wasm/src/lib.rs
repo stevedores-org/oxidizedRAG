@@ -1,6 +1,7 @@
 //! # GraphRAG WASM
 //!
-//! WASM bindings for GraphRAG - enables 100% client-side knowledge graphs in the browser.
+//! WASM bindings for GraphRAG - enables 100% client-side knowledge graphs in
+//! the browser.
 //!
 //! ## Features
 //!
@@ -25,6 +26,7 @@
 //! ```
 
 use std::collections::HashMap;
+
 use wasm_bindgen::prelude::*;
 
 // WASM backend modules
@@ -47,22 +49,18 @@ pub mod onnx_embedder;
 pub mod components;
 
 // Re-export ONNX types for easy access
-pub use onnx_embedder::{check_onnx_runtime, WasmOnnxEmbedder};
-
-// Re-export Ollama HTTP client
-pub use ollama_http::{OllamaHttpClient, OllamaHttpConfig};
-
-// Re-export unified LLM provider
-pub use llm_provider::{LlmProviderConfig, LlmProviderType, UnifiedLlmClient};
-
-// Re-export WebLLM client
-pub use webllm::WebLLMClient;
-
 // Re-export Leptos components for convenience
 pub use components::{
     ChatMessage, ChatWindow, DocumentManager, GraphEdge, GraphNode, GraphStats, GraphVisualization,
     MessageRole, QueryInterface,
 };
+// Re-export unified LLM provider
+pub use llm_provider::{LlmProviderConfig, LlmProviderType, UnifiedLlmClient};
+// Re-export Ollama HTTP client
+pub use ollama_http::{OllamaHttpClient, OllamaHttpConfig};
+pub use onnx_embedder::{check_onnx_runtime, WasmOnnxEmbedder};
+// Re-export WebLLM client
+pub use webllm::WebLLMClient;
 
 #[wasm_bindgen]
 extern "C" {
@@ -117,7 +115,8 @@ pub struct GraphRAG {
 unsafe impl Send for GraphRAG {}
 unsafe impl Sync for GraphRAG {}
 
-// Manual Clone implementation since VoyIndex (JavaScript object) can't be cloned
+// Manual Clone implementation since VoyIndex (JavaScript object) can't be
+// cloned
 impl Clone for GraphRAG {
     fn clone(&self) -> Self {
         // Clone all fields except vector_index (which will be None in the clone)
@@ -382,7 +381,8 @@ impl GraphRAG {
             });
         log(&format!("  ✓ Loaded {} entities", self.entities.len()));
 
-        // Load relationships (use default empty vec if not found - backward compatibility)
+        // Load relationships (use default empty vec if not found - backward
+        // compatibility)
         self.relationships = db
             .get("relationships", "all_relationships")
             .await
@@ -457,7 +457,8 @@ impl GraphRAG {
     /// Detect hierarchical communities using Leiden algorithm
     ///
     /// # Arguments
-    /// * `config_json` - JSON configuration for Leiden algorithm (optional, use "{}" for defaults)
+    /// * `config_json` - JSON configuration for Leiden algorithm (optional, use
+    ///   "{}" for defaults)
     ///
     /// # Example config:
     /// ```json
@@ -589,11 +590,13 @@ impl GraphRAG {
             .map_err(|e| JsValue::from_str(&format!("JSON serialization failed: {}", e)))
     }
 
-    /// Query using adaptive routing (automatically selects best hierarchical level)
+    /// Query using adaptive routing (automatically selects best hierarchical
+    /// level)
     ///
     /// # Arguments
     /// * `query` - User query string
-    /// * `config_json` - Adaptive routing configuration (optional, use "{}" for defaults)
+    /// * `config_json` - Adaptive routing configuration (optional, use "{}" for
+    ///   defaults)
     ///
     /// # Example config:
     /// ```json
@@ -762,8 +765,9 @@ impl GraphRAG {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

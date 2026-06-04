@@ -1,8 +1,8 @@
 //! GPU-Accelerated Embeddings with Burn + WebGPU
 //!
-//! This module provides GPU-accelerated embedding generation using Burn framework
-//! with WebGPU backend. It demonstrates how to leverage browser GPU for 20-40x
-//! speedup compared to CPU inference.
+//! This module provides GPU-accelerated embedding generation using Burn
+//! framework with WebGPU backend. It demonstrates how to leverage browser GPU
+//! for 20-40x speedup compared to CPU inference.
 //!
 //! ## Architecture
 //!
@@ -35,11 +35,9 @@
 //!     assert_eq!(embedding.len(), 384);
 //!
 //!     // Batch processing (highly efficient on GPU)
-//!     let embeddings = embedder.embed_batch(&[
-//!         "First sentence",
-//!         "Second sentence",
-//!         "Third sentence",
-//!     ]).await?;
+//!     let embeddings = embedder
+//!         .embed_batch(&["First sentence", "Second sentence", "Third sentence"])
+//!         .await?;
 //!
 //!     Ok(())
 //! }
@@ -186,7 +184,8 @@ impl GpuEmbedder {
     /// 4. Upload model weights to GPU
     ///
     /// # Arguments
-    /// * `model_name` - Model name (e.g., "all-MiniLM-L6-v2", "bert-base-uncased")
+    /// * `model_name` - Model name (e.g., "all-MiniLM-L6-v2",
+    ///   "bert-base-uncased")
     pub async fn load_model(&mut self, model_name: &str) -> Result<(), GpuEmbedderError> {
         if self.gpu_device.is_none() {
             return Err(GpuEmbedderError::WebGPUNotAvailable);
@@ -462,8 +461,9 @@ impl WasmGpuEmbedder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

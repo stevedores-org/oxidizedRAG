@@ -7,9 +7,12 @@
 //! - Thread pool management
 //! - Task scheduling and coordination
 
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use indexmap::IndexMap;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 use crate::core::{Document, GraphRAGError, KnowledgeGraph};
@@ -152,8 +155,9 @@ impl AsyncGraphRAGCore {
 
     /// Processes a single document asynchronously with rate limiting
     ///
-    /// Applies entity extraction and updates the knowledge graph for one document.
-    /// Automatically handles rate limiting and metrics collection.
+    /// Applies entity extraction and updates the knowledge graph for one
+    /// document. Automatically handles rate limiting and metrics
+    /// collection.
     ///
     /// # Parameters
     /// - `document`: Document to process
@@ -226,7 +230,8 @@ impl AsyncGraphRAGCore {
             } else {
                 // Simple placeholder response
                 Ok(format!(
-                    "Query processed: '{query}'. Found {entity_count} entities in graph. This is a basic implementation."
+                    "Query processed: '{query}'. Found {entity_count} entities in graph. This is \
+                     a basic implementation."
                 ))
             }
         };

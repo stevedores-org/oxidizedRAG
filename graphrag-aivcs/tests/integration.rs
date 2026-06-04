@@ -5,8 +5,8 @@
 //!     legacy one currently re-exported from `lib.rs` and used by the
 //!     `aivcs_adapter` + the examples.
 //!   - `recorder::RagRunRecorder` (async, `::start(ledger, &spec)`, ledger-
-//!     aware via `aivcs_core::GraphRunRecorder`) — the type this test suite
-//!     was written against.
+//!     aware via `aivcs_core::GraphRunRecorder`) — the type this test suite was
+//!     written against.
 //!
 //! Until the duplication is consolidated, we import the ledger-aware one
 //! directly from its submodule rather than via the crate root. See
@@ -14,8 +14,7 @@
 
 use std::sync::Arc;
 
-use graphrag_aivcs::recorder::RagRunRecorder;
-use graphrag_aivcs::{GraphRagSpec, RagAdapter};
+use graphrag_aivcs::{recorder::RagRunRecorder, GraphRagSpec, RagAdapter};
 use oxidized_state::{fakes::MemoryRunLedger, RunLedger, RunStatus};
 
 fn test_spec() -> GraphRagSpec {

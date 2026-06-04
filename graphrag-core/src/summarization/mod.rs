@@ -1,3 +1,10 @@
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+};
+
+use indexmap::IndexMap;
+
 #[cfg(feature = "parallel-processing")]
 use crate::parallel::ParallelProcessor;
 use crate::{
@@ -5,9 +12,6 @@ use crate::{
     text::TextProcessor,
     Result,
 };
-use indexmap::IndexMap;
-use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 
 /// Trait for LLM client to be used in summarization
 #[async_trait::async_trait]
@@ -520,43 +524,52 @@ impl DocumentTree {
 
         // Default prompts based on strategy and level
         match self.config.llm_config.strategy {
-            LLMStrategy::Uniform => {
-                Ok(format!(
-                    "Create a concise summary of the following text. The summary should be approximately {} characters long.\n\nContext: {}\n\nText to summarize:\n{}\n\nSummary:",
-                    level_config.max_length, context, text
-                ))
-            }
+            LLMStrategy::Uniform => Ok(format!(
+                "Create a concise summary of the following text. The summary should be \
+                 approximately {} characters long.\n\nContext: {}\n\nText to \
+                 summarize:\n{}\n\nSummary:",
+                level_config.max_length, context, text
+            )),
             LLMStrategy::Adaptive => {
                 if level == 0 {
                     Ok(format!(
-                        "Extract the key information from this text segment. Keep it factual and under {} characters.\n\nContext: {}\n\nText:\n{}\n\nKey points:",
+                        "Extract the key information from this text segment. Keep it factual and \
+                         under {} characters.\n\nContext: {}\n\nText:\n{}\n\nKey points:",
                         level_config.max_length, context, text
                     ))
                 } else if level <= 2 {
                     Ok(format!(
-                        "Create a coherent summary that combines the key information from this text. Make it approximately {} characters.\n\nContext: {}\n\nText:\n{}\n\nSummary:",
+                        "Create a coherent summary that combines the key information from this \
+                         text. Make it approximately {} characters.\n\nContext: \
+                         {}\n\nText:\n{}\n\nSummary:",
                         level_config.max_length, context, text
                     ))
                 } else {
                     Ok(format!(
-                        "Generate a high-level abstract summary of this content. Focus on the main themes and insights. Limit to approximately {} characters.\n\nContext: {}\n\nText:\n{}\n\nAbstract summary:",
+                        "Generate a high-level abstract summary of this content. Focus on the \
+                         main themes and insights. Limit to approximately {} \
+                         characters.\n\nContext: {}\n\nText:\n{}\n\nAbstract summary:",
                         level_config.max_length, context, text
                     ))
                 }
-            }
+            },
             LLMStrategy::Progressive => {
                 if level_config.use_abstractive {
                     Ok(format!(
-                        "Generate an abstractive summary that synthesizes the key concepts and relationships in this text. The summary should be approximately {} characters.\n\nContext: {}\n\nText:\n{}\n\nAbstractive summary:",
+                        "Generate an abstractive summary that synthesizes the key concepts and \
+                         relationships in this text. The summary should be approximately {} \
+                         characters.\n\nContext: {}\n\nText:\n{}\n\nAbstractive summary:",
                         level_config.max_length, context, text
                     ))
                 } else {
                     Ok(format!(
-                        "Extract and organize the most important sentences from this text to create a coherent summary. Keep it under {} characters.\n\nContext: {}\n\nText:\n{}\n\nExtractive summary:",
+                        "Extract and organize the most important sentences from this text to \
+                         create a coherent summary. Keep it under {} characters.\n\nContext: \
+                         {}\n\nText:\n{}\n\nExtractive summary:",
                         level_config.max_length, context, text
                     ))
                 }
-            }
+            },
         }
     }
 
@@ -758,7 +771,8 @@ impl DocumentTree {
             if self.llm_client.is_some() {
                 // Create context for this merge operation
                 let context = format!(
-                    "Merging {} nodes at level {}. This represents a higher-level abstraction of the document content.",
+                    "Merging {} nodes at level {}. This represents a higher-level abstraction of \
+                     the document content.",
                     node_ids.len(),
                     level
                 );
@@ -777,7 +791,11 @@ impl DocumentTree {
                         llm_summary
                     },
                     Err(e) => {
-                        eprintln!("⚠️ LLM summarization failed for level {}: {}, falling back to extractive", level, e);
+                        eprintln!(
+                            "⚠️ LLM summarization failed for level {}: {}, falling back to \
+                             extractive",
+                            level, e
+                        );
                         self.generate_extractive_summary(&combined_content)?
                     },
                 }
@@ -1281,7 +1299,8 @@ mod tests {
         let doc_id = DocumentId::new("test_doc".to_string());
         let tree = DocumentTree::new(doc_id, config).unwrap();
 
-        let text = "This is the first sentence. This is a second sentence with more details. This is the final sentence.";
+        let text = "This is the first sentence. This is a second sentence with more details. This \
+                    is the final sentence.";
         let summary = tree.generate_extractive_summary(text).unwrap();
 
         assert!(!summary.is_empty());

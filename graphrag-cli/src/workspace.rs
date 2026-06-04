@@ -1,8 +1,9 @@
 //! Workspace management
 
+use std::path::PathBuf;
+
 use color_eyre::eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use uuid::Uuid;
 
 /// Workspace metadata

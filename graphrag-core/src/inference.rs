@@ -1,7 +1,8 @@
 //! Implicit relationship inference system
 
-use crate::core::{Entity, EntityId, KnowledgeGraph, TextChunk};
 use std::collections::HashMap;
+
+use crate::core::{Entity, EntityId, KnowledgeGraph, TextChunk};
 
 /// Represents a relationship inferred between two entities
 ///
@@ -23,8 +24,8 @@ pub struct InferredRelation {
 
 /// Configuration for the relationship inference engine
 ///
-/// Controls the behavior and thresholds used when inferring implicit relationships
-/// between entities based on their co-occurrence in text.
+/// Controls the behavior and thresholds used when inferring implicit
+/// relationships between entities based on their co-occurrence in text.
 #[derive(Debug, Clone)]
 pub struct InferenceConfig {
     /// Minimum confidence threshold for accepting an inferred relationship
@@ -67,8 +68,9 @@ impl InferenceEngine {
 
     /// Infer relationships for a target entity
     ///
-    /// Analyzes the knowledge graph to find entities that frequently co-occur with
-    /// the target entity and have contextual evidence of a relationship.
+    /// Analyzes the knowledge graph to find entities that frequently co-occur
+    /// with the target entity and have contextual evidence of a
+    /// relationship.
     ///
     /// # Arguments
     ///
@@ -138,9 +140,9 @@ impl InferenceEngine {
 
     /// Calculate evidence score for a potential relationship
     ///
-    /// Analyzes a text chunk to determine how strongly it suggests a relationship
-    /// between two entities. Uses proximity analysis, pattern matching, and
-    /// contextual clues.
+    /// Analyzes a text chunk to determine how strongly it suggests a
+    /// relationship between two entities. Uses proximity analysis, pattern
+    /// matching, and contextual clues.
     ///
     /// # Arguments
     ///
@@ -283,7 +285,8 @@ impl InferenceEngine {
     ///
     /// # Returns
     ///
-    /// Returns the cleaned, lowercase entity name with underscores replaced by spaces
+    /// Returns the cleaned, lowercase entity name with underscores replaced by
+    /// spaces
     fn extract_entity_name(&self, entity_id: &EntityId) -> String {
         // EntityId format is typically "TYPE_normalized_name"
         let id_str = &entity_id.0;
@@ -298,8 +301,8 @@ impl InferenceEngine {
 
     /// Calculate proximity score between entities in text
     ///
-    /// Determines how close two entities are mentioned in the text. Closer proximity
-    /// suggests a stronger relationship between the entities.
+    /// Determines how close two entities are mentioned in the text. Closer
+    /// proximity suggests a stronger relationship between the entities.
     ///
     /// # Arguments
     ///
@@ -364,12 +367,13 @@ impl InferenceEngine {
     /// * `content` - The text content to search
     /// * `entity_a` - Name of the first entity
     /// * `entity_b` - Name of the second entity
-    /// * `pattern` - The relationship pattern to search for (e.g., "friend", "enemy")
+    /// * `pattern` - The relationship pattern to search for (e.g., "friend",
+    ///   "enemy")
     ///
     /// # Returns
     ///
-    /// Returns `true` if both entities are found within 100 characters before and
-    /// after the pattern, `false` otherwise.
+    /// Returns `true` if both entities are found within 100 characters before
+    /// and after the pattern, `false` otherwise.
     fn entities_near_pattern(
         &self,
         content: &str,

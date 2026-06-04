@@ -19,14 +19,15 @@
 
 pub mod pipeline_validation;
 
+use std::collections::HashMap;
+
 pub use pipeline_validation::{
     DocumentProcessingValidator, EntityExtractionValidator, GraphConstructionValidator,
     PhaseValidation, PipelineValidationReport, RelationshipExtractionValidator, ValidationCheck,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{Entity, GraphRAGError, Relationship, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// A query result from GraphRAG that can be evaluated
 #[derive(Debug, Clone, Serialize, Deserialize)]

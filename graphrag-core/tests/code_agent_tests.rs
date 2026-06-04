@@ -12,8 +12,9 @@
 
 mod common;
 
-use common::*;
 use std::time::Instant;
+
+use common::*;
 
 // ---------------------------------------------------------------------------
 // Module 1: Code Indexing
@@ -630,7 +631,8 @@ mod e2e_agent_workflows {
             "History should maintain semantic context across turns"
         );
 
-        // Verify response quality improved with feedback (Turn 3 response is more detailed)
+        // Verify response quality improved with feedback (Turn 3 response is more
+        // detailed)
         let turn_3 = conversation.last_turn().expect("Should have turn 3");
         let turn_1 = conversation.turns().next().expect("Should have turn 1");
         assert!(
@@ -753,8 +755,8 @@ mod e2e_agent_workflows {
             .collect();
 
         // Generate suggestion based on retrieved context
-        let suggestion = "Based on existing structure, suggested implementation: \
-             impl Calculator { pub fn multiply(&self, a: i32, b: i32) -> i32 { a * b } }"
+        let suggestion = "Based on existing structure, suggested implementation: impl Calculator \
+                          { pub fn multiply(&self, a: i32, b: i32) -> i32 { a * b } }"
             .to_string();
 
         assert!(

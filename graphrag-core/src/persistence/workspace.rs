@@ -2,9 +2,12 @@
 //!
 //! Provides multi-workspace support with checkpointing and metadata tracking.
 
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 use crate::core::{GraphRAGError, KnowledgeGraph, Result};
-use std::fs;
-use std::path::{Path, PathBuf};
 
 /// Workspace metadata
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -321,8 +324,9 @@ impl WorkspaceManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_workspace_manager_creation() {

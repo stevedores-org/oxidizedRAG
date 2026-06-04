@@ -1,13 +1,14 @@
 //! Embeddings module for GraphRAG Server
 //!
-//! Provides a unified interface for generating embeddings using various backends:
+//! Provides a unified interface for generating embeddings using various
+//! backends:
 //! - Ollama (local LLM service)
 //! - Hash-based fallback (deterministic, no external dependencies)
 //!
 //! ## Usage
 //!
 //! ```rust
-//! use graphrag_server::embeddings::{EmbeddingService, EmbeddingConfig};
+//! use graphrag_server::embeddings::{EmbeddingConfig, EmbeddingService};
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,14 +18,14 @@
 //! # }
 //! ```
 
-use graphrag_core::vector::EmbeddingGenerator;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tracing::{info, warn};
 
+use graphrag_core::vector::EmbeddingGenerator;
 #[cfg(feature = "ollama")]
 use ollama_rs::{generation::embeddings::request::GenerateEmbeddingsRequest, Ollama};
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
+use tracing::{info, warn};
 
 /// Embedding service configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,7 +147,10 @@ impl EmbeddingService {
 
         #[cfg(not(feature = "ollama"))]
         if config.backend == "ollama" {
-            warn!("⚠ Ollama support not compiled in. Using fallback embeddings. Rebuild with --features ollama");
+            warn!(
+                "⚠ Ollama support not compiled in. Using fallback embeddings. Rebuild with \
+                 --features ollama"
+            );
         }
 
         // Always create fallback generator

@@ -1,6 +1,7 @@
 //! GraphRAG AIVCS SurrealDB Persistence Architecture
 //!
-//! This example demonstrates the complete architecture for persisting RAG executions:
+//! This example demonstrates the complete architecture for persisting RAG
+//! executions:
 //! 1. RagRunRecorder - tracks RAG events locally
 //! 2. RagConfigDigest - versions configurations deterministically
 //! 3. RagToAivcsAdapter - converts to AIVCS format
@@ -39,9 +40,9 @@ fn main() {
     // Simulate LLM interaction
     recorder.record_llm_call(
         "Summarize the key architectural patterns from these retrieval results...",
-        "Based on the retrieved documents, Rust's key architectural patterns include: \
-         1. Ownership & borrowing for memory safety, 2. Pattern matching for control flow, \
-         3. Traits for abstraction and composition...",
+        "Based on the retrieved documents, Rust's key architectural patterns include: 1. \
+         Ownership & borrowing for memory safety, 2. Pattern matching for control flow, 3. Traits \
+         for abstraction and composition...",
         620,
         850,
     );

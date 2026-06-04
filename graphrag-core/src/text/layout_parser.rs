@@ -1,7 +1,6 @@
 //! Layout parser trait and factory for document structure detection
 
-use crate::core::Document;
-use crate::text::document_structure::DocumentStructure;
+use crate::{core::Document, text::document_structure::DocumentStructure};
 
 /// Trait for document layout parsers
 pub trait LayoutParser: Send + Sync {

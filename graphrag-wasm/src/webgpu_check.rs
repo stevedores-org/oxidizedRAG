@@ -50,11 +50,8 @@ impl WebGPUInfo {
     pub fn get_summary(&self) -> String {
         if self.available {
             format!(
-                "✅ WebGPU Available\n\
-                 GPU: {} ({})\n\
-                 Max Buffer: {} MB\n\
-                 Max Texture: {}px\n\
-                 Browser: {}",
+                "✅ WebGPU Available\nGPU: {} ({})\nMax Buffer: {} MB\nMax Texture: \
+                 {}px\nBrowser: {}",
                 self.vendor,
                 self.architecture,
                 self.max_buffer_size / 1_048_576, // Convert to MB
@@ -261,8 +258,9 @@ pub async fn get_recommended_backend() -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

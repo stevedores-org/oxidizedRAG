@@ -18,10 +18,10 @@
 //! - Model weights and configuration
 //! - Progressive loading support
 
-use serde::{Deserialize, Serialize};
 use std::rc::Rc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::{prelude::*, JsCast};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     Cache, IdbDatabase, IdbOpenDbRequest, IdbRequest, IdbTransactionMode, Request, Response,
@@ -142,7 +142,8 @@ impl IndexedDBStore {
             let db = request.result().unwrap().dyn_into::<IdbDatabase>().unwrap();
 
             // Create object stores (will only create if they don't exist)
-            // onupgradeneeded is only called when version changes, so we can safely try to create
+            // onupgradeneeded is only called when version changes, so we can safely try to
+            // create
             let _ = db.create_object_store("entities").map_err(|e| {
                 web_sys::console::warn_1(
                     &format!("entities store may already exist: {:?}", e).into(),
@@ -257,14 +258,16 @@ impl IndexedDBStore {
     ///
     /// # Arguments
     /// * `store_name` - Name of the object store
-    /// * `batch_size` - Maximum number of items to retrieve (optional, default 100)
+    /// * `batch_size` - Maximum number of items to retrieve (optional, default
+    ///   100)
     ///
     /// # Returns
     /// Vector of all values in the store
     ///
     /// # Performance
     /// Using `getAll()` with batch size is 10-50x faster than cursor iteration
-    /// for large datasets (100+ items). Recommended for entity/relationship retrieval.
+    /// for large datasets (100+ items). Recommended for entity/relationship
+    /// retrieval.
     pub async fn get_all_batched<T: for<'de> Deserialize<'de>>(
         &self,
         store_name: &str,
@@ -278,8 +281,8 @@ impl IndexedDBStore {
             StorageError::DatabaseError(format!("Failed to get object store: {:?}", e))
         })?;
 
-        // Use getAll() - note: batch_size parameter is ignored as web_sys IdbObjectStore
-        // doesn't support limiting results directly
+        // Use getAll() - note: batch_size parameter is ignored as web_sys
+        // IdbObjectStore doesn't support limiting results directly
         let request = store
             .get_all()
             .map_err(|e| StorageError::DatabaseError(format!("Failed to getAll: {:?}", e)))?;
@@ -412,8 +415,9 @@ impl IndexedDBStore {
 
 /// Cache API wrapper for ML model storage
 ///
-/// Provides async API for storing and retrieving large ML models (up to 1.6GB+).
-/// Uses the browser's Cache API which is designed for PWA and large file storage.
+/// Provides async API for storing and retrieving large ML models (up to
+/// 1.6GB+). Uses the browser's Cache API which is designed for PWA and large
+/// file storage.
 ///
 /// ## Usage
 ///
@@ -605,8 +609,9 @@ pub async fn estimate_storage() -> Result<(u64, u64, f64), StorageError> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

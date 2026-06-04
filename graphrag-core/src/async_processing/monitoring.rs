@@ -1,12 +1,13 @@
 //! Performance monitoring and metrics collection for GraphRAG operations.
 //!
-//! This module provides the [`ProcessingMetrics`] collector for tracking comprehensive
-//! statistics about query execution, document processing, batch operations, rate limiting,
-//! and system resource usage.
+//! This module provides the [`ProcessingMetrics`] collector for tracking
+//! comprehensive statistics about query execution, document processing, batch
+//! operations, rate limiting, and system resource usage.
 //!
 //! # Main Types
 //!
-//! - [`ProcessingMetrics`]: Thread-safe metrics collector using atomic operations
+//! - [`ProcessingMetrics`]: Thread-safe metrics collector using atomic
+//!   operations
 //! - [`MetricsSummary`]: Comprehensive snapshot of all collected metrics
 //! - [`QueryMetrics`]: Query-specific statistics
 //! - [`DocumentMetrics`]: Document processing statistics
@@ -55,9 +56,13 @@
 //! metrics.print_summary();
 //! ```
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant};
+use std::{
+    sync::{
+        atomic::{AtomicU64, AtomicUsize, Ordering},
+        Arc, RwLock,
+    },
+    time::{Duration, Instant},
+};
 
 /// Metrics collector for tracking processing performance and statistics
 ///
@@ -145,7 +150,8 @@ impl ProcessingMetrics {
 
     /// Records the execution duration of a query
     ///
-    /// Keeps only the most recent 1000 measurements to prevent unbounded memory growth.
+    /// Keeps only the most recent 1000 measurements to prevent unbounded memory
+    /// growth.
     ///
     /// # Parameters
     /// - `duration`: Time taken to execute the query
@@ -176,7 +182,8 @@ impl ProcessingMetrics {
 
     /// Records the processing duration of a document
     ///
-    /// Keeps only the most recent 1000 measurements to prevent unbounded memory growth.
+    /// Keeps only the most recent 1000 measurements to prevent unbounded memory
+    /// growth.
     ///
     /// # Parameters
     /// - `duration`: Time taken to process the document
@@ -197,7 +204,8 @@ impl ProcessingMetrics {
 
     /// Records the processing duration of a batch
     ///
-    /// Keeps only the most recent 100 measurements to prevent unbounded memory growth.
+    /// Keeps only the most recent 100 measurements to prevent unbounded memory
+    /// growth.
     ///
     /// # Parameters
     /// - `duration`: Time taken to process the batch
@@ -312,7 +320,8 @@ impl ProcessingMetrics {
     /// Calculates the query success rate
     ///
     /// # Returns
-    /// Ratio of successful queries to total queries (0.0-1.0), or 1.0 if no queries
+    /// Ratio of successful queries to total queries (0.0-1.0), or 1.0 if no
+    /// queries
     pub fn get_query_success_rate(&self) -> f64 {
         let total = self.get_queries_started();
         if total == 0 {
@@ -325,7 +334,8 @@ impl ProcessingMetrics {
     /// Calculates the document processing success rate
     ///
     /// # Returns
-    /// Ratio of successful documents to total documents (0.0-1.0), or 1.0 if no documents
+    /// Ratio of successful documents to total documents (0.0-1.0), or 1.0 if no
+    /// documents
     pub fn get_document_success_rate(&self) -> f64 {
         let total = self.get_documents_started();
         if total == 0 {

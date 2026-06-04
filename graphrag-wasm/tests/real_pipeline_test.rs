@@ -1,4 +1,5 @@
-//! Integration test for complete pipeline with REAL embeddings and vector search
+//! Integration test for complete pipeline with REAL embeddings and vector
+//! search
 //!
 //! This test verifies:
 //! 1. Hash-based TF embeddings generate non-zero vectors
@@ -17,8 +18,9 @@ async fn test_real_embeddings_generation() {
     let _embedder = CandleEmbedder::new("test-model", 384).await.unwrap();
 
     // Simulate model loading (in real usage, this downloads from HuggingFace)
-    // For this test, we'll use the baseline TF implementation which works without model files
-    // Note: In production, load_model() would be called, but our baseline doesn't require it
+    // For this test, we'll use the baseline TF implementation which works without
+    // model files Note: In production, load_model() would be called, but our
+    // baseline doesn't require it
 
     let text1 = "artificial intelligence machine learning";
     let text2 = "cooking recipes food preparation";

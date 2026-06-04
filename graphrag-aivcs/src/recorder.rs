@@ -2,17 +2,16 @@
 
 use std::sync::Arc;
 
+use aivcs_core::recording::GraphRunRecorder;
 use chrono::Utc;
 use oxidized_state::{RunEvent, RunId, RunLedger, RunMetadata, RunSummary, StorageError};
-
-use aivcs_core::recording::GraphRunRecorder;
 
 use crate::spec::GraphRagSpec;
 
 /// Records RAG pipeline events (retrieval, LLM calls) into an AIVCS run ledger.
 ///
-/// Uses [`GraphRunRecorder`] for lifecycle (start/finish with observability hooks)
-/// and appends RAG-specific events directly to the ledger.
+/// Uses [`GraphRunRecorder`] for lifecycle (start/finish with observability
+/// hooks) and appends RAG-specific events directly to the ledger.
 pub struct RagRunRecorder {
     inner: GraphRunRecorder,
     ledger: Arc<dyn RunLedger>,

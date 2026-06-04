@@ -1,8 +1,9 @@
 //! Cache warming strategies for improved performance
 
+use std::time::Duration;
+
 use super::{CacheError, CacheResult, CachedLLMClient};
 use crate::core::traits::{GenerationParams, LanguageModel};
-use std::time::Duration;
 
 /// Cache warming strategies
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

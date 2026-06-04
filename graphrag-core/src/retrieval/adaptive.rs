@@ -1,5 +1,7 @@
 //! Adaptive strategy selection for intelligent retrieval
 
+use std::collections::HashMap;
+
 use crate::{
     core::KnowledgeGraph,
     retrieval::{QueryAnalysisResult, QueryType, RetrievalSystem, SearchResult},
@@ -7,7 +9,6 @@ use crate::{
     vector::VectorIndex,
     Result,
 };
-use std::collections::HashMap;
 
 /// Weights for different retrieval strategies
 #[derive(Debug, Clone)]

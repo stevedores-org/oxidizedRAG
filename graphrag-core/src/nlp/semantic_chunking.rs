@@ -492,11 +492,9 @@ impl ChunkingStats {
 mod tests {
     use super::*;
 
-    const TEST_TEXT: &str = "This is the first sentence. This is the second sentence. \
-                              This is the third sentence.\n\n\
-                              This is a new paragraph with different content. \
-                              It has multiple sentences too. \
-                              And here is another one.";
+    const TEST_TEXT: &str = "This is the first sentence. This is the second sentence. This is the \
+                             third sentence.\n\nThis is a new paragraph with different content. \
+                             It has multiple sentences too. And here is another one.";
 
     #[test]
     fn test_fixed_size_chunking() {

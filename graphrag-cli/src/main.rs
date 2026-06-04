@@ -3,9 +3,10 @@
 //! A modern TUI built with Ratatui for interactive GraphRAG queries,
 //! document processing, and knowledge graph exploration.
 
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
-use std::path::PathBuf;
 
 mod action;
 mod app;
@@ -48,13 +49,15 @@ enum Commands {
     /// Start interactive TUI (default)
     Tui,
 
-    /// Initialize GraphRAG with configuration (deprecated: use TUI with /config)
+    /// Initialize GraphRAG with configuration (deprecated: use TUI with
+    /// /config)
     Init {
         /// Configuration file path
         config: PathBuf,
     },
 
-    /// Load a document into the knowledge graph (deprecated: use TUI with /load)
+    /// Load a document into the knowledge graph (deprecated: use TUI with
+    /// /load)
     Load {
         /// Document file path
         document: PathBuf,
@@ -78,7 +81,8 @@ enum Commands {
         explain_query: bool,
     },
 
-    /// List entities in the knowledge graph (deprecated: use TUI with /entities)
+    /// List entities in the knowledge graph (deprecated: use TUI with
+    /// /entities)
     Entities {
         /// Filter by name or type
         filter: Option<String>,
@@ -403,8 +407,8 @@ fn setup_logging(debug: bool) -> Result<()> {
 
 /// Setup tracing/logging for TUI mode (logs to file)
 fn setup_tui_logging() -> Result<()> {
-    use std::fs::OpenOptions;
-    use std::sync::Arc;
+    use std::{fs::OpenOptions, sync::Arc};
+
     use tracing_subscriber::EnvFilter;
 
     // Create logs directory if it doesn't exist

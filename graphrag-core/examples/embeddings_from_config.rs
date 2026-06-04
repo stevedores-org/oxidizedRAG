@@ -7,14 +7,11 @@
 //! ```bash
 //! cargo run --example embeddings_from_config --features "ureq,huggingface-hub"
 //! ```
-use graphrag_core::embeddings::config::EmbeddingProviderConfig;
-use graphrag_core::embeddings::EmbeddingProvider;
-
 #[cfg(feature = "ureq")]
 use graphrag_core::embeddings::api_providers::HttpEmbeddingProvider;
-
 #[cfg(feature = "huggingface-hub")]
 use graphrag_core::embeddings::huggingface::HuggingFaceEmbeddings;
+use graphrag_core::embeddings::{config::EmbeddingProviderConfig, EmbeddingProvider};
 
 #[tokio::main]
 async fn main() -> graphrag_core::core::error::Result<()> {

@@ -15,8 +15,9 @@
 //! - Trend analysis and forecasting
 //! - Event detection in temporal data
 
-use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
+
+use serde::{Deserialize, Serialize};
 
 /// Temporal edge with timestamp
 #[derive(Debug, Clone, Serialize, Deserialize)]

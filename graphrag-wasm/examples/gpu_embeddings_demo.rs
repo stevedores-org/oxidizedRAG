@@ -35,10 +35,9 @@
 //! # Then serve www/ directory
 //! ```
 
-use wasm_bindgen::prelude::*;
-
 #[cfg(feature = "webgpu")]
 use graphrag_wasm::gpu_embedder::GpuEmbedder;
+use wasm_bindgen::prelude::*;
 
 /// Example 1: Check WebGPU availability
 #[wasm_bindgen]

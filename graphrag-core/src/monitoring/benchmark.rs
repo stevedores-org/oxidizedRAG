@@ -6,8 +6,9 @@
 //! - Latency and throughput
 //! - Quality metrics (F1, Exact Match, BLEU)
 
-use serde::{Deserialize, Serialize};
 use std::time::Instant;
+
+use serde::{Deserialize, Serialize};
 
 /// Benchmark results for a single query
 #[derive(Debug, Clone, Serialize, Deserialize)]

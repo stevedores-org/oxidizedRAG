@@ -116,7 +116,8 @@ impl ExtractiveSummarizer {
         } else {
             // Middle sentences get decreasing score based on distance from start
             let distance_from_start = position as f32 / all_sentences.len() as f32;
-            1.0 - (distance_from_start * 0.5) // Gradually decrease from 1.0 to 0.5
+            1.0 - (distance_from_start * 0.5) // Gradually decrease from 1.0 to
+                                              // 0.5
         };
         total_score += position_score * 0.3;
 
@@ -236,7 +237,8 @@ impl ExtractiveSummarizer {
 
     /// Select sentences to include in summary
     ///
-    /// Greedy selection: iteratively add highest-scoring sentences until max_length reached
+    /// Greedy selection: iteratively add highest-scoring sentences until
+    /// max_length reached
     fn select_sentences(
         &self,
         mut scored_sentences: Vec<(usize, f32)>,
@@ -390,10 +392,10 @@ mod tests {
     #[test]
     fn test_summarization() {
         let summarizer = ExtractiveSummarizer::new();
-        let text = "Machine learning is a subset of artificial intelligence. \
-                    It focuses on training algorithms to learn from data. \
-                    Deep learning is a specialized branch of machine learning. \
-                    Neural networks are the foundation of deep learning systems.";
+        let text = "Machine learning is a subset of artificial intelligence. It focuses on \
+                    training algorithms to learn from data. Deep learning is a specialized branch \
+                    of machine learning. Neural networks are the foundation of deep learning \
+                    systems.";
 
         let summary = summarizer.summarize(text, 100).unwrap();
 
@@ -408,8 +410,7 @@ mod tests {
     #[test]
     fn test_sentence_selection() {
         let summarizer = ExtractiveSummarizer::new();
-        let text = "The quick brown fox jumps over the lazy dog. \
-                    This is a simple test sentence. \
+        let text = "The quick brown fox jumps over the lazy dog. This is a simple test sentence. \
                     Machine learning and artificial intelligence are transforming technology.";
 
         let summary = summarizer.summarize_sentences(text, 1).unwrap();
@@ -424,7 +425,8 @@ mod tests {
     #[test]
     fn test_truncation() {
         let summarizer = ExtractiveSummarizer::new();
-        let long_sentence = "This is a very long sentence that needs to be truncated because it exceeds the maximum allowed length for the summary";
+        let long_sentence = "This is a very long sentence that needs to be truncated because it \
+                             exceeds the maximum allowed length for the summary";
 
         let truncated = summarizer.truncate_sentence(long_sentence, 50);
 

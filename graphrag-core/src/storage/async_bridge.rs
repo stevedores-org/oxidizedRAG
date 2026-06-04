@@ -4,13 +4,17 @@
 //! [`ProductionGraphStore`], keeping both in sync through the incremental
 //! update pipeline.
 
-use crate::core::{Entity, EntityId, KnowledgeGraph, Relationship, Result};
-use crate::graph::incremental::{
-    ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
-    ProductionGraphStore, UpdateId,
-};
 use std::sync::Arc;
+
 use tokio::sync::Mutex;
+
+use crate::{
+    core::{Entity, EntityId, KnowledgeGraph, Relationship, Result},
+    graph::incremental::{
+        ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
+        ProductionGraphStore, UpdateId,
+    },
+};
 
 /// Bridges the synchronous [`KnowledgeGraph`] with the async
 /// [`ProductionGraphStore`] for incremental updates.

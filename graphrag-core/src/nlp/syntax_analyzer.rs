@@ -10,9 +10,11 @@
 //! - Sentence segmentation
 //! - Token classification
 
-use crate::Result;
-use regex::Regex;
 use std::collections::HashMap;
+
+use regex::Regex;
+
+use crate::Result;
 
 /// Part-of-Speech tag
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -667,7 +669,8 @@ mod tests {
         assert_eq!(tokens[0].pos, POSTag::Determiner); // "The"
         assert_eq!(tokens[1].pos, POSTag::Adjective); // "good" (in dictionary)
         assert!(matches!(tokens[3].pos, POSTag::Noun | POSTag::ProperNoun)); // "fox"
-                                                                             // "jumps" ends with 's' but may be tagged as plural noun, so we check it's present
+                                                                             // "jumps" ends with 's' but may be tagged as plural noun, so we check it's
+                                                                             // present
         assert!(tokens.iter().any(|t| t.text == "jumps"));
     }
 

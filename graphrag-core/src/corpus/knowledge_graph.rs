@@ -1,14 +1,17 @@
 //! Corpus-level knowledge graph construction and management
 
-use crate::core::Result;
-use crate::corpus::document_manager::DocumentCollection;
-use crate::corpus::entity_linker::EntityCluster;
-use petgraph::graph::NodeIndex;
-use petgraph::visit::EdgeRef;
-use petgraph::{Directed, Graph};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
+
+use petgraph::{graph::NodeIndex, visit::EdgeRef, Directed, Graph};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::path::Path;
+
+use crate::{
+    core::Result,
+    corpus::{document_manager::DocumentCollection, entity_linker::EntityCluster},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalEntity {

@@ -3,11 +3,13 @@
 //! This module provides a dependency injection system that allows
 //! components to be swapped out for testing or different implementations.
 
-use crate::core::traits::*;
-use crate::core::{GraphRAGError, Result};
-use std::any::{Any, TypeId};
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+    sync::Arc,
+};
+
+use crate::core::{traits::*, GraphRAGError, Result};
 
 /// Type-erased service container
 type ServiceBox = Box<dyn Any + Send + Sync>;

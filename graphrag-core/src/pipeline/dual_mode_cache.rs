@@ -1,12 +1,13 @@
 //! Dual-mode cache supporting both in-memory and persistent backends.
 //!
-//! Enables seamless switching between in-memory (fast) and disk-based (persistent) caching.
+//! Enables seamless switching between in-memory (fast) and disk-based
+//! (persistent) caching.
+
+use std::{collections::HashMap, sync::Mutex};
 
 use super::persistent_cache::CacheStats;
 #[cfg(feature = "persistent-cache")]
 use super::persistent_cache::PersistentCacheBackend;
-use std::collections::HashMap;
-use std::sync::Mutex;
 
 /// Dual-mode cache that can operate in-memory or persistent mode.
 pub struct DualModeCache {

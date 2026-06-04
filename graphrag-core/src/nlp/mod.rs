@@ -9,11 +9,13 @@
 //!
 //! ### Multilingual Support
 //! - Automatic language detection using n-gram analysis
-//! - Support for 10+ languages (English, Spanish, French, German, Chinese, Japanese, Korean, Arabic, Russian, Portuguese)
+//! - Support for 10+ languages (English, Spanish, French, German, Chinese,
+//!   Japanese, Korean, Arabic, Russian, Portuguese)
 //! - Language-specific text normalization and tokenization
 //!
 //! ### Semantic Chunking
-//! - Multiple chunking strategies (sentence, paragraph, topic, semantic, hybrid)
+//! - Multiple chunking strategies (sentence, paragraph, topic, semantic,
+//!   hybrid)
 //! - Intelligent boundary detection
 //! - Coherence scoring
 //! - Configurable chunk sizes and overlap
@@ -31,19 +33,16 @@ pub mod semantic_chunking;
 pub mod syntax_analyzer;
 
 // Re-export main types
-pub use multilingual::{
-    DetectionResult, Language, LanguageDetector, MultilingualProcessor, ProcessedText,
-};
-
-pub use semantic_chunking::{
-    ChunkingConfig, ChunkingStats, ChunkingStrategy, SemanticChunk, SemanticChunker,
-};
-
 pub use custom_ner::{
     AnnotatedExample, CustomNER, DatasetStatistics, EntityType, ExtractedEntity, ExtractionRule,
     RuleType, TrainingDataset,
 };
-
+pub use multilingual::{
+    DetectionResult, Language, LanguageDetector, MultilingualProcessor, ProcessedText,
+};
+pub use semantic_chunking::{
+    ChunkingConfig, ChunkingStats, ChunkingStrategy, SemanticChunk, SemanticChunker,
+};
 pub use syntax_analyzer::{
     Dependency, DependencyRelation, NounPhrase, POSTag, SyntaxAnalyzer, SyntaxAnalyzerConfig, Token,
 };

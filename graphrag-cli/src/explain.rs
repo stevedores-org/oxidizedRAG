@@ -73,9 +73,11 @@ pub fn format_query_trace(trace: &QueryTrace) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use graphrag_core::retrieval::explain::{QueryTrace, ScoreBreakdown, StageTrace};
     use std::time::Duration;
+
+    use graphrag_core::retrieval::explain::{QueryTrace, ScoreBreakdown, StageTrace};
+
+    use super::*;
 
     #[test]
     fn test_format_basic_trace() {

@@ -4,7 +4,8 @@
 //!
 //! ## Embeddings
 //! - **Candle CPU**: 100% Rust, BERT/MiniLM, 50-100ms, works everywhere
-//! - **Burn WebGPU**: 20-40x speedup, Chrome/Edge 70% users, requires feature flag
+//! - **Burn WebGPU**: 20-40x speedup, Chrome/Edge 70% users, requires feature
+//!   flag
 //!
 //! ## LLM Chatbot
 //! - **Candle CPU**: 2-5 tok/s, 100% Rust, good for demos
@@ -12,8 +13,8 @@
 //!
 //! ## Model Loading
 //!
-//! Models are automatically downloaded from HuggingFace and cached using the Cache API.
-//! Cached models persist across browser sessions for offline use.
+//! Models are automatically downloaded from HuggingFace and cached using the
+//! Cache API. Cached models persist across browser sessions for offline use.
 //!
 //! ## Usage
 //!
@@ -40,9 +41,10 @@
 //! console.log(embedding.length); // 384
 //! ```
 
-use crate::storage::CacheStore;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
+
+use crate::storage::CacheStore;
 
 /// Helper function to fetch URL and return bytes
 async fn fetch_url(url: &str) -> Result<Vec<u8>, JsValue> {
@@ -170,7 +172,8 @@ impl CandleEmbedder {
     /// Create a new Candle embedder
     ///
     /// # Arguments
-    /// * `model_name` - Model name (e.g., "sentence-transformers/all-MiniLM-L6-v2")
+    /// * `model_name` - Model name (e.g.,
+    ///   "sentence-transformers/all-MiniLM-L6-v2")
     /// * `dimension` - Embedding dimension (384 for MiniLM, 768 for BERT)
     pub async fn new(model_name: &str, dimension: usize) -> Result<Self, EmbedderError> {
         // Initialize cache store
@@ -186,8 +189,9 @@ impl CandleEmbedder {
 
     /// Load model from Cache API
     ///
-    /// Downloads model files from HuggingFace if not cached, then loads into memory.
-    /// Model files are stored persistently in Cache API for offline use.
+    /// Downloads model files from HuggingFace if not cached, then loads into
+    /// memory. Model files are stored persistently in Cache API for offline
+    /// use.
     pub async fn load_model(&mut self) -> Result<(), EmbedderError> {
         if self.model_loaded {
             return Ok(());
@@ -547,7 +551,8 @@ impl WasmEmbedder {
     /// Automatically detects and uses the best available backend.
     ///
     /// # Arguments
-    /// * `model_name` - Model name (e.g., "sentence-transformers/all-MiniLM-L6-v2")
+    /// * `model_name` - Model name (e.g.,
+    ///   "sentence-transformers/all-MiniLM-L6-v2")
     /// * `dimension` - Embedding dimension (384 for MiniLM, 768 for BERT)
     pub async fn new(model_name: String, dimension: usize) -> Result<WasmEmbedder, JsValue> {
         let embedder = create_embedder(&model_name, dimension)
@@ -642,8 +647,9 @@ impl WasmEmbedder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
@@ -651,7 +657,8 @@ mod tests {
     async fn test_candle_embedder() {
         let embedder = CandleEmbedder::new("test-model", 384).await;
         assert!(embedder.is_ok());
-        // Note: embed() will fail with ModelNotLoaded until load_model() is called
+        // Note: embed() will fail with ModelNotLoaded until load_model() is
+        // called
     }
 
     #[wasm_bindgen_test]

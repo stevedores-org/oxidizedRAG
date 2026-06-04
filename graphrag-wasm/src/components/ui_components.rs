@@ -8,14 +8,15 @@
 //! - `<QueryInterface/>`: Query input with syntax highlighting
 //! - `<GraphStats/>`: Real-time graph statistics display
 //! - `<DocumentManager/>`: Upload and manage documents
-//! - `<GraphVisualization/>`: Interactive graph rendering with force-directed layout
+//! - `<GraphVisualization/>`: Interactive graph rendering with force-directed
+//!   layout
 
 #![allow(dead_code)]
 
-use super::force_layout::{ForceLayout, LayoutConfig};
-use leptos::ev::SubmitEvent;
-use leptos::prelude::*;
+use leptos::{ev::SubmitEvent, prelude::*};
 use serde::{Deserialize, Serialize};
+
+use super::force_layout::{ForceLayout, LayoutConfig};
 
 /// Message type for chat history
 #[derive(Debug, Clone, Serialize, Deserialize)]

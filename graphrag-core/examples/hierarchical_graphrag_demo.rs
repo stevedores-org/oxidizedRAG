@@ -1,6 +1,7 @@
 //! Hierarchical GraphRAG Example
 //!
-//! Demonstrates the complete hierarchical GraphRAG pipeline with Leiden community detection:
+//! Demonstrates the complete hierarchical GraphRAG pipeline with Leiden
+//! community detection:
 //! 1. Build knowledge graph from documents
 //! 2. Extract entities and relationships
 //! 3. Detect hierarchical communities using Leiden algorithm
@@ -10,7 +11,6 @@
 //! Run with: cargo run --example hierarchical_graphrag_demo --features leiden
 
 use graphrag_core::core::{Document, DocumentId, Entity, EntityId, KnowledgeGraph, Relationship};
-
 #[cfg(feature = "leiden")]
 use graphrag_core::graph::LeidenConfig;
 

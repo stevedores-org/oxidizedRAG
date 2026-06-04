@@ -4,25 +4,24 @@
 //! dual-level retrieval, and robust response generation.
 
 #[cfg(feature = "rograg")]
-use crate::core::KnowledgeGraph;
-#[cfg(feature = "rograg")]
-use crate::Result;
-
-use crate::rograg::{
-    DecompositionResult, FuzzyMatchResult, FuzzyMatcher, HybridQueryDecomposer, IntentClassifier,
-    IntentResult, LogicFormResult, LogicFormRetriever, QueryDecomposer, QueryValidator,
-    StreamingResponseBuilder, ValidationResult,
-};
-
-use crate::rograg::quality_metrics::QualityMetrics;
-#[cfg(feature = "rograg")]
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "rograg")]
 use std::sync::Arc;
 #[cfg(feature = "rograg")]
 use std::time::{Duration, Instant};
+
+#[cfg(feature = "rograg")]
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::core::KnowledgeGraph;
+use crate::rograg::{
+    quality_metrics::QualityMetrics, DecompositionResult, FuzzyMatchResult, FuzzyMatcher,
+    HybridQueryDecomposer, IntentClassifier, IntentResult, LogicFormResult, LogicFormRetriever,
+    QueryDecomposer, QueryValidator, StreamingResponseBuilder, ValidationResult,
+};
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Error types for ROGRAG processing.
 #[cfg(feature = "rograg")]
@@ -792,7 +791,8 @@ impl Default for RogragConfig {
 
 /// Response from ROGRAG processing.
 ///
-/// Contains the generated answer, confidence scores, sources, and processing metadata.
+/// Contains the generated answer, confidence scores, sources, and processing
+/// metadata.
 #[cfg(feature = "rograg")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RogragResponse {

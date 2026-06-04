@@ -3,9 +3,11 @@
 //! Validates that batch insert, fetch, and query operations work correctly
 //! across storage backends, avoid N+1 query patterns, and produce metrics.
 
-use graphrag_core::core::{traits::BatchMetrics, Entity, EntityId};
-use graphrag_core::storage::MemoryStorage;
-use graphrag_core::vector::{VectorIndex, VectorUtils};
+use graphrag_core::{
+    core::{traits::BatchMetrics, Entity, EntityId},
+    storage::MemoryStorage,
+    vector::{VectorIndex, VectorUtils},
+};
 use indexmap::IndexMap;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -43,8 +45,9 @@ fn batch_insert_entities_returns_all_ids() {
 
     let ids: Vec<String> = entities.iter().map(|e| e.id.to_string()).collect();
 
-    // Insert individually to simulate batch (MemoryStorage doesn't impl Storage trait
-    // directly without the `async` feature, so we use the inherent methods)
+    // Insert individually to simulate batch (MemoryStorage doesn't impl Storage
+    // trait directly without the `async` feature, so we use the inherent
+    // methods)
     for e in &entities {
         storage.store_entity(e.id.to_string(), e.clone()).unwrap();
     }

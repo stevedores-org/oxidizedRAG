@@ -13,12 +13,15 @@ pub mod semantic_merging;
 /// String similarity-based entity linking module
 pub mod string_similarity_linker;
 
+use std::collections::{HashMap, HashSet};
+
 pub use bidirectional_index::{BidirectionalIndex, IndexStatistics};
 pub use gleaning_extractor::{ExtractionCompletionStatus, GleaningConfig, GleaningEntityExtractor};
 pub use llm_extractor::LLMEntityExtractor;
 pub use llm_relationship_extractor::{
     ExtractedEntity, ExtractedRelationship, ExtractionResult, LLMRelationshipExtractor,
 };
+use regex::Regex;
 pub use semantic_merging::{EntityMergeDecision, MergingStatistics, SemanticEntityMerger};
 pub use string_similarity_linker::{EntityLinkingConfig, StringSimilarityLinker};
 
@@ -27,8 +30,6 @@ use crate::{
     core::{ChunkId, Entity, EntityId, EntityMention, TextChunk},
     Result,
 };
-use regex::Regex;
-use std::collections::{HashMap, HashSet};
 
 /// Entity extraction system with dynamic configuration support
 pub struct EntityExtractor {
@@ -155,7 +156,8 @@ impl EntityExtractor {
         Ok(entities)
     }
 
-    /// Extract person entities using enhanced capitalization and context heuristics
+    /// Extract person entities using enhanced capitalization and context
+    /// heuristics
     fn extract_persons(&self, text: &str, chunk_id: &ChunkId) -> Result<Vec<Entity>> {
         let mut entities = Vec::new();
         let words: Vec<&str> = text.split_whitespace().collect();
@@ -1067,7 +1069,8 @@ impl EntityExtractor {
         Ok(entities)
     }
 
-    /// Check if a word is a common word that shouldn't be extracted as an entity
+    /// Check if a word is a common word that shouldn't be extracted as an
+    /// entity
     fn is_common_word(&self, word: &str) -> bool {
         let common_words = [
             "the", "and", "but", "or", "in", "on", "at", "to", "for", "with", "by", "from",

@@ -1,10 +1,14 @@
 //! Document collection management and indexing
 
-use crate::core::Result;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+
+use crate::core::Result;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentMetadata {
@@ -264,8 +268,10 @@ impl DocumentManager {
 
     /// Calculate content hash for deduplication
     fn calculate_content_hash(&self, content: &str) -> String {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::{
+            collections::hash_map::DefaultHasher,
+            hash::{Hash, Hasher},
+        };
 
         let mut hasher = DefaultHasher::new();
         content.hash(&mut hasher);

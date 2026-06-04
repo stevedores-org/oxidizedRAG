@@ -1,20 +1,23 @@
 //! HippoRAG Personalized PageRank Retrieval
 //!
-//! This module implements the HippoRAG retrieval strategy that uses Personalized
-//! PageRank (PPR) to combine fact-based entity signals with dense passage retrieval.
+//! This module implements the HippoRAG retrieval strategy that uses
+//! Personalized PageRank (PPR) to combine fact-based entity signals with dense
+//! passage retrieval.
 //!
 //! Key innovation: Uses a dual-signal approach for PPR personalization:
 //! 1. Entity weights from relevant facts (query-fact similarity)
 //! 2. Passage weights from dense retrieval (scaled down)
 //!
-//! Reference: "HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models"
-//! <https://arxiv.org/abs/2405.14831>
+//! Reference: "HippoRAG: Neurobiologically Inspired Long-Term Memory for Large
+//! Language Models" <https://arxiv.org/abs/2405.14831>
 
 use std::collections::HashMap;
 
-use crate::core::{EntityId, GraphRAGError, Result};
-use crate::graph::pagerank::{PageRankConfig, PersonalizedPageRank};
-use crate::retrieval::SearchResult;
+use crate::{
+    core::{EntityId, GraphRAGError, Result},
+    graph::pagerank::{PageRankConfig, PersonalizedPageRank},
+    retrieval::SearchResult,
+};
 
 /// Configuration for HippoRAG PPR retrieval
 #[derive(Debug, Clone)]
@@ -142,7 +145,8 @@ impl HippoRAGRetriever {
     /// Calculate entity weights based on fact relevance
     ///
     /// Key insight: Entities from high-scoring facts get high weights,
-    /// but downweighted by how many passages they appear in (reduces generic entities)
+    /// but downweighted by how many passages they appear in (reduces generic
+    /// entities)
     fn calculate_entity_weights(
         &self,
         facts: &[Fact],

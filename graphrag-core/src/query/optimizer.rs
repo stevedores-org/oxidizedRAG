@@ -8,9 +8,9 @@
 //!
 //! This is a rule-based optimizer without ML dependencies.
 
-use crate::core::KnowledgeGraph;
-use crate::Result;
 use std::collections::HashMap;
+
+use crate::{core::KnowledgeGraph, Result};
 
 /// Query operation types
 #[derive(Debug, Clone, PartialEq)]

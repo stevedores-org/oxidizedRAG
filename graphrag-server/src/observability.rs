@@ -1,7 +1,7 @@
 //! OpenTelemetry Observability
 //!
-//! This module provides comprehensive observability for GraphRAG using OpenTelemetry.
-//! It includes:
+//! This module provides comprehensive observability for GraphRAG using
+//! OpenTelemetry. It includes:
 //! - Distributed tracing with Jaeger
 //! - Metrics with Prometheus
 //! - Custom business metrics
@@ -33,10 +33,9 @@
 //! └────────┘         └──────────┘
 //! ```
 
+use std::{collections::HashMap, sync::Arc, time::Duration};
+
 use parking_lot::RwLock;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
 
 /// Metrics collector for business metrics
 #[derive(Default, Clone)]
@@ -310,7 +309,8 @@ impl Observability {
 
 /// Middleware for automatic request tracing
 ///
-/// This can be used with web frameworks to automatically trace all HTTP requests.
+/// This can be used with web frameworks to automatically trace all HTTP
+/// requests.
 pub struct TracingMiddleware {
     #[allow(dead_code)]
     observability: Arc<Observability>,

@@ -1,6 +1,9 @@
-use crate::config::{Config, SetConfig};
-use crate::{GraphRAGError, Result};
 use std::path::Path;
+
+use crate::{
+    config::{Config, SetConfig},
+    GraphRAGError, Result,
+};
 
 /// Result of configuration validation
 #[derive(Debug, Clone, Default)]
@@ -42,7 +45,8 @@ impl ValidationResult {
 pub trait Validatable {
     /// Validate configuration with standard checks
     fn validate(&self) -> ValidationResult;
-    /// Validate configuration with strict checks (includes warnings and suggestions)
+    /// Validate configuration with strict checks (includes warnings and
+    /// suggestions)
     fn validate_strict(&self) -> ValidationResult;
 }
 
@@ -126,7 +130,11 @@ impl Validatable for Config {
 
         // Add suggestions based on configuration
         if self.chunk_size > 1000 && self.chunk_overlap < 100 {
-            result.add_suggestion("Consider increasing chunk overlap for better context preservation with large chunks".to_string());
+            result.add_suggestion(
+                "Consider increasing chunk overlap for better context preservation with large \
+                 chunks"
+                    .to_string(),
+            );
         }
 
         result
@@ -246,7 +254,11 @@ fn validate_pipeline_approach(config: &SetConfig, result: &mut ValidationResult)
                 if semantic.entity_extraction.confidence_threshold < 0.0
                     || semantic.entity_extraction.confidence_threshold > 1.0
                 {
-                    result.add_error("Semantic entity extraction confidence threshold must be between 0.0 and 1.0".to_string());
+                    result.add_error(
+                        "Semantic entity extraction confidence threshold must be between 0.0 and \
+                         1.0"
+                        .to_string(),
+                    );
                 }
 
                 if semantic.entity_extraction.temperature < 0.0
@@ -279,7 +291,11 @@ fn validate_pipeline_approach(config: &SetConfig, result: &mut ValidationResult)
     if approach == "algorithmic" {
         match &config.algorithmic {
             None => {
-                result.add_error("Algorithmic pipeline approach selected but [algorithmic] configuration is missing".to_string());
+                result.add_error(
+                    "Algorithmic pipeline approach selected but [algorithmic] configuration is \
+                     missing"
+                        .to_string(),
+                );
             },
             Some(algorithmic) => {
                 if !algorithmic.enabled {
@@ -292,7 +308,8 @@ fn validate_pipeline_approach(config: &SetConfig, result: &mut ValidationResult)
                 // Validate algorithmic embeddings
                 if algorithmic.embeddings.backend != "hash" {
                     result.add_warning(format!(
-                        "Algorithmic pipeline typically uses 'hash' backend, but '{}' is configured",
+                        "Algorithmic pipeline typically uses 'hash' backend, but '{}' is \
+                         configured",
                         algorithmic.embeddings.backend
                     ));
                 }
@@ -316,7 +333,11 @@ fn validate_pipeline_approach(config: &SetConfig, result: &mut ValidationResult)
                 if algorithmic.entity_extraction.confidence_threshold < 0.0
                     || algorithmic.entity_extraction.confidence_threshold > 1.0
                 {
-                    result.add_error("Algorithmic entity extraction confidence threshold must be between 0.0 and 1.0".to_string());
+                    result.add_error(
+                        "Algorithmic entity extraction confidence threshold must be between 0.0 \
+                         and 1.0"
+                            .to_string(),
+                    );
                 }
 
                 // Validate algorithmic retrieval (BM25 parameters)
@@ -418,7 +439,11 @@ fn validate_pipeline_approach(config: &SetConfig, result: &mut ValidationResult)
     // Add suggestions based on approach
     match approach.as_str() {
         "semantic" => {
-            result.add_suggestion("Semantic pipeline uses neural embeddings and LLM-based extraction for high-quality results".to_string());
+            result.add_suggestion(
+                "Semantic pipeline uses neural embeddings and LLM-based extraction for \
+                 high-quality results"
+                    .to_string(),
+            );
             if config.ollama.enabled {
                 result.add_suggestion(
                     "Consider using 'llama3.1:8b' for entity extraction with gleaning enabled"
@@ -427,11 +452,23 @@ fn validate_pipeline_approach(config: &SetConfig, result: &mut ValidationResult)
             }
         },
         "algorithmic" => {
-            result.add_suggestion("Algorithmic pipeline uses pattern matching and TF-IDF for fast, resource-efficient processing".to_string());
-            result.add_suggestion("Algorithmic pipeline works well for structured documents and doesn't require an LLM".to_string());
+            result.add_suggestion(
+                "Algorithmic pipeline uses pattern matching and TF-IDF for fast, \
+                 resource-efficient processing"
+                    .to_string(),
+            );
+            result.add_suggestion(
+                "Algorithmic pipeline works well for structured documents and doesn't require an \
+                 LLM"
+                .to_string(),
+            );
         },
         "hybrid" => {
-            result.add_suggestion("Hybrid pipeline combines semantic and algorithmic approaches for balanced quality and performance".to_string());
+            result.add_suggestion(
+                "Hybrid pipeline combines semantic and algorithmic approaches for balanced \
+                 quality and performance"
+                    .to_string(),
+            );
             result.add_suggestion(
                 "Fine-tune hybrid weights based on your specific use case and evaluation metrics"
                     .to_string(),

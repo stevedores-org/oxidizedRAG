@@ -5,10 +5,11 @@
 //! - L2: Redis cache (distributed)
 //! - L3: Persistent storage (fallback)
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::RwLock;
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+    time::{Duration, Instant},
+};
 
 #[cfg(feature = "redis_storage")]
 use redis::{Commands, Connection};
@@ -54,7 +55,8 @@ impl<T: Clone> CacheEntry<T> {
         }
     }
 
-    /// Access the entry, updating access time and count, and return a clone of the value
+    /// Access the entry, updating access time and count, and return a clone of
+    /// the value
     pub fn access(&mut self) -> T {
         self.last_accessed = Instant::now();
         self.access_count += 1;
@@ -74,7 +76,8 @@ where
     K: Eq + std::hash::Hash + Clone,
     V: Clone,
 {
-    /// Create a new L1 (in-memory) cache with the given maximum size and default TTL
+    /// Create a new L1 (in-memory) cache with the given maximum size and
+    /// default TTL
     pub fn new(max_size: usize, default_ttl: Option<Duration>) -> Self {
         Self {
             cache: Arc::new(RwLock::new(HashMap::with_capacity(max_size))),
@@ -153,7 +156,8 @@ pub struct L2Cache {
 
 #[cfg(feature = "redis_storage")]
 impl L2Cache {
-    /// Create a new L2 (Redis) cache with the given connection URL, key prefix, and default TTL
+    /// Create a new L2 (Redis) cache with the given connection URL, key prefix,
+    /// and default TTL
     pub fn new(url: &str, key_prefix: String, default_ttl: Option<Duration>) -> Result<Self> {
         let client = redis::Client::open(url).map_err(|e| GraphRAGError::Storage {
             message: format!("Failed to connect to Redis: {}", e),
@@ -266,7 +270,8 @@ where
     K: Eq + std::hash::Hash + Clone + ToString,
     V: Clone + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-    /// Create a new distributed cache with L1 (memory) and optional L2 (Redis) tiers
+    /// Create a new distributed cache with L1 (memory) and optional L2 (Redis)
+    /// tiers
     pub fn new(
         l1_size: usize,
         l1_ttl: Option<Duration>,

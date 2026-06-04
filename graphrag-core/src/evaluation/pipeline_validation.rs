@@ -3,9 +3,11 @@
 //! This module provides tools to validate each phase of the GraphRAG pipeline,
 //! ensuring that every step produces expected outputs before proceeding.
 
-use crate::{Document, Entity, Relationship, TextChunk};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{Document, Entity, Relationship, TextChunk};
 
 /// Validation result for a pipeline phase
 #[derive(Debug, Clone, Serialize, Deserialize)]

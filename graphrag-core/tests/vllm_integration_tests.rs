@@ -4,14 +4,18 @@
 
 #[cfg(feature = "vllm")]
 mod vllm_tests {
-    use graphrag_core::core::traits::{AsyncLanguageModel, GenerationParams};
-    use graphrag_core::embeddings::EmbeddingProvider;
-    use graphrag_core::vllm::{
-        AsyncVllmGenerator, ChatMessage, Role, VllmClient, VllmConfig, VllmEmbeddingProvider,
+    use graphrag_core::{
+        core::traits::{AsyncLanguageModel, GenerationParams},
+        embeddings::EmbeddingProvider,
+        vllm::{
+            AsyncVllmGenerator, ChatMessage, Role, VllmClient, VllmConfig, VllmEmbeddingProvider,
+        },
     };
     use serde_json::json;
-    use wiremock::matchers::{header, method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
+    use wiremock::{
+        matchers::{header, method, path},
+        Mock, MockServer, ResponseTemplate,
+    };
 
     fn make_config(base_url: &str) -> VllmConfig {
         VllmConfig {

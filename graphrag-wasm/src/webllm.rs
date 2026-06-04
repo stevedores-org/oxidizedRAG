@@ -23,9 +23,11 @@
 //!
 //! ```rust
 //! let llm = WebLLM::new("Phi-3-mini-4k-instruct-q4f16_1-MLC").await?;
-//! let response = llm.chat("Hello!", |progress, text| {
-//!     console_log!("Loading: {}% - {}", progress * 100.0, text);
-//! }).await?;
+//! let response = llm
+//!     .chat("Hello!", |progress, text| {
+//!         console_log!("Loading: {}% - {}", progress * 100.0, text);
+//!     })
+//!     .await?;
 //! ```
 
 use serde::{Deserialize, Serialize};
@@ -120,7 +122,8 @@ impl WebLLM {
     /// Initialize WebLLM with a model
     ///
     /// # Arguments
-    /// * `model_id` - Model identifier (e.g., "Phi-3-mini-4k-instruct-q4f16_1-MLC")
+    /// * `model_id` - Model identifier (e.g.,
+    ///   "Phi-3-mini-4k-instruct-q4f16_1-MLC")
     ///
     /// # Available Models
     /// - "Llama-3.2-1B-Instruct-q4f16_1-MLC" (fast, 62 tok/s)
@@ -164,7 +167,8 @@ impl WebLLM {
     ///
     /// # Arguments
     /// * `model_id` - Model identifier
-    /// * `on_progress` - Callback for progress updates (progress: f64, text: String)
+    /// * `on_progress` - Callback for progress updates (progress: f64, text:
+    ///   String)
     pub async fn new_with_progress<F>(model_id: &str, on_progress: F) -> Result<Self, WebLLMError>
     where
         F: Fn(f64, String) + 'static,
@@ -438,7 +442,8 @@ impl WasmWebLLM {
     /// Initialize WebLLM
     ///
     /// # Arguments
-    /// * `model_id` - Model identifier (e.g., "Phi-3-mini-4k-instruct-q4f16_1-MLC")
+    /// * `model_id` - Model identifier (e.g.,
+    ///   "Phi-3-mini-4k-instruct-q4f16_1-MLC")
     pub async fn new(model_id: String) -> Result<WasmWebLLM, JsValue> {
         let llm = WebLLM::new(&model_id)
             .await
@@ -451,7 +456,8 @@ impl WasmWebLLM {
     ///
     /// # Arguments
     /// * `model_id` - Model identifier
-    /// * `on_progress` - JavaScript callback function(progress: number, text: string)
+    /// * `on_progress` - JavaScript callback function(progress: number, text:
+    ///   string)
     pub async fn new_with_progress(
         model_id: String,
         on_progress: js_sys::Function,
@@ -698,8 +704,9 @@ impl Default for WebLLMClient {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

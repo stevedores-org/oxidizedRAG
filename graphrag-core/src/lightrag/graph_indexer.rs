@@ -44,7 +44,8 @@ pub struct ExtractedRelationship {
 pub struct GraphIndexer {
     /// List of entity types to recognize during extraction
     entity_types: Vec<String>,
-    /// Maximum depth for relationship traversal (reserved for future implementation)
+    /// Maximum depth for relationship traversal (reserved for future
+    /// implementation)
     #[allow(dead_code)]
     max_depth: usize,
 }

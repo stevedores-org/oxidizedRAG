@@ -14,7 +14,8 @@ fn test_voy_availability() {
     let available = check_voy_available();
     web_sys::console::log_1(&format!("Voy available: {}", available).into());
     // Smoke test: exercising check_voy_available without panicking is the test.
-    // See TODO: replace with a real assertion once the host-vs-browser split is decided.
+    // See TODO: replace with a real assertion once the host-vs-browser split is
+    // decided.
 }
 
 /// Test 2: Create index from embeddings

@@ -5,11 +5,12 @@
 //! - Graph Traversal (BFS, DFS, ego networks)
 //! - Query Optimization (cost-based planning)
 
-use graphrag_core::{Entity, EntityId, KnowledgeGraph, Relationship, Result};
-
-use graphrag_core::graph::{GraphTraversal, TraversalConfig};
-use graphrag_core::nlp::{SyntaxAnalyzer, SyntaxAnalyzerConfig};
-use graphrag_core::query::{GraphStatistics, JoinType, QueryOp, QueryOptimizer};
+use graphrag_core::{
+    graph::{GraphTraversal, TraversalConfig},
+    nlp::{SyntaxAnalyzer, SyntaxAnalyzerConfig},
+    query::{GraphStatistics, JoinType, QueryOp, QueryOptimizer},
+    Entity, EntityId, KnowledgeGraph, Relationship, Result,
+};
 
 fn main() -> Result<()> {
     println!("\n🚀 Advanced NLP Features Demo");

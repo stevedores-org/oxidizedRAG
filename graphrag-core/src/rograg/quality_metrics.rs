@@ -1,22 +1,25 @@
 //! Quality metrics and performance tracking for ROGRAG system
 //!
 //! Provides comprehensive metrics collection and analysis to measure
-//! the effectiveness and improvement of the ROGRAG system over baseline GraphRAG.
+//! the effectiveness and improvement of the ROGRAG system over baseline
+//! GraphRAG.
+
+#[cfg(feature = "rograg")]
+use std::collections::VecDeque;
+#[cfg(feature = "rograg")]
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+#[cfg(feature = "rograg")]
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "rograg")]
+use strum::{Display as StrumDisplay, EnumString};
+#[cfg(feature = "rograg")]
+use thiserror::Error;
 
 #[cfg(feature = "rograg")]
 use crate::rograg::{DecompositionResult, RogragResponse};
 #[cfg(feature = "rograg")]
 use crate::Result;
-#[cfg(feature = "rograg")]
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "rograg")]
-use std::collections::VecDeque;
-#[cfg(feature = "rograg")]
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-#[cfg(feature = "rograg")]
-use strum::{Display as StrumDisplay, EnumString};
-#[cfg(feature = "rograg")]
-use thiserror::Error;
 
 /// Error types for quality metrics operations.
 #[cfg(feature = "rograg")]
@@ -97,9 +100,10 @@ impl Default for QualityMetricsConfig {
 
 /// Quality metrics collector and analyzer.
 ///
-/// Central system for tracking, analyzing, and reporting on ROGRAG quality metrics.
-/// Maintains query history, calculates performance statistics, performs comparative
-/// analysis against baseline GraphRAG, and provides real-time monitoring with alerts.
+/// Central system for tracking, analyzing, and reporting on ROGRAG quality
+/// metrics. Maintains query history, calculates performance statistics,
+/// performs comparative analysis against baseline GraphRAG, and provides
+/// real-time monitoring with alerts.
 ///
 /// # Features
 /// - **Query Tracking**: Records detailed metrics for each query processed
@@ -110,8 +114,7 @@ impl Default for QualityMetricsConfig {
 ///
 /// # Example
 /// ```
-/// use graphrag_core::rograg::QualityMetrics;
-/// use graphrag_core::rograg::QualityMetricsConfig;
+/// use graphrag_core::rograg::{QualityMetrics, QualityMetricsConfig};
 ///
 /// // Create with default configuration
 /// let metrics = QualityMetrics::new();
@@ -201,25 +204,28 @@ pub struct QueryMetrics {
 pub struct ResponseQuality {
     /// Accuracy of the response based on confidence and source credibility.
     ///
-    /// Measures factual correctness and reliability of information. Range: [0.0, 1.0].
+    /// Measures factual correctness and reliability of information. Range:
+    /// [0.0, 1.0].
     pub accuracy_score: f32,
 
     /// Completeness of the response coverage.
     ///
     /// Measures how thoroughly the response addresses all aspects of the query.
-    /// Considers answer length, source count, and subquery coverage. Range: [0.0, 1.0].
+    /// Considers answer length, source count, and subquery coverage. Range:
+    /// [0.0, 1.0].
     pub completeness_score: f32,
 
     /// Coherence and logical flow of the response text.
     ///
-    /// Measures text structure, transitions between ideas, and lack of repetition.
-    /// Range: [0.0, 1.0].
+    /// Measures text structure, transitions between ideas, and lack of
+    /// repetition. Range: [0.0, 1.0].
     pub coherence_score: f32,
 
     /// Relevance to the original query.
     ///
     /// Measures alignment between query terms and response content.
-    /// Higher when response directly addresses query keywords. Range: [0.0, 1.0].
+    /// Higher when response directly addresses query keywords. Range: [0.0,
+    /// 1.0].
     pub relevance_score: f32,
 
     /// Credibility of information sources.
@@ -252,8 +258,9 @@ pub enum RetrievalStrategy {
 
     /// Fuzzy matching-based retrieval.
     ///
-    /// Uses semantic similarity and approximate matching to find relevant entities.
-    /// More flexible than logic form but potentially less precise.
+    /// Uses semantic similarity and approximate matching to find relevant
+    /// entities. More flexible than logic form but potentially less
+    /// precise.
     FuzzyMatch,
 
     /// Combined logic form and fuzzy matching.
@@ -395,7 +402,7 @@ pub struct QualityBenchmarks {
 /// ```
 /// # use graphrag_core::rograg::ConfidenceIntervals;
 /// let intervals = ConfidenceIntervals {
-///     accuracy_ci_95: (2.5, 8.3),  // Improvement between 2.5% and 8.3%
+///     accuracy_ci_95: (2.5, 8.3), // Improvement between 2.5% and 8.3%
 ///     completeness_ci_95: (1.2, 6.7),
 ///     coherence_ci_95: (0.8, 5.4),
 ///     overall_ci_95: (1.5, 6.8),
@@ -409,7 +416,8 @@ pub struct ConfidenceIntervals {
     /// 95% confidence interval for accuracy improvement.
     ///
     /// Tuple of (lower_bound, upper_bound) in percentage points.
-    /// If both values are positive, accuracy improvement is significant at 95% level.
+    /// If both values are positive, accuracy improvement is significant at 95%
+    /// level.
     pub accuracy_ci_95: (f64, f64),
 
     /// 95% confidence interval for completeness improvement.
@@ -567,7 +575,8 @@ pub enum AlertType {
     /// Response quality has fallen below acceptable threshold.
     ///
     /// Triggered when overall quality score is below `min_quality_score`.
-    /// Indicates potential issues with answer accuracy, completeness, or coherence.
+    /// Indicates potential issues with answer accuracy, completeness, or
+    /// coherence.
     #[default]
     QualityDegradation,
 
@@ -762,11 +771,11 @@ pub struct AggregatedMetrics {
 /// ```
 /// # use graphrag_core::rograg::ImprovementPercentages;
 /// let improvements = ImprovementPercentages {
-///     accuracy_improvement: 15.2,      // 15.2% better accuracy
-///     completeness_improvement: 12.8,  // 12.8% more complete
-///     coherence_improvement: 18.5,     // 18.5% more coherent
-///     relevance_improvement: 14.3,     // 14.3% more relevant
-///     overall_improvement: 15.2,       // 15.2% overall improvement
+///     accuracy_improvement: 15.2,     // 15.2% better accuracy
+///     completeness_improvement: 12.8, // 12.8% more complete
+///     coherence_improvement: 18.5,    // 18.5% more coherent
+///     relevance_improvement: 14.3,    // 14.3% more relevant
+///     overall_improvement: 15.2,      // 15.2% overall improvement
 /// };
 /// assert!(improvements.overall_improvement > 10.0);
 /// ```
@@ -819,12 +828,12 @@ pub struct ImprovementPercentages {
 /// ```
 /// # use graphrag_core::rograg::StatisticalSignificance;
 /// let significance = StatisticalSignificance {
-///     p_value_accuracy: 0.02,      // Significant at 95% level
+///     p_value_accuracy: 0.02, // Significant at 95% level
 ///     p_value_completeness: 0.03,
-///     p_value_coherence: 0.01,     // Highly significant
-///     p_value_overall: 0.02,       // Significant
-///     is_significant_95: true,      // Overall improvement is significant
-///     effect_size: 0.65,            // Large effect size
+///     p_value_coherence: 0.01, // Highly significant
+///     p_value_overall: 0.02,   // Significant
+///     is_significant_95: true, // Overall improvement is significant
+///     effect_size: 0.65,       // Large effect size
 /// };
 /// assert!(significance.is_significant_95);
 /// assert!(significance.effect_size > 0.5);
@@ -1512,11 +1521,12 @@ impl QualityMetrics {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use super::*;
     use crate::rograg::{
         IntentResult, ProcessingStats, QueryIntent, SubqueryResult, SubqueryResultType,
     };
-    use std::time::Duration;
 
     #[cfg(feature = "rograg")]
     fn create_test_response() -> RogragResponse {

@@ -1,9 +1,11 @@
 //! Graph Traversal Algorithms for GraphRAG
 //!
-//! This module implements deterministic graph traversal algorithms that don't require
-//! machine learning, following NLP best practices for knowledge graph exploration:
+//! This module implements deterministic graph traversal algorithms that don't
+//! require machine learning, following NLP best practices for knowledge graph
+//! exploration:
 //!
-//! - **BFS (Breadth-First Search)**: Level-by-level exploration for shortest paths
+//! - **BFS (Breadth-First Search)**: Level-by-level exploration for shortest
+//!   paths
 //! - **DFS (Depth-First Search)**: Deep exploration for discovering all paths
 //! - **Ego-Network Extraction**: K-hop neighborhoods around entities
 //! - **Multi-Source Path Finding**: Simultaneous search from multiple entities
@@ -15,8 +17,9 @@
 //! - Context-aware information gathering
 //! - Multi-hop reasoning without neural networks
 
-use crate::core::{Entity, EntityId, KnowledgeGraph, Relationship, Result};
 use std::collections::{HashMap, HashSet, VecDeque};
+
+use crate::core::{Entity, EntityId, KnowledgeGraph, Relationship, Result};
 
 /// Configuration for graph traversal algorithms
 #[derive(Debug, Clone)]

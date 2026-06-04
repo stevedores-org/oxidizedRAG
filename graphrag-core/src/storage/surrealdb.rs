@@ -13,14 +13,19 @@
 //! graphrag-core = { version = "0.1", features = ["surrealdb-storage"] }
 //! ```
 
-use crate::core::{GraphRAGError, Result};
-use crate::graph::incremental::{ChangeRecord, DeltaStatus, GraphDelta, RollbackData, UpdateId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use surrealdb::engine::any::{connect, Any};
-use surrealdb::opt::auth::Root;
-use surrealdb::sql::Thing;
-use surrealdb::Surreal;
+use surrealdb::{
+    engine::any::{connect, Any},
+    opt::auth::Root,
+    sql::Thing,
+    Surreal,
+};
+
+use crate::{
+    core::{GraphRAGError, Result},
+    graph::incremental::{ChangeRecord, DeltaStatus, GraphDelta, RollbackData, UpdateId},
+};
 
 /// SurrealDB-backed storage for incremental graph deltas and transactions.
 pub struct SurrealDeltaStorage {
@@ -165,7 +170,8 @@ impl SurrealDeltaStorage {
         Ok(storage)
     }
 
-    /// Connect to a remote SurrealDB server (e.g. `wss://surrealdb.stevedores.org`).
+    /// Connect to a remote SurrealDB server (e.g.
+    /// `wss://surrealdb.stevedores.org`).
     pub fn connect_remote(url: impl Into<String>) -> SurrealDeltaStorageBuilder {
         SurrealDeltaStorageBuilder {
             url: url.into(),
@@ -386,7 +392,8 @@ impl SurrealDeltaStorage {
 
         self.db
             .query(
-                "UPDATE transactions SET status = $status, committed_at = $committed_at WHERE tx_id = $tx_id",
+                "UPDATE transactions SET status = $status, committed_at = $committed_at WHERE \
+                 tx_id = $tx_id",
             )
             .bind(("tx_id", tx_id.to_string()))
             .bind(("status", status.to_string()))

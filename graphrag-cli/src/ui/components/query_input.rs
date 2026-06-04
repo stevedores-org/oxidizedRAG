@@ -2,7 +2,6 @@
 //!
 //! Single input box that automatically detects slash commands
 
-use crate::{action::Action, theme::Theme};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::Rect,
@@ -11,6 +10,8 @@ use ratatui::{
     Frame,
 };
 use tui_textarea::TextArea;
+
+use crate::{action::Action, theme::Theme};
 
 /// Query input widget - handles both queries and slash commands
 pub struct QueryInput {
@@ -26,7 +27,10 @@ impl QueryInput {
     pub fn new() -> Self {
         let mut textarea = TextArea::default();
         textarea.set_cursor_line_style(Style::default());
-        textarea.set_placeholder_text("Enter query or /command... (e.g., \"What are the main entities?\" or \"/config file.json5\")");
+        textarea.set_placeholder_text(
+            "Enter query or /command... (e.g., \"What are the main entities?\" or \"/config \
+             file.json5\")",
+        );
 
         Self {
             textarea,
@@ -36,7 +40,8 @@ impl QueryInput {
     }
 
     /// Handle keyboard input directly
-    /// Returns Some(Action) if an action should be triggered, None if key was consumed for input
+    /// Returns Some(Action) if an action should be triggered, None if key was
+    /// consumed for input
     pub fn handle_key(&mut self, key: KeyEvent) -> Option<Action> {
         // Only handle keys when input is focused
         if !self.focused {
@@ -59,7 +64,10 @@ impl QueryInput {
                 // Clear textarea
                 self.textarea = TextArea::default();
                 self.textarea.set_cursor_line_style(Style::default());
-                self.textarea.set_placeholder_text("Enter query or /command... (e.g., \"What are the main entities?\" or \"/config file.json5\")");
+                self.textarea.set_placeholder_text(
+                    "Enter query or /command... (e.g., \"What are the main entities?\" or \
+                     \"/config file.json5\")",
+                );
 
                 // Auto-detect: slash command vs query
                 if crate::mode::is_slash_command(&content) {
@@ -72,7 +80,10 @@ impl QueryInput {
             (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
                 self.textarea = TextArea::default();
                 self.textarea.set_cursor_line_style(Style::default());
-                self.textarea.set_placeholder_text("Enter query or /command... (e.g., \"What are the main entities?\" or \"/config file.json5\")");
+                self.textarea.set_placeholder_text(
+                    "Enter query or /command... (e.g., \"What are the main entities?\" or \
+                     \"/config file.json5\")",
+                );
                 Some(Action::Noop) // Return Noop to indicate key was consumed
             },
             // Let textarea handle everything else - return Noop to indicate consumption

@@ -1,10 +1,11 @@
 //! Graph Embeddings
 //!
-//! This module provides graph embedding algorithms for converting graph structures
-//! into dense vector representations:
+//! This module provides graph embedding algorithms for converting graph
+//! structures into dense vector representations:
 //!
 //! - **Node2Vec**: Random walk-based embeddings capturing network neighborhoods
-//! - **GraphSAGE**: Inductive representation learning using neighborhood sampling
+//! - **GraphSAGE**: Inductive representation learning using neighborhood
+//!   sampling
 //! - **DeepWalk**: Simplified random walk embeddings
 //! - **Struct2Vec**: Structure-aware graph embeddings
 //!
@@ -16,9 +17,10 @@
 //! - Similarity search in graph space
 //! - Transfer learning across graphs
 
+use std::collections::{HashMap, HashSet};
+
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 
 /// Graph embedding configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]

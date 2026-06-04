@@ -1,15 +1,15 @@
-///! Hugging Face Hub integration for downloading and using embedding models
-///!
-///! This module provides functionality to:
-///! - Download embedding models from Hugging Face Hub
-///! - Cache models locally to avoid re-downloading
-///! - Load models with Candle framework
-///! - Generate embeddings using downloaded models
-use crate::core::error::{GraphRAGError, Result};
-use crate::embeddings::{EmbeddingConfig, EmbeddingProvider};
-
 #[cfg(feature = "huggingface-hub")]
 use hf_hub::api::sync::{Api, ApiBuilder};
+
+/// ! Hugging Face Hub integration for downloading and using embedding models
+/// !
+/// ! This module provides functionality to:
+/// ! - Download embedding models from Hugging Face Hub
+/// ! - Cache models locally to avoid re-downloading
+/// ! - Load models with Candle framework
+/// ! - Generate embeddings using downloaded models
+use crate::core::error::{GraphRAGError, Result};
+use crate::embeddings::{EmbeddingConfig, EmbeddingProvider};
 
 /// Hugging Face Hub embedding provider
 pub struct HuggingFaceEmbeddings {
@@ -29,7 +29,8 @@ impl HuggingFaceEmbeddings {
     /// Create a new Hugging Face embeddings provider
     ///
     /// # Arguments
-    /// * `model_id` - Hugging Face model identifier (e.g., "sentence-transformers/all-MiniLM-L6-v2")
+    /// * `model_id` - Hugging Face model identifier (e.g.,
+    ///   "sentence-transformers/all-MiniLM-L6-v2")
     /// * `cache_dir` - Optional cache directory for downloaded models
     ///
     /// # Example

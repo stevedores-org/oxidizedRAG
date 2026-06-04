@@ -1,4 +1,5 @@
-//! Pipeline DAG Architecture - typed, composable stages with explicit contracts.
+//! Pipeline DAG Architecture - typed, composable stages with explicit
+//! contracts.
 //!
 //! Provides first-class pipeline composition with type-safe stage boundaries,
 //! deterministic DAG generation, and per-stage caching.
@@ -48,17 +49,15 @@ pub mod types;
 #[cfg(feature = "async")]
 pub mod cached_stage;
 
+#[cfg(feature = "async")]
+pub use cached_stage::CachedStage;
+pub use dual_mode_cache::{CacheMode, DualModeCache};
+#[cfg(feature = "persistent-cache")]
+pub use persistent_cache::RocksDBCache;
+pub use persistent_cache::{CacheStats, PersistentCacheBackend};
 pub use registry::{StageId, StageRegistry};
 pub use stage::{Stage, StageError, StageMeta};
 pub use types::{
     ChunkBatch, DocumentChunk, EmbeddingBatch, EmbeddingRecord, EntityGraphDelta, GraphEdge,
     GraphNode, RankedResult, RetrievalSet, ScoreBreakdown,
 };
-
-#[cfg(feature = "async")]
-pub use cached_stage::CachedStage;
-
-pub use dual_mode_cache::{CacheMode, DualModeCache};
-#[cfg(feature = "persistent-cache")]
-pub use persistent_cache::RocksDBCache;
-pub use persistent_cache::{CacheStats, PersistentCacheBackend};

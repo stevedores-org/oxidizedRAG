@@ -1,6 +1,7 @@
 //! Authentication and Authorization Middleware
 //!
-//! Provides JWT token-based authentication and API key authentication for the REST API.
+//! Provides JWT token-based authentication and API key authentication for the
+//! REST API.
 //!
 //! ## Features
 //!
@@ -16,8 +17,13 @@
 //! // Add authentication middleware to your routes
 //! Router::new()
 //!     .route("/api/protected", get(protected_handler))
-//!     .layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+//!     .layer(middleware::from_fn_with_state(
+//!         state.clone(),
+//!         auth_middleware,
+//!     ))
 //! ```
+
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{Extension, Request, State},
@@ -27,8 +33,6 @@ use axum::{
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// JWT claims structure

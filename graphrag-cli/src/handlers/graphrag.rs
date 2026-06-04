@@ -1,11 +1,12 @@
 //! GraphRAG operations handler
 //!
-//! Provides a thread-safe wrapper around GraphRAG instance with async operations.
+//! Provides a thread-safe wrapper around GraphRAG instance with async
+//! operations.
+
+use std::{path::Path, sync::Arc};
 
 use color_eyre::eyre::{eyre, Result};
 use graphrag_core::{persistence::WorkspaceManager, Config, Entity, GraphRAG};
-use std::path::Path;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Statistics about the knowledge graph
@@ -55,7 +56,8 @@ impl GraphRAGHandler {
     ///
     /// # Arguments
     /// * `path` - Path to the document to load
-    /// * `rebuild` - If true, clears existing graph AND documents before loading (forces complete rebuild)
+    /// * `rebuild` - If true, clears existing graph AND documents before
+    ///   loading (forces complete rebuild)
     pub async fn load_document_with_options(&self, path: &Path, rebuild: bool) -> Result<String> {
         tracing::info!("Loading document: {:?} (rebuild: {})", path, rebuild);
 
@@ -73,7 +75,8 @@ impl GraphRAGHandler {
         // Add document and build graph with tokio::sync::Mutex
         let mut guard = self.graphrag.lock().await;
         if let Some(ref mut graphrag) = *guard {
-            // Clear graph AND documents if rebuild is requested (BEFORE adding new document)
+            // Clear graph AND documents if rebuild is requested (BEFORE adding new
+            // document)
             if rebuild {
                 tracing::info!("Clearing existing graph and documents for rebuild");
                 // Re-initialize to clear everything including documents and chunks
@@ -114,7 +117,11 @@ impl GraphRAGHandler {
         let mut guard = self.graphrag.lock().await;
         if let Some(ref mut graphrag) = *guard {
             graphrag.clear_graph()?;
-            Ok("Knowledge graph cleared successfully. Entities and relationships removed, documents preserved.".to_string())
+            Ok(
+                "Knowledge graph cleared successfully. Entities and relationships removed, \
+                 documents preserved."
+                    .to_string(),
+            )
         } else {
             Err(eyre!("GraphRAG not initialized"))
         }
@@ -122,8 +129,9 @@ impl GraphRAGHandler {
 
     /// Rebuild the knowledge graph from existing documents
     ///
-    /// This clears the graph and re-extracts entities and relationships from all loaded documents.
-    /// Useful after changing configuration or to fix issues with the graph.
+    /// This clears the graph and re-extracts entities and relationships from
+    /// all loaded documents. Useful after changing configuration or to fix
+    /// issues with the graph.
     pub async fn rebuild_graph(&self) -> Result<String> {
         tracing::info!("Rebuilding knowledge graph from existing documents");
 
@@ -302,8 +310,8 @@ impl GraphRAGHandler {
                 );
 
                 Ok(format!(
-                    "✅ Workspace '{}' saved successfully!\n\n\
-                     Saved: {} entities, {} relationships, {} documents, {} chunks",
+                    "✅ Workspace '{}' saved successfully!\n\nSaved: {} entities, {} \
+                     relationships, {} documents, {} chunks",
                     name, stats.0, stats.1, stats.2, stats.3
                 ))
             } else {
@@ -339,8 +347,8 @@ impl GraphRAGHandler {
             }
 
             Ok(format!(
-                "✅ Workspace '{}' loaded successfully!\n\n\
-                 Loaded: {} entities, {} relationships, {} documents, {} chunks",
+                "✅ Workspace '{}' loaded successfully!\n\nLoaded: {} entities, {} relationships, \
+                 {} documents, {} chunks",
                 name, stats.0, stats.1, stats.2, stats.3
             ))
         } else {

@@ -6,10 +6,12 @@
 //! Test Type: Integration Tests (multiple components, no external services)
 //! Data Source: Real text documents from tests/fixtures/documents/
 
-use graphrag_core::text::parsers::MarkdownLayoutParser;
-use graphrag_core::text::{ChunkEnricher, TextProcessor};
-use graphrag_core::{Document, DocumentId};
 use std::fs;
+
+use graphrag_core::{
+    text::{parsers::MarkdownLayoutParser, ChunkEnricher, TextProcessor},
+    Document, DocumentId,
+};
 
 /// Helper function to load fixture files
 fn load_fixture(filename: &str) -> String {

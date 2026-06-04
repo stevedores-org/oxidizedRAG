@@ -1,9 +1,10 @@
 //! Query history management
 
+use std::path::PathBuf;
+
 use chrono::{DateTime, Utc};
 use color_eyre::eyre::Result;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 /// Single query history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]

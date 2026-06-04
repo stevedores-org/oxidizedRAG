@@ -11,13 +11,12 @@
 //! - Improved throughput for high-load scenarios
 //! - Future-proof architecture for cloud deployments
 
-use crate::core::Result;
-use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
+use std::{collections::HashMap, future::Future, pin::Pin};
 
 use async_trait::async_trait;
 use futures;
+
+use crate::core::Result;
 
 /// Type alias for vector metadata
 pub type VectorMetadata = Option<HashMap<String, String>>;
@@ -25,7 +24,8 @@ pub type VectorMetadata = Option<HashMap<String, String>>;
 /// Type alias for vector batch operations
 pub type VectorBatch = Vec<(String, Vec<f32>, VectorMetadata)>;
 
-/// Core storage abstraction for persisting and retrieving entities, documents, and graph data
+/// Core storage abstraction for persisting and retrieving entities, documents,
+/// and graph data
 ///
 /// ## Synchronous Version
 /// This trait provides synchronous operations for storage.
@@ -63,7 +63,8 @@ pub trait Storage {
     /// Batch operations for performance
     fn store_entities_batch(&mut self, entities: Vec<Self::Entity>) -> Result<Vec<String>>;
 
-    /// Fetch multiple entities by IDs in a single operation (avoids N+1 queries)
+    /// Fetch multiple entities by IDs in a single operation (avoids N+1
+    /// queries)
     fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Self::Entity>>> {
         ids.iter().map(|id| self.retrieve_entity(id)).collect()
     }
@@ -72,7 +73,8 @@ pub trait Storage {
 /// Async storage abstraction for non-blocking storage operations
 ///
 /// ## Async Version
-/// This trait provides async operations for storage with better concurrency and resource utilization.
+/// This trait provides async operations for storage with better concurrency and
+/// resource utilization.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncStorage: Send + Sync {
@@ -109,7 +111,8 @@ pub trait AsyncStorage: Send + Sync {
     /// Batch operations for performance
     async fn store_entities_batch(&mut self, entities: Vec<Self::Entity>) -> Result<Vec<String>>;
 
-    /// Fetch multiple entities by IDs in a single operation (avoids N+1 queries)
+    /// Fetch multiple entities by IDs in a single operation (avoids N+1
+    /// queries)
     async fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Self::Entity>>> {
         let mut results = Vec::with_capacity(ids.len());
         for id in ids {
@@ -153,7 +156,8 @@ pub trait Embedder {
 /// Async text embedding abstraction for non-blocking embedding operations
 ///
 /// ## Async Version
-/// This trait provides async operations for text embeddings with better throughput for large batches.
+/// This trait provides async operations for text embeddings with better
+/// throughput for large batches.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncEmbedder: Send + Sync {
@@ -242,10 +246,12 @@ pub trait VectorStore {
     fn is_empty(&self) -> bool;
 }
 
-/// Async vector similarity search abstraction for non-blocking vector operations
+/// Async vector similarity search abstraction for non-blocking vector
+/// operations
 ///
 /// ## Async Version
-/// This trait provides async operations for vector search with better concurrency and scalability.
+/// This trait provides async operations for vector search with better
+/// concurrency and scalability.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncVectorStore: Send + Sync {
@@ -309,7 +315,8 @@ pub trait AsyncVectorStore: Send + Sync {
     async fn fetch_many(&self, ids: &[&str]) -> Result<Vec<Option<Vec<f32>>>> {
         let mut results = Vec::with_capacity(ids.len());
         for _id in ids {
-            // Default: no per-ID fetch — backends should override with efficient batch fetch
+            // Default: no per-ID fetch — backends should override with efficient batch
+            // fetch
             results.push(None);
         }
         Ok(results)
@@ -408,7 +415,8 @@ pub trait EntityExtractor {
 /// Async entity extraction abstraction for non-blocking entity extraction
 ///
 /// ## Async Version
-/// This trait provides async operations for entity extraction with better throughput for large texts.
+/// This trait provides async operations for entity extraction with better
+/// throughput for large texts.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncEntityExtractor: Send + Sync {
@@ -496,7 +504,8 @@ pub trait Retriever {
 /// Async text retrieval abstraction for non-blocking content retrieval
 ///
 /// ## Async Version
-/// This trait provides async operations for content retrieval with better scalability and concurrency.
+/// This trait provides async operations for content retrieval with better
+/// scalability and concurrency.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncRetriever: Send + Sync {
@@ -596,7 +605,8 @@ pub trait LanguageModel {
 /// Async Large Language Model abstraction for non-blocking text generation
 ///
 /// ## Async Version
-/// This trait provides async operations for text generation with better throughput and concurrency.
+/// This trait provides async operations for text generation with better
+/// throughput and concurrency.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncLanguageModel: Send + Sync {
@@ -762,7 +772,8 @@ pub trait GraphStore {
 /// Async graph operations abstraction for non-blocking graph management
 ///
 /// ## Async Version
-/// This trait provides async operations for graph management with better scalability for large graphs.
+/// This trait provides async operations for graph management with better
+/// scalability for large graphs.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncGraphStore: Send + Sync {
@@ -912,7 +923,8 @@ pub trait FunctionRegistry {
 /// Async function calling abstraction for non-blocking tool usage
 ///
 /// ## Async Version
-/// This trait provides async operations for function calling with better concurrency for tool usage.
+/// This trait provides async operations for function calling with better
+/// concurrency for tool usage.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncFunctionRegistry: Send + Sync {
@@ -1009,10 +1021,12 @@ pub trait ConfigProvider {
     fn default_config(&self) -> Self::Config;
 }
 
-/// Async configuration management abstraction for non-blocking configuration operations
+/// Async configuration management abstraction for non-blocking configuration
+/// operations
 ///
 /// ## Async Version
-/// This trait provides async operations for configuration management with better I/O handling.
+/// This trait provides async operations for configuration management with
+/// better I/O handling.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncConfigProvider: Send + Sync {
@@ -1077,7 +1091,8 @@ pub trait MetricsCollector {
 /// Async monitoring and metrics abstraction for non-blocking metrics collection
 ///
 /// ## Async Version
-/// This trait provides async operations for metrics collection with better throughput.
+/// This trait provides async operations for metrics collection with better
+/// throughput.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncMetricsCollector: Send + Sync {
@@ -1235,7 +1250,8 @@ pub trait Serializer {
 /// Async serialization abstraction for non-blocking serialization operations
 ///
 /// ## Async Version
-/// This trait provides async operations for serialization with better I/O handling.
+/// This trait provides async operations for serialization with better I/O
+/// handling.
 #[allow(async_fn_in_trait)]
 #[async_trait]
 pub trait AsyncSerializer: Send + Sync {
@@ -1298,14 +1314,14 @@ pub trait AsyncSerializer: Send + Sync {
     }
 }
 
-//
 // COMPREHENSIVE ASYNC TRAIT EXPORTS AND ADAPTER UTILITIES
 //
 
 /// Adapter to convert sync traits to async
 pub mod sync_to_async {
-    use super::*;
     use std::sync::Arc;
+
+    use super::*;
 
     /// Adapter that wraps a sync Storage to implement AsyncStorage
     pub struct StorageAdapter<T>(pub Arc<tokio::sync::Mutex<T>>);
@@ -1403,7 +1419,8 @@ pub mod sync_to_async {
         }
     }
 
-    /// Blanket implementation for `Box<T>` where `T` implements `AsyncLanguageModel`
+    /// Blanket implementation for `Box<T>` where `T` implements
+    /// `AsyncLanguageModel`
     #[async_trait]
     impl<T> AsyncLanguageModel for Box<T>
     where
@@ -1468,8 +1485,9 @@ pub mod sync_to_async {
 
 /// Comprehensive async trait utilities and helpers
 pub mod async_utils {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     /// Timeout wrapper for any async operation
     pub async fn with_timeout<F, T>(future: F, timeout: Duration) -> Result<T>
@@ -1522,8 +1540,9 @@ pub mod async_utils {
         F: Fn(T) -> Pin<Box<dyn Future<Output = Result<R>> + Send>> + Send + Sync + 'static,
         R: Send + 'static,
     {
-        use futures::stream::{FuturesUnordered, StreamExt};
         use std::sync::Arc;
+
+        use futures::stream::{FuturesUnordered, StreamExt};
 
         let processor = Arc::new(processor);
         let mut futures = FuturesUnordered::new();

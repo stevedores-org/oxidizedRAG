@@ -1,18 +1,21 @@
 //! Intent classification for ROGRAG system
 //!
 //! Classifies query intent and determines whether the system should attempt
-//! to answer the query or refuse to answer based on confidence and appropriateness.
+//! to answer the query or refuse to answer based on confidence and
+//! appropriateness.
 
 #[cfg(feature = "rograg")]
-use crate::Result;
+use std::collections::HashMap;
+
 #[cfg(feature = "rograg")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "rograg")]
-use std::collections::HashMap;
 #[cfg(feature = "rograg")]
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Errors that can occur during intent classification.
 #[cfg(feature = "rograg")]
@@ -68,7 +71,8 @@ pub enum QueryIntent {
 
     /// Requests about relationships or connections between entities.
     ///
-    /// Examples: "How are X and Y related?", "What is the connection between A and B?"
+    /// Examples: "How are X and Y related?", "What is the connection between A
+    /// and B?"
     Relational,
 
     /// Temporal information requests about timing, sequence, or duration.
@@ -103,7 +107,8 @@ pub enum QueryIntent {
 
     /// Ambiguous or unclear requests that cannot be reliably interpreted.
     ///
-    /// Occurs when intent is unclear or multiple intents have similar confidence.
+    /// Occurs when intent is unclear or multiple intents have similar
+    /// confidence.
     Ambiguous,
 }
 
@@ -169,12 +174,14 @@ impl Default for IntentResult {
 pub struct IntentClassificationConfig {
     /// Minimum confidence required for classification (0.0 to 1.0).
     ///
-    /// Default: 0.7. Classifications below this threshold are considered unreliable.
+    /// Default: 0.7. Classifications below this threshold are considered
+    /// unreliable.
     pub confidence_threshold: f32,
 
     /// Threshold for refusing to answer (0.0 to 1.0).
     ///
-    /// Default: 0.8. Queries with confidence below this threshold trigger refusal.
+    /// Default: 0.8. Queries with confidence below this threshold trigger
+    /// refusal.
     pub refusal_threshold: f32,
 
     /// Whether to detect and refuse inappropriate content.
@@ -184,12 +191,14 @@ pub struct IntentClassificationConfig {
 
     /// Whether to detect ambiguous intent.
     ///
-    /// Default: true. When enabled, identifies queries with multiple competing intents.
+    /// Default: true. When enabled, identifies queries with multiple competing
+    /// intents.
     pub enable_ambiguity_detection: bool,
 
     /// Whether to suggest query reformulations.
     ///
-    /// Default: true. When enabled, provides suggestions for improving unclear queries.
+    /// Default: true. When enabled, provides suggestions for improving unclear
+    /// queries.
     pub suggest_reformulations: bool,
 }
 
@@ -210,7 +219,8 @@ impl Default for IntentClassificationConfig {
 ///
 /// Uses pattern matching (keywords and regex) to classify query intent and
 /// determine whether queries should be answered or refused. Supports detection
-/// of inappropriate content, ambiguous queries, and provides reformulation suggestions.
+/// of inappropriate content, ambiguous queries, and provides reformulation
+/// suggestions.
 ///
 /// # Classification Process
 ///
@@ -270,7 +280,8 @@ impl IntentClassifier {
     ///
     /// # Errors
     ///
-    /// Returns an error if regex pattern compilation fails during initialization.
+    /// Returns an error if regex pattern compilation fails during
+    /// initialization.
     pub fn new() -> Result<Self> {
         let config = IntentClassificationConfig::default();
         let mut classifier = Self {
@@ -296,7 +307,8 @@ impl IntentClassifier {
     ///
     /// # Errors
     ///
-    /// Returns an error if regex pattern compilation fails during initialization.
+    /// Returns an error if regex pattern compilation fails during
+    /// initialization.
     pub fn with_config(config: IntentClassificationConfig) -> Result<Self> {
         let mut classifier = Self {
             config,
@@ -609,7 +621,8 @@ impl IntentClassifier {
                 .count();
 
             if pattern.requires_all && keyword_matches != pattern.keywords.len() {
-                continue; // Skip if all keywords are required but not all are present
+                continue; // Skip if all keywords are required but not all are
+                          // present
             }
 
             if keyword_matches > 0 {
@@ -877,7 +890,12 @@ mod tests {
         let classifier = IntentClassifier::new().unwrap();
 
         let simple_result = classifier.classify("What is Tom?").unwrap();
-        let complex_result = classifier.classify("What is the intricate relationship between Entity Name and Second Entity, and how does it evolve throughout their various adventures and escapades?").unwrap();
+        let complex_result = classifier
+            .classify(
+                "What is the intricate relationship between Entity Name and Second Entity, and \
+                 how does it evolve throughout their various adventures and escapades?",
+            )
+            .unwrap();
 
         assert!(complex_result.complexity_score > simple_result.complexity_score);
     }

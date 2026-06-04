@@ -1,7 +1,6 @@
 //! Tests for the simplified API
 
-use crate::api::easy::SimpleGraphRAG;
-use crate::api::simple;
+use crate::api::{easy::SimpleGraphRAG, simple};
 
 #[test]
 fn test_simple_api_compilation() {

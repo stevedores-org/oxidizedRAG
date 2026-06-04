@@ -4,15 +4,16 @@
 //! quality, safety, and appropriateness.
 
 #[cfg(feature = "rograg")]
-use crate::rograg::RogragResponse;
-#[cfg(feature = "rograg")]
-use crate::Result;
-#[cfg(feature = "rograg")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "rograg")]
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::rograg::RogragResponse;
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Error types for validation
 #[cfg(feature = "rograg")]
@@ -467,7 +468,9 @@ impl QueryValidator {
             .any(|i| matches!(i.severity, IssueSeverity::Critical))
         {
             // For critical issues, modify the response
-            validated_response.content = "I apologize, but I cannot provide a response to this query due to safety or quality concerns.".to_string();
+            validated_response.content = "I apologize, but I cannot provide a response to this \
+                                          query due to safety or quality concerns."
+                .to_string();
             validated_response.confidence = 0.0;
             validated_response.is_refusal = true;
         }
@@ -662,7 +665,8 @@ impl ConfidenceCheck {
     ///
     /// # Arguments
     ///
-    /// * `min_confidence` - Minimum acceptable confidence score (range: 0.0-1.0)
+    /// * `min_confidence` - Minimum acceptable confidence score (range:
+    ///   0.0-1.0)
     pub fn new(min_confidence: f32) -> Self {
         Self { min_confidence }
     }
@@ -966,18 +970,18 @@ mod tests {
     fn create_test_response() -> RogragResponse {
         RogragResponse {
             query: "What is Entity Name?".to_string(),
-            content: "Entity Name is a young boy character in Mark Twain's novels. He is adventurous and mischievous.".to_string(),
+            content: "Entity Name is a young boy character in Mark Twain's novels. He is \
+                      adventurous and mischievous."
+                .to_string(),
             confidence: 0.8,
             sources: vec!["source1".to_string(), "source2".to_string()],
-            subquery_results: vec![
-                SubqueryResult {
-                    subquery: "What is Entity Name?".to_string(),
-                    result_type: SubqueryResultType::LogicForm,
-                    confidence: 0.8,
-                    content: "Entity Name character info".to_string(),
-                    sources: vec!["source1".to_string()],
-                }
-            ],
+            subquery_results: vec![SubqueryResult {
+                subquery: "What is Entity Name?".to_string(),
+                result_type: SubqueryResultType::LogicForm,
+                confidence: 0.8,
+                content: "Entity Name character info".to_string(),
+                sources: vec!["source1".to_string()],
+            }],
             intent_result: IntentResult {
                 primary_intent: QueryIntent::Factual,
                 secondary_intents: vec![],
@@ -1035,7 +1039,8 @@ mod tests {
         let response = create_test_response();
 
         let result = check.check(&response).unwrap();
-        assert!(result.passed); // Should pass as the response is reasonable length
+        assert!(result.passed); // Should pass as the response is reasonable
+                                // length
     }
 
     #[cfg(feature = "rograg")]

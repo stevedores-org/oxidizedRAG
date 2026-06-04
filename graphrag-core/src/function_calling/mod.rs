@@ -1,11 +1,14 @@
 //! Function Calling Framework for Dynamic GraphRAG Queries
 //!
-//! This module implements a function calling system that allows LLMs to interact
-//! dynamically with the knowledge graph database through specific functions.
+//! This module implements a function calling system that allows LLMs to
+//! interact dynamically with the knowledge graph database through specific
+//! functions.
+
+use std::collections::HashMap;
+
+use json::JsonValue;
 
 use crate::{core::KnowledgeGraph, GraphRAGError, Result};
-use json::JsonValue;
-use std::collections::HashMap;
 
 pub mod agent;
 pub mod enhanced_registry;

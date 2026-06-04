@@ -252,7 +252,8 @@ impl VllmClient {
         })
     }
 
-    /// Generate chat completion with messages (fallback when ureq feature is disabled)
+    /// Generate chat completion with messages (fallback when ureq feature is
+    /// disabled)
     #[cfg(not(feature = "ureq"))]
     pub fn chat_completion_with_messages(
         &self,
@@ -275,7 +276,8 @@ impl VllmClient {
         })
     }
 
-    /// Remove `<think>...</think>` tags from LLM output (Qwen3 and similar models).
+    /// Remove `<think>...</think>` tags from LLM output (Qwen3 and similar
+    /// models).
     fn strip_think_tags(text: &str) -> String {
         let mut result = text.to_string();
         while let Some(start) = result.find("<think>") {
@@ -447,7 +449,8 @@ impl crate::embeddings::EmbeddingProvider for VllmEmbeddingProvider {
     }
 }
 
-/// Sync adapter for using `VllmClient` as an `LLMInterface` (e.g. for `AnswerGenerator`).
+/// Sync adapter for using `VllmClient` as an `LLMInterface` (e.g. for
+/// `AnswerGenerator`).
 #[cfg(feature = "async")]
 pub struct VllmLLMAdapter {
     client: VllmClient,

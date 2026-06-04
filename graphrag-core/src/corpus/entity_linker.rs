@@ -1,8 +1,10 @@
 //! Cross-document entity linking with LMCD clustering
 
-use crate::core::{Entity, Result};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::core::{Entity, Result};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntityCluster {
@@ -131,7 +133,8 @@ impl CrossDocumentEntityLinker {
                     name: entity.name.clone(),
                     context: "entity context".to_string(), // Entity doesn't have description field
                     confidence: 1.0,                       // Default confidence
-                    mentions: Vec::new(), // Could be populated from entity mentions
+                    mentions: Vec::new(),                  /* Could be populated from entity
+                                                            * mentions */
                 });
             }
         }
@@ -237,7 +240,8 @@ impl CrossDocumentEntityLinker {
                 }
             }
 
-            // Remove matched entities from unprocessed (in reverse order to maintain indices)
+            // Remove matched entities from unprocessed (in reverse order to maintain
+            // indices)
             for &index in to_remove.iter().rev() {
                 unprocessed.remove(index);
             }

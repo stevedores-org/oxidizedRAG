@@ -9,18 +9,16 @@ pub mod settings;
 pub mod ui_components;
 
 // Re-export settings components
-pub use settings::SettingsPanel;
-
-// Re-export UI components
-#[allow(unused_imports)]
-pub use ui_components::{
-    ChatMessage, ChatWindow, DocumentManager, GraphEdge, GraphNode, GraphStats, GraphVisualization,
-    MessageRole, QueryInterface,
-};
-
 // Re-export hierarchy components
 #[allow(unused_imports)]
 pub use hierarchy::{
     AdaptiveQueryPanel, CommunityCard, CommunityData, HierarchyExplorer, LevelSelector,
     QueryAnalysisResult, QueryResult,
+};
+pub use settings::SettingsPanel;
+// Re-export UI components
+#[allow(unused_imports)]
+pub use ui_components::{
+    ChatMessage, ChatWindow, DocumentManager, GraphEdge, GraphNode, GraphStats, GraphVisualization,
+    MessageRole, QueryInterface,
 };

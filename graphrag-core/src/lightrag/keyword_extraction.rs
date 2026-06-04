@@ -2,11 +2,11 @@
 //!
 //! Extracts high-level (topics) and low-level (entities) keywords from queries.
 
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::core::error::GraphRAGError;
-use crate::core::traits::AsyncLanguageModel;
+use serde::{Deserialize, Serialize};
+
+use crate::core::{error::GraphRAGError, traits::AsyncLanguageModel};
 
 /// Dual-level keywords for retrieval
 #[derive(Debug, Clone, Serialize, Deserialize)]

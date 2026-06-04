@@ -4,9 +4,10 @@
 //! via REST API endpoints, allowing dynamic initialization without requiring
 //! TOML files or environment variables.
 
+use std::sync::Arc;
+
 use graphrag_core::Config;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Server configuration state

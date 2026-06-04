@@ -4,7 +4,8 @@
 
 #[cfg(feature = "web-api")]
 pub mod server {
-    use crate::{GraphRAG, GraphRAGError, Result};
+    use std::sync::Arc;
+
     use axum::{
         extract::{Path, Query, State},
         http::StatusCode,
@@ -13,8 +14,9 @@ pub mod server {
         Router,
     };
     use serde::{Deserialize, Serialize};
-    use std::sync::Arc;
     use tokio::sync::RwLock;
+
+    use crate::{GraphRAG, GraphRAGError, Result};
 
     /// API server configuration
     #[derive(Debug, Clone)]
@@ -135,8 +137,9 @@ pub mod server {
 /// Client for interacting with GraphRAG REST API
 #[cfg(feature = "web-api")]
 pub mod client {
-    use crate::{GraphRAGError, Result};
     use serde::{Deserialize, Serialize};
+
+    use crate::{GraphRAGError, Result};
 
     pub struct ApiClient {
         base_url: String,

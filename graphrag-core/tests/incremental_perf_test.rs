@@ -4,12 +4,15 @@
 
 #![cfg(feature = "incremental")]
 
-use graphrag_core::core::{Entity, EntityId, KnowledgeGraph, Relationship};
-use graphrag_core::graph::incremental::{
-    ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
-    ProductionGraphStore,
-};
 use std::time::Instant;
+
+use graphrag_core::{
+    core::{Entity, EntityId, KnowledgeGraph, Relationship},
+    graph::incremental::{
+        ConflictResolver, ConflictStrategy, IncrementalConfig, IncrementalGraphStore,
+        ProductionGraphStore,
+    },
+};
 
 fn create_test_entity(i: usize) -> Entity {
     Entity {

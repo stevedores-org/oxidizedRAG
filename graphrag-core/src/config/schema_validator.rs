@@ -4,9 +4,11 @@
 //! are correct before they're used. This catches errors early with clear
 //! messages about what's wrong and where.
 
-use crate::core::error::{GraphRAGError, Result};
-use serde_json::Value;
 use std::path::Path;
+
+use serde_json::Value;
+
+use crate::core::error::{GraphRAGError, Result};
 
 /// Validate a configuration against a JSON Schema
 ///
@@ -228,8 +230,9 @@ impl ValidationResult {
 
 #[cfg(all(test, feature = "json5-support"))]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_validate_simple_config() {

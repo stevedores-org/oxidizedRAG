@@ -196,89 +196,103 @@ impl fmt::Display for GraphRAGError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             GraphRAGError::Config { message } => {
-                write!(f, "Configuration error: {message}. \
-                          Solution: Check your config file or use default settings with GraphRAG::builder()")
+                write!(
+                    f,
+                    "Configuration error: {message}. Solution: Check your config file or use \
+                     default settings with GraphRAG::builder()"
+                )
             },
             GraphRAGError::NotInitialized => {
                 write!(
                     f,
-                    "GraphRAG not initialized. \
-                          Solution: Call .initialize() or use .ask() which auto-initializes"
+                    "GraphRAG not initialized. Solution: Call .initialize() or use .ask() which \
+                     auto-initializes"
                 )
             },
             GraphRAGError::NoDocuments => {
-                write!(f, "No documents added. \
-                          Solution: Use .add_document(), .add_document_from_text(), or .from_file() to add content")
+                write!(
+                    f,
+                    "No documents added. Solution: Use .add_document(), \
+                     .add_document_from_text(), or .from_file() to add content"
+                )
             },
             GraphRAGError::Io(err) => {
                 write!(
                     f,
-                    "I/O error: {err}. \
-                          Solution: Check file permissions and that paths exist"
+                    "I/O error: {err}. Solution: Check file permissions and that paths exist"
                 )
             },
             #[cfg(feature = "ureq")]
             GraphRAGError::Http(err) => {
                 write!(
                     f,
-                    "HTTP request error: {err}. \
-                          Solution: Check network connectivity and service availability"
+                    "HTTP request error: {err}. Solution: Check network connectivity and service \
+                     availability"
                 )
             },
             #[cfg(not(feature = "ureq"))]
             GraphRAGError::Http(msg) => {
                 write!(
                     f,
-                    "HTTP request error: {msg}. \
-                          Solution: Check network connectivity and service availability"
+                    "HTTP request error: {msg}. Solution: Check network connectivity and service \
+                     availability"
                 )
             },
             GraphRAGError::Json(err) => {
                 write!(
                     f,
-                    "JSON parsing error: {err}. \
-                          Solution: Verify JSON format or use default configuration"
+                    "JSON parsing error: {err}. Solution: Verify JSON format or use default \
+                     configuration"
                 )
             },
             GraphRAGError::SerdeJson(err) => {
                 write!(
                     f,
-                    "JSON serialization error: {err}. \
-                          Solution: Verify data structure compatibility"
+                    "JSON serialization error: {err}. Solution: Verify data structure \
+                     compatibility"
                 )
             },
             GraphRAGError::TextProcessing { message } => {
                 write!(
                     f,
-                    "Text processing error: {message}. \
-                          Solution: Check text content and chunk size configuration"
+                    "Text processing error: {message}. Solution: Check text content and chunk \
+                     size configuration"
                 )
             },
             GraphRAGError::GraphConstruction { message } => {
                 write!(
                     f,
-                    "Graph construction error: {message}. \
-                          Solution: Initialize GraphRAG system and add documents first"
+                    "Graph construction error: {message}. Solution: Initialize GraphRAG system \
+                     and add documents first"
                 )
             },
             GraphRAGError::VectorSearch { message } => {
-                write!(f, "Vector search error: {message}. \
-                          Solution: Ensure embeddings are initialized with .initialize_embeddings()")
+                write!(
+                    f,
+                    "Vector search error: {message}. Solution: Ensure embeddings are initialized \
+                     with .initialize_embeddings()"
+                )
             },
             GraphRAGError::EntityExtraction { message } => {
-                write!(f, "Entity extraction error: {message}. \
-                          Solution: Check entity extraction configuration or use lower confidence threshold")
+                write!(
+                    f,
+                    "Entity extraction error: {message}. Solution: Check entity extraction \
+                     configuration or use lower confidence threshold"
+                )
             },
             GraphRAGError::Retrieval { message } => {
                 write!(
                     f,
-                    "Retrieval error: {message}. \
-                          Solution: Ensure documents are added and graph is built"
+                    "Retrieval error: {message}. Solution: Ensure documents are added and graph \
+                     is built"
                 )
             },
             GraphRAGError::Generation { message } => {
-                write!(f, "Answer generation error: {message}. \
-                          Solution: Check LLM provider configuration or use GraphRAG::builder().auto_detect_llm()")
+                write!(
+                    f,
+                    "Answer generation error: {message}. Solution: Check LLM provider \
+                     configuration or use GraphRAG::builder().auto_detect_llm()"
+                )
             },
             GraphRAGError::FunctionCall { message } => {
                 write!(f, "Function call error: {message}")
@@ -708,7 +722,8 @@ mod tests {
         };
         assert_eq!(
             format!("{error}"),
-            "Configuration error: Invalid configuration. Solution: Check your config file or use default settings with GraphRAG::builder()"
+            "Configuration error: Invalid configuration. Solution: Check your config file or use \
+             default settings with GraphRAG::builder()"
         );
     }
 

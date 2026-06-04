@@ -1,10 +1,13 @@
 //! Shared test fixtures and helpers for RAG agent tests
 
-pub use graphrag_core::core::{Document, DocumentId, KnowledgeGraph};
-use graphrag_core::graph::GraphBuilder;
-pub use graphrag_core::text::TextProcessor;
-pub use graphrag_core::Result;
 use std::fs;
+
+use graphrag_core::graph::GraphBuilder;
+pub use graphrag_core::{
+    core::{Document, DocumentId, KnowledgeGraph},
+    text::TextProcessor,
+    Result,
+};
 
 pub const FIXTURE_DIR: &str = "tests/fixtures/code_samples";
 

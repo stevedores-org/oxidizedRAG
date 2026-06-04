@@ -7,8 +7,9 @@
 //! - `/entities [filter]`
 //! - `/workspace <name>`
 
-use color_eyre::eyre::{eyre, Result};
 use std::path::PathBuf;
+
+use color_eyre::eyre::{eyre, Result};
 
 /// Slash command enum
 #[derive(Debug, Clone, PartialEq)]

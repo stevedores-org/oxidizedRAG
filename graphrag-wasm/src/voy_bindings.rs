@@ -217,8 +217,8 @@ impl VoyIndex {
     pub fn search_parsed(&self, query: JsValue, k: usize) -> Result<JsValue, JsValue> {
         let results = self.inner.search(query, k);
 
-        // Voy returns: Array<{id, title, url, embeddings, neighbors: Array<{id, similarity}>}>
-        // We want: Array<{id, distance, title, url}>
+        // Voy returns: Array<{id, title, url, embeddings, neighbors: Array<{id,
+        // similarity}>}> We want: Array<{id, distance, title, url}>
         if let Ok(arr) = js_sys::Array::from(&results).dyn_into::<js_sys::Array>() {
             let result_array = js_sys::Array::new();
 
@@ -351,8 +351,9 @@ pub fn check_voy_available() -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

@@ -1,7 +1,7 @@
 //! Symposium GraphRAG with Zero-Cost Approach
 //!
-//! This example demonstrates the complete workflow using the convenient GraphRAG API
-//! with a zero-cost algorithmic pipeline:
+//! This example demonstrates the complete workflow using the convenient
+//! GraphRAG API with a zero-cost algorithmic pipeline:
 //! 1. Loading configuration from JSON5
 //! 2. Processing Plato's Symposium with pattern-based extraction
 //! 3. Co-occurrence relationship discovery (no LLM)
@@ -24,8 +24,9 @@
 //! - Query cost: ~$0.05 per query (only final LLM generation)
 //! - Quality: ~85-90% (excellent for zero-cost)
 
-use graphrag_core::GraphRAG;
 use std::time::Instant;
+
+use graphrag_core::GraphRAG;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -43,7 +44,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let start_time = Instant::now();
 
-    // Use the convenient API: load config + process document + build graph in one call
+    // Use the convenient API: load config + process document + build graph in one
+    // call
     let mut graphrag = GraphRAG::from_config_and_document(
         "config/templates/symposium_zero_cost.graphrag.json5",
         "docs-example/Symposium.txt",

@@ -1,11 +1,17 @@
 //! Configuration loading and management
 
-use crate::handlers::FileOperations;
-use color_eyre::eyre::{eyre, Result};
-use graphrag_core::config::json5_loader::{detect_config_format, ConfigFormat};
-use graphrag_core::config::setconfig::SetConfig;
-use graphrag_core::Config as GraphRAGConfig;
 use std::path::Path;
+
+use color_eyre::eyre::{eyre, Result};
+use graphrag_core::{
+    config::{
+        json5_loader::{detect_config_format, ConfigFormat},
+        setconfig::SetConfig,
+    },
+    Config as GraphRAGConfig,
+};
+
+use crate::handlers::FileOperations;
 
 /// Load GraphRAG configuration from file (supports JSON5, JSON, TOML)
 pub async fn load_config(path: &Path) -> Result<GraphRAGConfig> {
@@ -19,7 +25,8 @@ pub async fn load_config(path: &Path) -> Result<GraphRAGConfig> {
     let format = detect_config_format(path)
         .ok_or_else(|| eyre!("Unsupported config file format: {:?}", path.extension()))?;
 
-    // Parse based on detected format - always parse as SetConfig first, then convert
+    // Parse based on detected format - always parse as SetConfig first, then
+    // convert
     let set_config: SetConfig = match format {
         ConfigFormat::Json5 => {
             #[cfg(feature = "json5-support")]
@@ -82,9 +89,11 @@ pub fn default_config() -> GraphRAGConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io::Write;
+
     use tempfile::NamedTempFile;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_load_valid_toml_config() {

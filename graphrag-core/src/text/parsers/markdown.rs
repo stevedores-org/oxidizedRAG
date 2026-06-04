@@ -140,7 +140,8 @@ mod tests {
     #[test]
     fn test_markdown_parsing() {
         let parser = MarkdownLayoutParser::new();
-        let content = "# Chapter 1\n\nSome text\n\n## Section 1.1\n\nMore text\n\n### Subsection 1.1.1\n\nDetails";
+        let content = "# Chapter 1\n\nSome text\n\n## Section 1.1\n\nMore text\n\n### Subsection \
+                       1.1.1\n\nDetails";
 
         let structure = parser.parse(content);
 

@@ -17,10 +17,11 @@ pub mod surrealdb;
 #[cfg(feature = "incremental")]
 pub mod async_bridge;
 
+use std::collections::HashMap;
+
 #[cfg(feature = "async")]
 use crate::core::{traits::Storage, GraphRAGError};
 use crate::core::{Document, Entity, Result, TextChunk};
-use std::collections::HashMap;
 
 /// In-memory storage implementation for development and testing
 #[derive(Debug, Default, Clone)]
@@ -85,12 +86,14 @@ impl MemoryStorage {
         self.chunks.values().collect()
     }
 
-    /// Fetch multiple entities by IDs in a single operation (avoids N+1 queries)
+    /// Fetch multiple entities by IDs in a single operation (avoids N+1
+    /// queries)
     pub fn fetch_many_entities(&self, ids: &[&str]) -> Vec<Option<&Entity>> {
         ids.iter().map(|id| self.entities.get(*id)).collect()
     }
 
-    /// Fetch multiple documents by IDs in a single operation (avoids N+1 queries)
+    /// Fetch multiple documents by IDs in a single operation (avoids N+1
+    /// queries)
     pub fn fetch_many_documents(&self, ids: &[&str]) -> Vec<Option<&Document>> {
         ids.iter().map(|id| self.documents.get(*id)).collect()
     }
@@ -132,7 +135,8 @@ pub struct StorageStats {
     pub metadata_count: usize,
 }
 
-// Implement the Storage trait for MemoryStorage (only when async feature is enabled)
+// Implement the Storage trait for MemoryStorage (only when async feature is
+// enabled)
 #[cfg(feature = "async")]
 impl Storage for MemoryStorage {
     type Entity = Entity;
@@ -185,8 +189,9 @@ impl Storage for MemoryStorage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use indexmap::IndexMap;
+
+    use super::*;
 
     #[test]
     fn test_memory_storage() {

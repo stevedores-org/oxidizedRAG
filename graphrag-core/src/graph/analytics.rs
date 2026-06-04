@@ -7,8 +7,9 @@
 //! - Graph embeddings preparation
 //! - Temporal graph analysis
 
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
+
+use serde::{Deserialize, Serialize};
 
 /// Community detection result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,7 +91,8 @@ impl GraphAnalytics {
 
     /// Detect communities using Louvain algorithm
     ///
-    /// This is a simplified implementation. Full Louvain requires iterative optimization.
+    /// This is a simplified implementation. Full Louvain requires iterative
+    /// optimization.
     ///
     /// # Returns
     /// List of detected communities

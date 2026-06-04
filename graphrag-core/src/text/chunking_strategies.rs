@@ -1,15 +1,18 @@
 //! Trait-based chunking strategy implementations
 //!
 //! This module provides concrete implementations of the ChunkingStrategy trait
-//! that wrap existing chunking logic while maintaining a clean, minimal interface.
+//! that wrap existing chunking logic while maintaining a clean, minimal
+//! interface.
+
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Mutex,
+};
 
 use crate::{
     core::{ChunkId, ChunkingStrategy, DocumentId, TextChunk},
     text::{HierarchicalChunker, SemanticChunker},
 };
-
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Mutex;
 
 /// Global counter for generating unique chunk IDs
 static CHUNK_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -137,8 +140,9 @@ impl ChunkingStrategy for SemanticChunkingStrategy {
 
 /// Rust code chunking strategy using tree-sitter
 ///
-/// Parses Rust code using tree-sitter and creates chunks at function/method boundaries.
-/// This ensures that code chunks are syntactically complete and meaningful.
+/// Parses Rust code using tree-sitter and creates chunks at function/method
+/// boundaries. This ensures that code chunks are syntactically complete and
+/// meaningful.
 #[cfg(feature = "code-chunking")]
 pub struct RustCodeChunkingStrategy {
     min_chunk_size: usize,
@@ -261,7 +265,8 @@ mod tests {
         let document_id = DocumentId::new("test_doc".to_string());
         let strategy = HierarchicalChunkingStrategy::new(100, 20, document_id);
 
-        let text = "This is paragraph one.\n\nThis is paragraph two with more content to test chunking behavior.";
+        let text = "This is paragraph one.\n\nThis is paragraph two with more content to test \
+                    chunking behavior.";
         let chunks = strategy.chunk(text);
 
         assert!(!chunks.is_empty());
@@ -277,13 +282,15 @@ mod tests {
         // Note: In a real test, you would create a proper SemanticChunker
         // For now, we'll use a mock approach
         let _config = crate::text::semantic_chunking::SemanticChunkerConfig::default();
-        // We can't easily create a mock embedding generator here, so skip the test
-        // let embedding_gen = crate::vector::EmbeddingGenerator::mock();
-        // let chunker = SemanticChunker::new(config, embedding_gen);
-        // let strategy = SemanticChunkingStrategy::new(chunker, document_id);
+        // We can't easily create a mock embedding generator here, so skip the
+        // test let embedding_gen =
+        // crate::vector::EmbeddingGenerator::mock(); let chunker =
+        // SemanticChunker::new(config, embedding_gen); let strategy =
+        // SemanticChunkingStrategy::new(chunker, document_id);
         //
-        // let text = "First sentence. Second sentence. Third sentence. Fourth sentence. Fifth sentence. Sixth sentence.";
-        // let chunks = strategy.chunk(text);
+        // let text = "First sentence. Second sentence. Third sentence. Fourth
+        // sentence. Fifth sentence. Sixth sentence."; let chunks =
+        // strategy.chunk(text);
         //
         // assert!(!chunks.is_empty());
         // for chunk in &chunks {

@@ -8,13 +8,11 @@
 //! - Jina AI API
 //! - Mistral AI API
 //! - Together AI API
-use graphrag_core::embeddings::{EmbeddingConfig, EmbeddingProvider, EmbeddingProviderType};
-
-#[cfg(feature = "huggingface-hub")]
-use graphrag_core::embeddings::huggingface::HuggingFaceEmbeddings;
-
 #[cfg(feature = "ureq")]
 use graphrag_core::embeddings::api_providers::HttpEmbeddingProvider;
+#[cfg(feature = "huggingface-hub")]
+use graphrag_core::embeddings::huggingface::HuggingFaceEmbeddings;
+use graphrag_core::embeddings::{EmbeddingConfig, EmbeddingProvider, EmbeddingProviderType};
 
 #[tokio::main]
 async fn main() -> graphrag_core::core::error::Result<()> {

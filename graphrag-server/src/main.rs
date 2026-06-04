@@ -1,6 +1,7 @@
 //! GraphRAG REST API Server with Actix-web and Apistos OpenAPI
 //!
-//! Production-ready REST API for GraphRAG operations with automatic OpenAPI documentation.
+//! Production-ready REST API for GraphRAG operations with automatic OpenAPI
+//! documentation.
 //!
 //! ## Features
 //! - Automatic OpenAPI 3.0.3 documentation via Apistos
@@ -25,6 +26,8 @@
 //! # Browser: http://localhost:8080/swagger
 //! ```
 
+use std::{collections::HashMap, sync::Arc};
+
 use actix_cors::Cors;
 use actix_web::{
     web::{self, Data, Json, Path as WebPath},
@@ -38,8 +41,6 @@ use apistos::{
     web::{delete, get, post, resource, scope},
 };
 use serde_json::json;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 mod models;
@@ -237,7 +238,8 @@ impl AppState {
 #[api_operation(
     tag = "info",
     summary = "Get API information",
-    description = "Returns basic information about the GraphRAG API, including version, status, and available endpoints"
+    description = "Returns basic information about the GraphRAG API, including version, status, \
+                   and available endpoints"
 )]
 async fn root(state: Data<AppState>) -> impl Responder {
     Json(json!({
@@ -275,7 +277,8 @@ async fn root(state: Data<AppState>) -> impl Responder {
 #[api_operation(
     tag = "health",
     summary = "Health check",
-    description = "Returns the current health status of the service, including document count, graph status, and total queries processed"
+    description = "Returns the current health status of the service, including document count, \
+                   graph status, and total queries processed"
 )]
 async fn health(state: Data<AppState>) -> Result<Json<HealthResponse>, ApiError> {
     let doc_count;
@@ -323,7 +326,8 @@ async fn health(state: Data<AppState>) -> Result<Json<HealthResponse>, ApiError>
 #[api_operation(
     tag = "query",
     summary = "Query the knowledge graph",
-    description = "Search documents using semantic similarity. Returns ranked results with similarity scores.",
+    description = "Search documents using semantic similarity. Returns ranked results with \
+                   similarity scores.",
     error_code = 400,
     error_code = 500
 )]
@@ -454,7 +458,8 @@ async fn query(
 #[api_operation(
     tag = "documents",
     summary = "Add a new document",
-    description = "Add a new document to the knowledge graph. The document will be embedded and indexed for search.",
+    description = "Add a new document to the knowledge graph. The document will be embedded and \
+                   indexed for search.",
     error_code = 400,
     error_code = 500
 )]
@@ -731,7 +736,8 @@ async fn build_graph(state: Data<AppState>) -> Result<Json<BuildGraphResponse>, 
 #[api_operation(
     tag = "graph",
     summary = "Get graph statistics",
-    description = "Retrieve statistics about the knowledge graph, including document count, entity count, and relationship count"
+    description = "Retrieve statistics about the knowledge graph, including document count, \
+                   entity count, and relationship count"
 )]
 async fn graph_stats(state: Data<AppState>) -> Json<GraphStatsResponse> {
     #[cfg(feature = "qdrant")]
@@ -897,19 +903,23 @@ async fn main() -> std::io::Result<()> {
         info: Info {
             title: "GraphRAG REST API".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
-            description: Some(concat!(
-                "Production-ready REST API for GraphRAG operations with Qdrant vector database.\n\n",
-                "## Features\n",
-                "- Semantic search over documents\n",
-                "- Knowledge graph construction\n",
-                "- Real-time vector embeddings\n",
-                "- Qdrant integration (optional)\n",
-                "- JWT authentication (optional)\n\n",
-                "## Getting Started\n",
-                "1. Add documents via `POST /api/documents`\n",
-                "2. Build graph via `POST /api/graph/build`\n",
-                "3. Query via `POST /api/query`\n"
-            ).to_string()),
+            description: Some(
+                concat!(
+                    "Production-ready REST API for GraphRAG operations with Qdrant vector \
+                     database.\n\n",
+                    "## Features\n",
+                    "- Semantic search over documents\n",
+                    "- Knowledge graph construction\n",
+                    "- Real-time vector embeddings\n",
+                    "- Qdrant integration (optional)\n",
+                    "- JWT authentication (optional)\n\n",
+                    "## Getting Started\n",
+                    "1. Add documents via `POST /api/documents`\n",
+                    "2. Build graph via `POST /api/graph/build`\n",
+                    "3. Query via `POST /api/query`\n"
+                )
+                .to_string(),
+            ),
             ..Default::default()
         },
         ..Default::default()

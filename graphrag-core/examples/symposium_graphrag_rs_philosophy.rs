@@ -7,7 +7,8 @@
 //! 2. 📦 Zero Dipendenze Pesanti - NO SpaCy, solo regex + TF-IDF
 //! 3. 🦀 Rust-Native Performance - 56x più veloce, 24x meno memoria
 //!
-//! Configuration: config/templates/symposium_graphrag_rs_philosophy.graphrag.json5
+//! Configuration:
+//! config/templates/symposium_graphrag_rs_philosophy.graphrag.json5
 //!
 //! Filosofia GraphRAG-rs:
 //!   ✅ Zero Costi Operativi > Massima Accuratezza
@@ -16,7 +17,8 @@
 //!   ✅ Performance Real-Time > Semantic Depth
 //!
 //! Run with:
-//! cargo run --example symposium_graphrag_rs_philosophy --features async,json5-support
+//! cargo run --example symposium_graphrag_rs_philosophy --features
+//! async,json5-support
 //!
 //! Expected:
 //! - Processing time: 5-10 secondi (100x più veloce di LLM!)
@@ -25,8 +27,9 @@
 //! - Query time: 50ms (16x più veloce di LLM)
 //! - Quality: ~80% (accettabile per $0 costi!)
 
-use graphrag_core::GraphRAG;
 use std::time::Instant;
+
+use graphrag_core::GraphRAG;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

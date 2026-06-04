@@ -1,8 +1,12 @@
 //! Cache statistics and monitoring capabilities
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::{
+    sync::{
+        atomic::{AtomicU64, AtomicUsize, Ordering},
+        Arc,
+    },
+    time::{Duration, Instant},
+};
 
 /// Comprehensive cache statistics
 #[derive(Debug)]
@@ -171,7 +175,8 @@ impl CacheStatistics {
         self.evictions.store(0, Ordering::Relaxed);
         self.updates.store(0, Ordering::Relaxed);
         self.errors.store(0, Ordering::Relaxed);
-        // Note: We don't reset current_size and total_bytes as they represent current state
+        // Note: We don't reset current_size and total_bytes as they represent
+        // current state
     }
 
     /// Export statistics as a snapshot
@@ -468,7 +473,11 @@ impl CacheHealth {
 
         // Add positive recommendations
         if metrics.hit_rate > 0.8 && error_rate < 0.01 {
-            recommendations.push("Cache is performing well! Consider increasing capacity for even better performance".to_string());
+            recommendations.push(
+                "Cache is performing well! Consider increasing capacity for even better \
+                 performance"
+                    .to_string(),
+            );
         }
 
         if alerts.is_empty() && recommendations.is_empty() {

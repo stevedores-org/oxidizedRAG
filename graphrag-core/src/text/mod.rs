@@ -21,6 +21,9 @@ pub mod semantic_chunking;
 
 pub use analysis::{TextAnalyzer, TextStats};
 pub use chunk_enricher::{ChunkEnricher, EnrichmentStatistics};
+use chunking::HierarchicalChunker;
+#[cfg(feature = "code-chunking")]
+pub use chunking_strategies::RustCodeChunkingStrategy;
 pub use chunking_strategies::{HierarchicalChunkingStrategy, SemanticChunkingStrategy};
 pub use document_structure::{
     DocumentStructure, Heading, HeadingHierarchy, Section, SectionNumber, SectionNumberFormat,
@@ -33,16 +36,12 @@ pub use semantic_chunking::{
     BreakpointStrategy, SemanticChunk, SemanticChunker, SemanticChunkerConfig,
 };
 
-#[cfg(feature = "code-chunking")]
-pub use chunking_strategies::RustCodeChunkingStrategy;
-
 #[cfg(feature = "parallel-processing")]
 use crate::parallel::{ParallelProcessor, PerformanceMonitor};
 use crate::{
     core::{ChunkId, ChunkingStrategy, Document, TextChunk},
     Result,
 };
-use chunking::HierarchicalChunker;
 
 /// Text processing utilities for chunking and preprocessing
 #[derive(Debug)]
@@ -83,7 +82,8 @@ impl TextProcessor {
         })
     }
 
-    /// Split text into chunks with overlap using hierarchical boundary preservation
+    /// Split text into chunks with overlap using hierarchical boundary
+    /// preservation
     pub fn chunk_text_hierarchical(&self, document: &Document) -> Result<Vec<TextChunk>> {
         let chunker = HierarchicalChunker::new().with_min_size(50);
         let chunks_text =
@@ -208,7 +208,8 @@ impl TextProcessor {
         self.chunk_text_with_enrichment(document, &mut enricher)
     }
 
-    /// Convenience method: chunk hierarchically and enrich with auto-detected format
+    /// Convenience method: chunk hierarchically and enrich with auto-detected
+    /// format
     pub fn chunk_hierarchical_and_enrich(&self, document: &Document) -> Result<Vec<TextChunk>> {
         let mut enricher = Self::create_default_enricher(document);
         self.chunk_text_hierarchical_with_enrichment(document, &mut enricher)
@@ -231,10 +232,16 @@ impl TextProcessor {
     /// ```rust
     /// # use std::error::Error;
     /// # fn main() -> Result<(), Box<dyn Error>> {
-    /// use graphrag_core::text::{TextProcessor, HierarchicalChunkingStrategy};
-    /// use graphrag_core::core::{Document, DocumentId};
+    /// use graphrag_core::{
+    ///     core::{Document, DocumentId},
+    ///     text::{HierarchicalChunkingStrategy, TextProcessor},
+    /// };
     ///
-    /// let document = Document::new(DocumentId::new("doc1".to_string()), "Title".to_string(), "Content".to_string());
+    /// let document = Document::new(
+    ///     DocumentId::new("doc1".to_string()),
+    ///     "Title".to_string(),
+    ///     "Content".to_string(),
+    /// );
     /// let processor = TextProcessor::new(1000, 100)?;
     /// let strategy = HierarchicalChunkingStrategy::new(500, 50, document.id.clone());
     /// let chunks = processor.chunk_with_strategy(&document, &strategy)?;
@@ -259,7 +266,8 @@ impl TextProcessor {
         pos
     }
 
-    /// Find a safe character boundary within a slice at or before the given position
+    /// Find a safe character boundary within a slice at or before the given
+    /// position
     fn find_char_boundary_in_slice(&self, text: &str, mut pos: usize) -> usize {
         pos = pos.min(text.len());
         while pos > 0 && !text.is_char_boundary(pos) {
@@ -532,7 +540,8 @@ pub struct LanguageDetector;
 
 impl LanguageDetector {
     /// Simple language detection based on character patterns
-    /// This is a very basic implementation - in practice you'd want a proper library
+    /// This is a very basic implementation - in practice you'd want a proper
+    /// library
     pub fn detect_language(text: &str) -> String {
         // Very basic detection - in practice use a proper language detection library
         if text
@@ -561,7 +570,9 @@ mod tests {
         let document = Document::new(
             DocumentId::new("test".to_string()),
             "Test Document".to_string(),
-            "This is a test document. It has multiple sentences. Each sentence should be processed correctly.".to_string(),
+            "This is a test document. It has multiple sentences. Each sentence should be \
+             processed correctly."
+                .to_string(),
         );
 
         let chunks = processor.chunk_text(&document).unwrap();
@@ -572,7 +583,8 @@ mod tests {
     #[test]
     fn test_keyword_extraction() {
         let processor = TextProcessor::new(1000, 100).unwrap();
-        let text = "machine learning artificial intelligence data science computer vision natural language processing";
+        let text = "machine learning artificial intelligence data science computer vision natural \
+                    language processing";
         let keywords = processor.extract_keywords(text, 3);
 
         assert!(!keywords.is_empty());
@@ -597,7 +609,9 @@ mod tests {
         let document = Document::new(
             DocumentId::new("test".to_string()),
             "test.md".to_string(),
-            "# Chapter 1\n\nThis document discusses machine learning and artificial intelligence.\n\n## Section 1.1\n\nDeep learning is important.".to_string(),
+            "# Chapter 1\n\nThis document discusses machine learning and artificial \
+             intelligence.\n\n## Section 1.1\n\nDeep learning is important."
+                .to_string(),
         );
 
         let chunks = processor.chunk_and_enrich(&document).unwrap();

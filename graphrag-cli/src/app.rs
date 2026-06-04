@@ -1,5 +1,13 @@
 //! Main application logic and event loop
 
+use std::{path::PathBuf, time::Instant};
+
+use chrono::Utc;
+use color_eyre::eyre::Result;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::layout::{Constraint, Direction, Layout};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+
 use crate::{
     action::{Action, StatusType},
     commands::SlashCommand,
@@ -10,12 +18,6 @@ use crate::{
     ui::{HelpOverlay, InfoPanel, QueryInput, RawResultsViewer, ResultsViewer, StatusBar},
     workspace::{WorkspaceManager, WorkspaceMetadata},
 };
-use chrono::Utc;
-use color_eyre::eyre::Result;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::layout::{Constraint, Direction, Layout};
-use std::{path::PathBuf, time::Instant};
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 /// Main application state
 pub struct App {
@@ -737,7 +739,8 @@ impl App {
             name
         )))?;
 
-        // Get workspace directory from workspace_manager (default: ~/.graphrag/workspaces)
+        // Get workspace directory from workspace_manager (default:
+        // ~/.graphrag/workspaces)
         let workspace_dir = dirs::data_dir()
             .map(|p| p.join("graphrag").join("workspaces"))
             .unwrap_or_else(|| std::path::PathBuf::from("./workspaces"));

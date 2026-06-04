@@ -24,10 +24,8 @@ pub mod mock_providers;
 // Re-export key items for convenience
 pub use error::{ErrorContext, ErrorSeverity, GraphRAGError, Result};
 pub use metadata::ChunkMetadata;
-
 #[cfg(feature = "async")]
 pub use registry::{RegistryBuilder, ServiceConfig, ServiceContext, ServiceRegistry};
-
 // Traits require async feature
 #[cfg(feature = "async")]
 pub use traits::*;
@@ -63,10 +61,10 @@ pub trait ChunkingStrategy: Send + Sync {
     fn chunk(&self, text: &str) -> Vec<TextChunk>;
 }
 
-use indexmap::IndexMap;
-use petgraph::{graph::NodeIndex, Graph};
 use std::collections::HashMap;
 
+use indexmap::IndexMap;
+use petgraph::{graph::NodeIndex, Graph};
 // PageRank-related imports are only available when the feature is enabled
 #[cfg(feature = "pagerank")]
 use sprs::CsMat;
@@ -314,11 +312,12 @@ impl KnowledgeGraph {
     pub fn remove_entity(&mut self, entity_id: &EntityId) -> Option<Entity> {
         let node_idx = self.entity_index.remove(entity_id)?;
         self.graph.remove_node(node_idx)
-        // petgraph::Graph::remove_node also removes all edges connected to the node
+        // petgraph::Graph::remove_node also removes all edges connected to the
+        // node
     }
 
-    /// Remove a relationship between two entities by source, target, and relation_type.
-    /// Returns true if a matching edge was removed.
+    /// Remove a relationship between two entities by source, target, and
+    /// relation_type. Returns true if a matching edge was removed.
     pub fn remove_relationship(
         &mut self,
         source: &EntityId,
@@ -577,7 +576,8 @@ impl KnowledgeGraph {
         Ok(kg)
     }
 
-    /// Save knowledge graph to JSON file with optimized format for entities and relationships
+    /// Save knowledge graph to JSON file with optimized format for entities and
+    /// relationships
     pub fn save_to_json(&self, file_path: &str) -> Result<()> {
         use std::fs;
 
@@ -623,7 +623,8 @@ impl KnowledgeGraph {
             if let Some(embedding) = &entity.embedding {
                 entity_obj["has_embedding"] = true.into();
                 entity_obj["embedding_dimension"] = embedding.len().into();
-                // Store only first few dimensions for debugging (full embedding too large for JSON)
+                // Store only first few dimensions for debugging (full embedding too large for
+                // JSON)
                 let sample_embedding: Vec<f32> = embedding.iter().take(5).cloned().collect();
                 entity_obj["embedding_sample"] = sample_embedding.into();
             } else {
@@ -837,9 +838,11 @@ impl KnowledgeGraph {
         self.graph.edge_weights()
     }
 
-    /// Clear all entities and relationships while preserving documents and chunks
+    /// Clear all entities and relationships while preserving documents and
+    /// chunks
     ///
-    /// This is useful for rebuilding the graph from scratch without reloading documents.
+    /// This is useful for rebuilding the graph from scratch without reloading
+    /// documents.
     pub fn clear_entities_and_relationships(&mut self) {
         self.graph.clear();
         self.entity_index.clear();
@@ -847,8 +850,8 @@ impl KnowledgeGraph {
     }
 
     /// Convert KnowledgeGraph to petgraph format for Leiden clustering
-    /// Returns a graph with entity names as nodes and relationship confidences as edge weights
-    /// Only available when leiden feature is enabled
+    /// Returns a graph with entity names as nodes and relationship confidences
+    /// as edge weights Only available when leiden feature is enabled
     #[cfg(feature = "leiden")]
     pub fn to_leiden_graph(&self) -> petgraph::Graph<String, f32, petgraph::Undirected> {
         let mut graph = Graph::new_undirected();
@@ -871,18 +874,19 @@ impl KnowledgeGraph {
         graph
     }
 
-    /// Detect hierarchical communities in the entity graph using Leiden algorithm
-    /// Only available when leiden feature is enabled
+    /// Detect hierarchical communities in the entity graph using Leiden
+    /// algorithm Only available when leiden feature is enabled
     ///
     /// # Arguments
     /// * `config` - Leiden algorithm configuration
     ///
     /// # Returns
-    /// HierarchicalCommunities structure with community assignments at each level
+    /// HierarchicalCommunities structure with community assignments at each
+    /// level
     ///
     /// # Example
     /// ```no_run
-    /// use graphrag_core::{KnowledgeGraph, graph::LeidenConfig};
+    /// use graphrag_core::{graph::LeidenConfig, KnowledgeGraph};
     ///
     /// let graph = KnowledgeGraph::new();
     /// // ... build graph ...

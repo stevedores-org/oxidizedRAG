@@ -1,21 +1,23 @@
 //! Comprehensive example demonstrating trait-based chunking strategies
 //!
-//! This example implements the cAST (Context-Aware Splitting with Tree-sitter) approach
-//! from the CMU paper, showing how AST-based chunking improves RAG performance.
+//! This example implements the cAST (Context-Aware Splitting with Tree-sitter)
+//! approach from the CMU paper, showing how AST-based chunking improves RAG
+//! performance.
 //!
 //! We use Plato's Symposium as real-world text to demonstrate:
-//! 1. Hierarchical chunking for philosophical text - respects paragraph/sentence boundaries
-//! 2. Tree-sitter AST-based chunking for embedded code snippets - preserves syntactic boundaries
+//! 1. Hierarchical chunking for philosophical text - respects
+//!    paragraph/sentence boundaries
+//! 2. Tree-sitter AST-based chunking for embedded code snippets - preserves
+//!    syntactic boundaries
 
+use std::{path::Path, time::Instant};
+
+#[cfg(feature = "code-chunking")]
+use graphrag_core::text::RustCodeChunkingStrategy;
 use graphrag_core::{
     core::{Document, DocumentId, TextChunk},
     text::{HierarchicalChunkingStrategy, TextProcessor},
 };
-use std::path::Path;
-use std::time::Instant;
-
-#[cfg(feature = "code-chunking")]
-use graphrag_core::text::RustCodeChunkingStrategy;
 
 /// Metrics for comparing chunking strategies
 #[derive(Debug)]

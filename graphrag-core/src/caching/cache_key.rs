@@ -1,9 +1,11 @@
 //! Intelligent cache key generation for optimal hit rates
 
+use std::collections::HashMap;
+
+use sha2::{Digest, Sha256};
+
 use super::CacheResult;
 use crate::core::traits::GenerationParams;
-use sha2::{Digest, Sha256};
-use std::collections::HashMap;
 
 /// A cache key that uniquely identifies a request-response pair
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

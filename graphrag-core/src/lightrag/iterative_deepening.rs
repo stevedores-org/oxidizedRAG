@@ -1,13 +1,16 @@
 //! Iterative Deepening Search for LazyGraphRAG
 //!
-//! This module implements iterative deepening search that progressively explores
-//! the concept graph to find relevant information without requiring full graph traversal.
+//! This module implements iterative deepening search that progressively
+//! explores the concept graph to find relevant information without requiring
+//! full graph traversal.
 //!
 //! ## Key Features
 //!
-//! - **Progressive Exploration**: Start with high-confidence results, deepen if needed
+//! - **Progressive Exploration**: Start with high-confidence results, deepen if
+//!   needed
 //! - **Early Termination**: Stop when sufficient relevant chunks are found
-//! - **Depth-Limited**: Control exploration depth to balance speed vs completeness
+//! - **Depth-Limited**: Control exploration depth to balance speed vs
+//!   completeness
 //! - **Relevance-Guided**: Use query refinement to guide exploration
 //!
 //! ## Algorithm
@@ -33,15 +36,25 @@
 //! let search = IterativeDeepeningSearch::new(config);
 //! let results = search.search("machine learning", &concept_graph, &bidirectional_index);
 //!
-//! println!("Found {} chunks at depth {}", results.chunk_count(), results.depth_reached);
+//! println!(
+//!     "Found {} chunks at depth {}",
+//!     results.chunk_count(),
+//!     results.depth_reached
+//! );
 //! ```
 
-use crate::core::ChunkId;
-use crate::entity::BidirectionalIndex;
-use crate::lightrag::concept_graph::ConceptGraph;
-use crate::lightrag::query_refinement::{QueryRefinementConfig, QueryRefiner, RefinedQuery};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    core::ChunkId,
+    entity::BidirectionalIndex,
+    lightrag::{
+        concept_graph::ConceptGraph,
+        query_refinement::{QueryRefinementConfig, QueryRefiner, RefinedQuery},
+    },
+};
 
 /// Configuration for iterative deepening search
 #[derive(Debug, Clone)]

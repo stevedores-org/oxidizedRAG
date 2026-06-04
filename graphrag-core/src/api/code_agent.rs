@@ -3,11 +3,12 @@
 //! Provides traits and types for indexing source code, querying definitions
 //! and references, and building context packs for LLM consumption.
 
-use crate::Result;
+use std::{collections::HashMap, path::PathBuf};
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::PathBuf;
+
+use crate::Result;
 
 // ============================================================================
 // Supporting Types

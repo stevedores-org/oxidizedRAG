@@ -2,15 +2,15 @@
 //!
 //! This module is only available when the "pagerank" feature is enabled.
 
-use crate::core::{EntityId, Result};
+use std::{collections::HashMap, num::NonZeroUsize, sync::Arc};
+
 use lru::LruCache;
 use nalgebra::{DMatrix, DVector};
 use parking_lot::RwLock;
 use rayon::prelude::*;
 use sprs::CsMat;
-use std::collections::HashMap;
-use std::num::NonZeroUsize;
-use std::sync::Arc;
+
+use crate::core::{EntityId, Result};
 
 /// Configuration for PageRank algorithm
 #[derive(Debug, Clone)]
@@ -167,8 +167,10 @@ impl PersonalizedPageRank {
 
     /// Generate cache key from reset probabilities
     fn generate_cache_key(reset_probabilities: &HashMap<EntityId, f64>) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::{
+            collections::hash_map::DefaultHasher,
+            hash::{Hash, Hasher},
+        };
 
         let mut hasher = DefaultHasher::new();
         let mut sorted_entries: Vec<_> = reset_probabilities.iter().collect();

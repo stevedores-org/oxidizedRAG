@@ -153,7 +153,8 @@ async fn test_embedder_error_handling() {
 
     match result {
         Err(EmbedderError::ModelNotLoaded) => {
-            // Expected error type — matched, nothing to assert beyond reaching this arm.
+            // Expected error type — matched, nothing to assert beyond reaching
+            // this arm.
         },
         Err(e) => {
             panic!("Unexpected error type: {:?}", e);

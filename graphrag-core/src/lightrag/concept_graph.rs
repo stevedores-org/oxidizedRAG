@@ -1,8 +1,9 @@
 //! Concept Graph for LazyGraphRAG
 //!
-//! This module implements the concept graph construction approach from LazyGraphRAG
-//! (Microsoft Research, 2025), which eliminates the need for prior summarization
-//! by using lightweight noun phrase extraction instead of LLM-based entity extraction.
+//! This module implements the concept graph construction approach from
+//! LazyGraphRAG (Microsoft Research, 2025), which eliminates the need for prior
+//! summarization by using lightweight noun phrase extraction instead of
+//! LLM-based entity extraction.
 //!
 //! ## Key Features
 //!
@@ -37,11 +38,12 @@
 //! let graph = builder.build();
 //! ```
 
+use std::collections::{HashMap, HashSet};
+
 use indexmap::IndexMap;
 use petgraph::graph::{DiGraph, NodeIndex};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 
 /// A concept extracted from text (noun phrase or key term)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -500,11 +502,13 @@ mod tests {
     #[test]
     fn test_concept_extraction() {
         let extractor = ConceptExtractor::new();
-        let text = "Machine Learning and Artificial Intelligence are transforming Natural Language Processing.";
+        let text = "Machine Learning and Artificial Intelligence are transforming Natural \
+                    Language Processing.";
         let concepts = extractor.extract_concepts(text);
 
         assert!(!concepts.is_empty());
-        // Should extract "Machine Learning", "Artificial Intelligence", "Natural Language Processing"
+        // Should extract "Machine Learning", "Artificial Intelligence", "Natural
+        // Language Processing"
         assert!(concepts
             .iter()
             .any(|c| c.contains("Machine") || c.contains("Learning")));

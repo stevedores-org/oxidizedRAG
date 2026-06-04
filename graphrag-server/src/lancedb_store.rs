@@ -20,7 +20,7 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use graphrag_server::lancedb_store::{LanceDBStore, DocumentMetadata};
+//! use graphrag_server::lancedb_store::{DocumentMetadata, LanceDBStore};
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,7 +31,6 @@
 //! # }
 //! ```
 
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[cfg(feature = "lancedb")]
@@ -40,6 +39,7 @@ use arrow_array::{
 };
 #[cfg(feature = "lancedb")]
 use arrow_schema::{DataType, Field, Schema, SchemaRef};
+use serde::{Deserialize, Serialize};
 
 /// Document metadata stored in LanceDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -269,39 +269,24 @@ mod tests {
 
 // Implementation notes for full LanceDB integration:
 //
-// 1. **Connect to Database**:
-//    ```rust
-//    let db = lancedb::connect(db_path).execute().await?;
-//    ```
+// 1. **Connect to Database**: ```rust let db =
+//    lancedb::connect(db_path).execute().await?; ```
 //
-// 2. **Create Table with Schema**:
-//    ```rust
-//    let schema = create_schema(dimension);
-//    let empty_batch = RecordBatch::new_empty(schema.clone());
-//    let batches = RecordBatchIterator::new(vec![Ok(empty_batch)], schema);
-//    db.create_table(table_name, Box::new(batches)).execute().await?;
-//    ```
+// 2. **Create Table with Schema**: ```rust let schema =
+//    create_schema(dimension); let empty_batch =
+//    RecordBatch::new_empty(schema.clone()); let batches =
+//    RecordBatchIterator::new(vec![Ok(empty_batch)], schema);
+//    db.create_table(table_name, Box::new(batches)).execute().await?; ```
 //
-// 3. **Insert Documents**:
-//    ```rust
-//    let table = db.open_table(table_name).execute().await?;
-//    let batch = create_record_batch(documents, embeddings, metadata)?;
-//    table.add(Box::new(RecordBatchIterator::new(vec![Ok(batch)], schema))).execute().await?;
-//    ```
+// 3. **Insert Documents**: ```rust let table =
+//    db.open_table(table_name).execute().await?; let batch =
+//    create_record_batch(documents, embeddings, metadata)?;
+//    table.add(Box::new(RecordBatchIterator::new(vec![Ok(batch)],
+//    schema))).execute().await?; ```
 //
-// 4. **Search Vectors**:
-//    ```rust
-//    let results = table
-//        .query()
-//        .nearest_to(&query_embedding)?
-//        .limit(limit)
-//        .execute()
-//        .await?
-//        .try_collect::<Vec<_>>()
-//        .await?;
-//    ```
+// 4. **Search Vectors**: ```rust let results = table .query()
+//    .nearest_to(&query_embedding)? .limit(limit) .execute() .await?
+//    .try_collect::<Vec<_>>() .await?; ```
 //
-// 5. **Create Vector Index** (for performance):
-//    ```rust
-//    table.create_index(&["vector"], Index::Auto).execute().await?;
-//    ```
+// 5. **Create Vector Index** (for performance): ```rust
+//    table.create_index(&["vector"], Index::Auto).execute().await?; ```

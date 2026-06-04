@@ -1,6 +1,5 @@
 //! Info panel component showing stats and query history
 
-use crate::{action::Action, handlers::graphrag::GraphStats, theme::Theme};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Style,
@@ -8,6 +7,8 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame,
 };
+
+use crate::{action::Action, handlers::graphrag::GraphStats, theme::Theme};
 
 /// Query history entry
 #[derive(Debug, Clone)]

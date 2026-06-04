@@ -1,12 +1,13 @@
 //! Help overlay component showing keybindings
 
-use crate::theme::Theme;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph},
     Frame,
 };
+
+use crate::theme::Theme;
 
 /// Help overlay with keybindings
 pub struct HelpOverlay {

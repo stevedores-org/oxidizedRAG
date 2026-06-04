@@ -1,12 +1,14 @@
-#[cfg(feature = "parallel-processing")]
-use crate::parallel::ParallelProcessor;
-use crate::{GraphRAGError, Result};
-use std::collections::hash_map::DefaultHasher;
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::{
+    collections::{hash_map::DefaultHasher, HashMap},
+    hash::{Hash, Hasher},
+};
 
 #[cfg(feature = "vector-hnsw")]
 use instant_distance::{Builder, Point, Search};
+
+#[cfg(feature = "parallel-processing")]
+use crate::parallel::ParallelProcessor;
+use crate::{GraphRAGError, Result};
 
 // Voy vector store module (WASM-optimized)
 // TODO: Re-enable when voy crate is properly configured
@@ -186,7 +188,8 @@ impl VectorIndex {
             let mut scored_results = Vec::new();
             for item in results.into_iter().take(top_k) {
                 let distance = item.distance;
-                // Convert distance to similarity using exponential decay for better score distribution
+                // Convert distance to similarity using exponential decay for better score
+                // distribution
                 let similarity = (-distance).exp().clamp(0.0, 1.0);
                 scored_results.push((item.value.clone(), similarity));
             }
@@ -213,7 +216,8 @@ impl VectorIndex {
         }
     }
 
-    /// Calculate cosine similarity between two vectors (fallback when HNSW is not available)
+    /// Calculate cosine similarity between two vectors (fallback when HNSW is
+    /// not available)
     #[cfg(not(feature = "vector-hnsw"))]
     fn cosine_similarity(&self, a: &[f32], b: &[f32]) -> f32 {
         if a.len() != b.len() {
@@ -241,7 +245,8 @@ impl VectorIndex {
         self.embeddings.is_empty()
     }
 
-    /// Get embedding dimension (assuming all embeddings have the same dimension)
+    /// Get embedding dimension (assuming all embeddings have the same
+    /// dimension)
     pub fn dimension(&self) -> Option<usize> {
         self.embeddings.values().next().map(|v| v.len())
     }
@@ -273,7 +278,8 @@ impl VectorIndex {
         self.embeddings.get(id)
     }
 
-    /// Fetch multiple vectors by their IDs in a single operation (avoids N+1 queries)
+    /// Fetch multiple vectors by their IDs in a single operation (avoids N+1
+    /// queries)
     pub fn fetch_many(&self, ids: &[&str]) -> Vec<Option<&Vec<f32>>> {
         ids.iter().map(|id| self.embeddings.get(*id)).collect()
     }
@@ -305,7 +311,8 @@ impl VectorIndex {
         Ok(())
     }
 
-    /// Parallel batch vector addition with conflict detection and chunked processing
+    /// Parallel batch vector addition with conflict detection and chunked
+    /// processing
     #[cfg(feature = "parallel-processing")]
     fn batch_add_vectors_parallel(
         &mut self,
@@ -322,8 +329,9 @@ impl VectorIndex {
 
         #[cfg(feature = "parallel-processing")]
         {
-            use rayon::prelude::*;
             use std::collections::HashMap;
+
+            use rayon::prelude::*;
 
             // Pre-validate all vectors in parallel
             let validation_results: std::result::Result<Vec<_>, crate::GraphRAGError> = vectors
@@ -410,7 +418,8 @@ impl VectorIndex {
             .collect()
     }
 
-    /// Parallel similarity computation between all vectors with optimized chunking
+    /// Parallel similarity computation between all vectors with optimized
+    /// chunking
     pub fn compute_all_similarities(&self) -> HashMap<(String, String), f32> {
         #[cfg(feature = "parallel-processing")]
         if let Some(processor) = &self.parallel_processor {
@@ -421,7 +430,8 @@ impl VectorIndex {
         self.compute_similarities_sequential()
     }
 
-    /// Parallel similarity computation with work-stealing and memory optimization
+    /// Parallel similarity computation with work-stealing and memory
+    /// optimization
     #[cfg(feature = "parallel-processing")]
     fn compute_similarities_parallel(
         &self,
@@ -732,9 +742,10 @@ impl EmbeddingGenerator {
                 .flatten()
                 .collect();
 
-            // Update the main generator's word cache with new words from parallel processing
-            // Note: This is a simplified approach - in a more sophisticated implementation,
-            // we would merge the word caches from all parallel workers
+            // Update the main generator's word cache with new words from parallel
+            // processing Note: This is a simplified approach - in a more
+            // sophisticated implementation, we would merge the word caches from
+            // all parallel workers
 
             println!(
                 "Generated {} embeddings in parallel chunks of size {}",
@@ -825,8 +836,10 @@ impl VectorUtils {
 
     /// Generate a random vector (for testing)
     pub fn random_vector(dimension: usize) -> Vec<f32> {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::{
+            collections::hash_map::DefaultHasher,
+            hash::{Hash, Hasher},
+        };
 
         let mut vector = Vec::with_capacity(dimension);
         let mut hasher = DefaultHasher::new();

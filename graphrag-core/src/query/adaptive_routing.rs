@@ -1,10 +1,12 @@
 //! Adaptive Query Routing for Hierarchical GraphRAG
 //!
-//! Automatically selects the appropriate hierarchical level based on query complexity.
+//! Automatically selects the appropriate hierarchical level based on query
+//! complexity.
 //!
 //! # Strategy
 //! - **Broad queries** (overview, themes, summary) → Higher levels (2-3)
-//! - **Specific queries** (relationships, details, entities) → Lower levels (0-1)
+//! - **Specific queries** (relationships, details, entities) → Lower levels
+//!   (0-1)
 //! - **Adaptive routing** based on query analysis
 
 use serde::{Deserialize, Serialize};

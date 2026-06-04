@@ -1,14 +1,16 @@
 //! Enriched metadata-aware retrieval
 //!
-//! This module provides retrieval strategies that leverage enriched chunk metadata
-//! (chapters, sections, keywords, summaries) to improve search relevance and precision.
+//! This module provides retrieval strategies that leverage enriched chunk
+//! metadata (chapters, sections, keywords, summaries) to improve search
+//! relevance and precision.
+
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     core::{KnowledgeGraph, TextChunk},
     retrieval::{QueryAnalysis, ResultType, SearchResult},
     Result,
 };
-use std::collections::{HashMap, HashSet};
 
 /// Configuration for enriched metadata retrieval
 #[derive(Debug, Clone)]
@@ -115,7 +117,8 @@ impl EnrichedRetriever {
                 // 4. COMPLETENESS BONUS
                 let completeness = chunk.metadata.completeness_score();
                 if completeness > 0.7 {
-                    metadata_boost += 0.05; // Small bonus for high-quality metadata
+                    metadata_boost += 0.05; // Small bonus for high-quality
+                                            // metadata
                 }
 
                 // Apply boost only if significant
@@ -144,7 +147,8 @@ impl EnrichedRetriever {
 
     /// Filter chunks by chapter or section
     ///
-    /// Example: "What does Socrates say in Chapter 1?" -> filter to Chapter 1 chunks
+    /// Example: "What does Socrates say in Chapter 1?" -> filter to Chapter 1
+    /// chunks
     pub fn filter_by_structure(
         &self,
         query: &str,

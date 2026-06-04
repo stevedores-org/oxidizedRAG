@@ -3,8 +3,9 @@
 //! This module provides a simplified stateful interface that hides
 //! most of the complexity while allowing multiple queries on the same document.
 
-use crate::{GraphRAG, Result};
 use std::path::Path;
+
+use crate::{GraphRAG, Result};
 
 /// Simple wrapper around GraphRAG for easy usage
 ///

@@ -1,6 +1,7 @@
 //! Distributed Caching with Redis
 //!
-//! This module provides distributed caching for GraphRAG using Redis. It enables:
+//! This module provides distributed caching for GraphRAG using Redis. It
+//! enables:
 //! - Multi-level caching (L1/L2/L3)
 //! - Cache coherence across multiple server instances
 //! - Predictive prefetching
@@ -35,12 +36,15 @@
 //! └─────────────────────────────────────┘
 //! ```
 
+use std::{
+    collections::HashMap,
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use parking_lot::RwLock;
 use redis::{Client, Commands, RedisError};
 use serde::{de::DeserializeOwned, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 
 /// Cache entry with metadata
 #[derive(Clone)]

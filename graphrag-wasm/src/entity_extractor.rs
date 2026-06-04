@@ -1,11 +1,13 @@
 //! Entity Extraction using WebLLM with Rule-Based Fallback
 //!
-//! Extracts entities and relationships from text using WebLLM (Qwen) when available,
-//! or falls back to simple rule-based extraction.
+//! Extracts entities and relationships from text using WebLLM (Qwen) when
+//! available, or falls back to simple rule-based extraction.
+
+use std::collections::HashSet;
+
+use serde::{Deserialize, Serialize};
 
 use crate::webllm::{ChatMessage, WebLLM};
-use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entity {
@@ -52,7 +54,10 @@ JSON:"#,
     web_sys::console::log_1(&"🤖 Extracting entities with WebLLM...".to_string().into());
 
     let messages = vec![
-        ChatMessage::system("You are a knowledge graph entity extractor. Extract entities and relationships. Return ONLY valid JSON."),
+        ChatMessage::system(
+            "You are a knowledge graph entity extractor. Extract entities and relationships. \
+             Return ONLY valid JSON.",
+        ),
         ChatMessage::user(&prompt),
     ];
 

@@ -3,28 +3,28 @@
 //! `CachedStage<I,O>` wraps any `Stage<I,O>` with content-hash caching.
 //! Supports two backends:
 //! - **moka** (feature `caching`): in-memory TTL-based cache
-//! - **DualModeCache** (feature `persistent-cache`): in-memory or RocksDB-backed persistent cache
+//! - **DualModeCache** (feature `persistent-cache`): in-memory or
+//!   RocksDB-backed persistent cache
 //!
-//! When both features are enabled, moka acts as a fast L1 cache and DualModeCache
-//! as a persistent L2 fallback.
+//! When both features are enabled, moka acts as a fast L1 cache and
+//! DualModeCache as a persistent L2 fallback.
 
-use crate::pipeline::stage::{Stage, StageError};
+use std::{hash::Hash, sync::Arc, time::Duration};
+
 use async_trait::async_trait;
-use serde::{de::DeserializeOwned, Serialize};
-use sha2::{Digest, Sha256};
-use std::hash::Hash;
-use std::sync::Arc;
-use std::time::Duration;
-
 #[cfg(feature = "caching")]
 use moka::future::Cache;
+use serde::{de::DeserializeOwned, Serialize};
+use sha2::{Digest, Sha256};
 
 use super::dual_mode_cache::DualModeCache;
+use crate::pipeline::stage::{Stage, StageError};
 
 /// A cached wrapper around any `Stage<I,O>`.
 ///
 /// Caches stage outputs based on a content hash of the input.
-/// Requires `I: Serialize + Hash` and `O: Serialize + DeserializeOwned + Clone`.
+/// Requires `I: Serialize + Hash` and `O: Serialize + DeserializeOwned +
+/// Clone`.
 pub struct CachedStage<I, O>
 where
     I: Send + 'static,
@@ -67,8 +67,8 @@ where
 
     /// Create a cached stage with a DualModeCache as persistent L2.
     ///
-    /// When moka (L1) misses, the L2 cache is checked before running the inner stage.
-    /// Results are written to both L1 and L2.
+    /// When moka (L1) misses, the L2 cache is checked before running the inner
+    /// stage. Results are written to both L1 and L2.
     #[cfg_attr(not(feature = "caching"), allow(unused_variables))]
     pub fn with_dual_mode_cache(
         inner: Arc<dyn Stage<I, O>>,
@@ -187,9 +187,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::{AtomicU64, Ordering};
+
     use super::*;
     use crate::pipeline::stage::StageError;
-    use std::sync::atomic::{AtomicU64, Ordering};
 
     /// A counting stage that tracks how many times execute() is called.
     struct CountingStage {

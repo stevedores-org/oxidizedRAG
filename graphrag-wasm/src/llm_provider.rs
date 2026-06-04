@@ -4,7 +4,8 @@
 //! - WebLLM (100% in-browser, GPU via WebGPU)
 //! - Ollama HTTP (local server via HTTP)
 //!
-//! This allows users to choose between privacy (WebLLM) and performance (Ollama).
+//! This allows users to choose between privacy (WebLLM) and performance
+//! (Ollama).
 
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;

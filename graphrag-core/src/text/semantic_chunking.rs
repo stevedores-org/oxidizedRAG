@@ -6,10 +6,10 @@
 //! Key innovation: Uses sentence embeddings and cosine similarity to
 //! determine natural breakpoints, creating semantically cohesive chunks.
 //!
-//! Reference: LangChain SemanticChunker, Greg Kamradt's 5 Levels of Text Splitting
+//! Reference: LangChain SemanticChunker, Greg Kamradt's 5 Levels of Text
+//! Splitting
 
-use crate::core::Result;
-use crate::vector::EmbeddingGenerator;
+use crate::{core::Result, vector::EmbeddingGenerator};
 
 /// Chunk of semantically similar sentences
 #[derive(Debug, Clone)]
@@ -405,8 +405,8 @@ mod tests {
         let embedding_gen = EmbeddingGenerator::new(384);
         let mut chunker = SemanticChunker::new(config, embedding_gen);
 
-        let text = "Alice loves programming. Bob also codes daily. \
-                    The weather is sunny. Rain is expected tomorrow.";
+        let text = "Alice loves programming. Bob also codes daily. The weather is sunny. Rain is \
+                    expected tomorrow.";
 
         let chunks = chunker.chunk(text).unwrap();
 

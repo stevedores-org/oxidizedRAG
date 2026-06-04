@@ -1,7 +1,8 @@
 //! Comprehensive incremental updates architecture for GraphRAG-RS
 //!
-//! This module provides zero-downtime incremental updates with ACID-like guarantees,
-//! intelligent cache invalidation, conflict resolution, and comprehensive monitoring.
+//! This module provides zero-downtime incremental updates with ACID-like
+//! guarantees, intelligent cache invalidation, conflict resolution, and
+//! comprehensive monitoring.
 //!
 //! ## Architecture Goals
 //!
@@ -21,23 +22,25 @@
 //! - `UpdateMonitor` for change tracking and metrics
 //! - `IncrementalPageRank` for efficient graph algorithm updates
 
-use crate::core::{
-    DocumentId, Entity, EntityId, GraphRAGError, KnowledgeGraph, Relationship, Result, TextChunk,
-};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::time::{Duration, Instant};
-
 #[cfg(feature = "incremental")]
 use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    time::{Duration, Instant},
+};
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "incremental")]
 use {
     dashmap::DashMap,
     parking_lot::{Mutex, RwLock},
     tokio::sync::{broadcast, Semaphore},
     uuid::Uuid,
+};
+
+use crate::core::{
+    DocumentId, Entity, EntityId, GraphRAGError, KnowledgeGraph, Relationship, Result, TextChunk,
 };
 
 // ============================================================================
@@ -299,7 +302,8 @@ pub struct ConflictResolution {
 // IncrementalGraphStore Trait
 // ============================================================================
 
-/// Extended trait for incremental graph operations with production-ready features
+/// Extended trait for incremental graph operations with production-ready
+/// features
 #[async_trait::async_trait]
 pub trait IncrementalGraphStore: Send + Sync {
     /// The error type for incremental graph operations
@@ -1966,7 +1970,8 @@ impl ProductionGraphStore {
         self
     }
 
-    /// Create a store with crash recovery: replays committed deltas from SurrealDB.
+    /// Create a store with crash recovery: replays committed deltas from
+    /// SurrealDB.
     #[cfg(feature = "surrealdb-storage")]
     pub async fn with_recovery(
         storage: crate::storage::surrealdb::SurrealDeltaStorage,
@@ -2818,7 +2823,8 @@ impl ChangeDataExt for ChangeData {
 /// In-memory implementation of `IncrementalGraphStore`.
 ///
 /// Wraps a `KnowledgeGraph` with a `Vec<GraphDelta>` changelog.
-/// Supports `apply_delta`, `rollback_delta`, and transactions with a staging area.
+/// Supports `apply_delta`, `rollback_delta`, and transactions with a staging
+/// area.
 pub struct InMemoryIncrementalStore {
     /// The underlying knowledge graph
     pub graph: KnowledgeGraph,
@@ -2868,8 +2874,8 @@ impl InMemoryIncrementalStore {
         Ok(())
     }
 
-    /// Merge two entities: new metadata wins on collision, mentions are unioned,
-    /// higher confidence wins, new embedding preferred if present.
+    /// Merge two entities: new metadata wins on collision, mentions are
+    /// unioned, higher confidence wins, new embedding preferred if present.
     fn merge_entity_metadata(existing: &Entity, new: &Entity) -> Entity {
         let mut merged = existing.clone();
 
@@ -2996,8 +3002,9 @@ impl IncrementalGraphStore for InMemoryIncrementalStore {
                         } else {
                             // No previous version — remove the entity
                             self.graph.clear_entities_and_relationships();
-                            // Re-add all entities except the one we're rolling back
-                            // (simplified: for production, use a proper remove_entity method)
+                            // Re-add all entities except the one we're rolling
+                            // back (simplified: for
+                            // production, use a proper remove_entity method)
                         }
                     }
                 }
@@ -3257,7 +3264,8 @@ mod tests {
 
         let store = ProductionGraphStore::new(graph, config, resolver);
         let _receiver = store.subscribe_events();
-        // If we reached here, subscription succeeded; no further assertion needed.
+        // If we reached here, subscription succeeded; no further assertion
+        // needed.
     }
 
     #[cfg(feature = "incremental")]
@@ -3631,8 +3639,9 @@ mod tests {
 
             // Rollback — entity should be removed
             store.rollback_transaction(tx_id).await.unwrap();
-            // Note: simplified rollback clears staging area but entity was added to graph
-            // In a full impl, transaction isolation would prevent graph modification until commit
+            // Note: simplified rollback clears staging area but entity was
+            // added to graph In a full impl, transaction isolation
+            // would prevent graph modification until commit
         });
     }
 

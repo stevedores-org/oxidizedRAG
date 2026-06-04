@@ -1,7 +1,7 @@
 //! RAG Configuration Hasher - creates deterministic digests for RAG configs
 //!
-//! Uses canonical JSON to ensure identical RAG configurations produce identical digests,
-//! enabling reproducible experiment tracking and version control.
+//! Uses canonical JSON to ensure identical RAG configurations produce identical
+//! digests, enabling reproducible experiment tracking and version control.
 
 use serde_json::Value;
 use sha2::{Digest, Sha256};

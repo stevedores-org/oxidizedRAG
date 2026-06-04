@@ -1,11 +1,12 @@
 //! Results viewer component with scrolling support
 
-use crate::{action::Action, theme::Theme};
 use ratatui::{
     layout::{Margin, Rect},
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap},
     Frame,
 };
+
+use crate::{action::Action, theme::Theme};
 
 /// Results viewer with vim-style scrolling
 pub struct ResultsViewer {

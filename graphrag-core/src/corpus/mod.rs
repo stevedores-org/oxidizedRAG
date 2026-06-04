@@ -1,13 +1,15 @@
 //! # Multi-Document Processing Module
 //!
-//! This module provides corpus-level analysis and cross-document entity resolution
-//! for GraphRAG-RS, implementing the Multi-Document Processing capabilities outlined
-//! in Phase 3 of the implementation plan.
+//! This module provides corpus-level analysis and cross-document entity
+//! resolution for GraphRAG-RS, implementing the Multi-Document Processing
+//! capabilities outlined in Phase 3 of the implementation plan.
 
 pub mod collection_processor;
 pub mod document_manager;
 pub mod entity_linker;
 pub mod knowledge_graph;
+
+use std::path::Path;
 
 pub use collection_processor::{CollectionProcessor, CorpusStats, ProcessingPipeline};
 pub use document_manager::{DocumentCollection, DocumentManager, DocumentMetadata};
@@ -15,7 +17,6 @@ pub use entity_linker::{CrossDocumentEntityLinker, EntityCluster, LinkingStrateg
 pub use knowledge_graph::{CorpusKnowledgeGraph, GlobalEntity, GlobalRelation};
 
 use crate::core::Result;
-use std::path::Path;
 
 /// Main corpus coordinator that orchestrates multi-document processing
 pub struct CorpusProcessor {

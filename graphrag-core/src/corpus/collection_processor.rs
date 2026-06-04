@@ -1,11 +1,17 @@
 //! Collection processing pipeline and corpus-level analysis
 
-use crate::core::{Entity, Result};
-use crate::corpus::document_manager::{DocumentCollection, DocumentMetadata};
-use crate::corpus::knowledge_graph::CorpusKnowledgeGraph;
-use crate::lightrag::graph_indexer::GraphIndexer;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    core::{Entity, Result},
+    corpus::{
+        document_manager::{DocumentCollection, DocumentMetadata},
+        knowledge_graph::CorpusKnowledgeGraph,
+    },
+    lightrag::graph_indexer::GraphIndexer,
+};
 
 #[derive(Debug, Clone)]
 pub struct ProcessingPipeline {
@@ -383,7 +389,8 @@ impl CollectionProcessor {
         let mut clusters = Vec::new();
         let mut concept_groups: HashMap<String, Vec<DocumentConcept>> = HashMap::new();
 
-        // Simple clustering by exact text match (could be enhanced with semantic similarity)
+        // Simple clustering by exact text match (could be enhanced with semantic
+        // similarity)
         for concept in concepts {
             let normalized_text = concept.text.to_lowercase().trim().to_string();
             concept_groups

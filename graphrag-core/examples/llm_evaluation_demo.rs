@@ -1,7 +1,7 @@
 //! LLM-Based Evaluation Demo
 //!
-//! This example demonstrates how to create evaluable query results from GraphRAG
-//! and generate prompts for LLM-based evaluation.
+//! This example demonstrates how to create evaluable query results from
+//! GraphRAG and generate prompts for LLM-based evaluation.
 //!
 //! Run with:
 //! ```bash
@@ -225,10 +225,11 @@ fn demo_query_evaluation() -> Result<()> {
     let query = "What are knowledge graphs and how are they used?";
     let answer = "Knowledge graphs are structured representations of knowledge that capture \
                   entities, properties, and relationships. They are widely used in search engines \
-                  like Google for enhancing search results, in recommendation systems to find related \
-                  items, and in question-answering systems to provide accurate responses. The key \
-                  components include entities (real-world objects like people and organizations) and \
-                  relationships (connections such as 'works_for' or 'located_in').";
+                  like Google for enhancing search results, in recommendation systems to find \
+                  related items, and in question-answering systems to provide accurate responses. \
+                  The key components include entities (real-world objects like people and \
+                  organizations) and relationships (connections such as 'works_for' or \
+                  'located_in').";
 
     // Retrieved entities
     let entities = vec![

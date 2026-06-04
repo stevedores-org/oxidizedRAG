@@ -1,7 +1,8 @@
 //! End-to-end integration tests for GraphRAG WASM
 //!
-//! These tests validate the complete pipeline from document ingestion to query answering.
-//! They run in a headless browser environment using wasm-bindgen-test.
+//! These tests validate the complete pipeline from document ingestion to query
+//! answering. They run in a headless browser environment using
+//! wasm-bindgen-test.
 
 use graphrag_wasm::{
     storage::{CacheStore, IndexedDBStore},
@@ -13,7 +14,8 @@ wasm_bindgen_test_configure!(run_in_browser);
 
 /// Test: Create GraphRAG instance
 ///
-/// Validates that we can create a new GraphRAG instance with specified dimension.
+/// Validates that we can create a new GraphRAG instance with specified
+/// dimension.
 #[wasm_bindgen_test]
 async fn test_create_graphrag() {
     let graph = GraphRAG::new(384);
@@ -119,7 +121,8 @@ async fn test_query_graphrag() {
     let results = graph.query(query_embedding, 2).await;
 
     assert!(results.is_ok());
-    // TODO: Parse JSON results and validate structure when vector search is implemented
+    // TODO: Parse JSON results and validate structure when vector search is
+    // implemented
 }
 
 /// Test: Clear GraphRAG

@@ -1,11 +1,13 @@
 //! Complete Zero-Cost GraphRAG Demo
 //!
-//! This example demonstrates the full integration of zero-cost approaches with LLM summarization.
-//! It shows how to:
+//! This example demonstrates the full integration of zero-cost approaches with
+//! LLM summarization. It shows how to:
 //! 1. Load configuration from JSON5
 //! 2. Create GraphRAG instance with selected approach
 //! 3. Process documents with automatic strategy selection
 //! 4. Query the system with LLM-enhanced summarization
+
+use std::collections::HashMap;
 
 use graphrag_core::{
     async_graphrag::AsyncGraphRAG,
@@ -14,7 +16,6 @@ use graphrag_core::{
     text::TextProcessor,
 };
 use indexmap::IndexMap;
-use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<()> {

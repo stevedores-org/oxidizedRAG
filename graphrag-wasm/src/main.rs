@@ -8,15 +8,14 @@
 //! - HuggingFace tokenizers (unstable_wasm)
 //! - graphrag-core for real pipeline
 
+// Import graphrag-core WASM-compatible components
+// Note: We only import concrete types, not async traits
+use graphrag_core::{core::GraphRAGError, Config, GraphRAG};
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Event, HtmlInputElement, HtmlTextAreaElement};
-
-// Import graphrag-core WASM-compatible components
-// Note: We only import concrete types, not async traits
-use graphrag_core::{core::GraphRAGError, Config, GraphRAG};
 
 // Import ONNX embedder, vector search, and entity extraction
 mod components;
@@ -237,7 +236,8 @@ fn TabNavigation(
     graph_stats: ReadSignal<GraphStats>,
 ) -> impl IntoView {
     let tab_class = move |tab: Tab| {
-        let base = "flex-1 px-6 py-4 font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary";
+        let base = "flex-1 px-6 py-4 font-semibold rounded-lg transition-all duration-200 \
+                    focus:outline-none focus:ring-2 focus:ring-primary";
         if active_tab.get() == tab {
             format!("{} btn-primary shadow-lg", base)
         } else {
@@ -655,7 +655,14 @@ fn BuildTab(
                     Some(e)
                 },
                 Err(e) => {
-                    web_sys::console::warn_1(&format!("⚠️  ONNX embedder not available: {}. Using simple hash-based embeddings.", e).into());
+                    web_sys::console::warn_1(
+                        &format!(
+                            "⚠️  ONNX embedder not available: {}. Using simple hash-based \
+                             embeddings.",
+                            e
+                        )
+                        .into(),
+                    );
                     None
                 },
             };
@@ -1435,9 +1442,8 @@ fn QueryTab(
             // Build the response with vector search results
             let response = if let Some(ref vec_res) = vector_results {
                 let mut result_text = format!(
-                    "Query: \"{}\"\n\n\
-                    ✅ Graph Search Complete\n\
-                    📊 Searched {} chunks across {} documents\n",
+                    "Query: \"{}\"\n\n✅ Graph Search Complete\n📊 Searched {} chunks across {} \
+                     documents\n",
                     query_text, stats.chunks, stats.documents
                 );
 
@@ -1561,14 +1567,18 @@ fn QueryTab(
                         Ok(llm) => {
                             let messages = vec![
                                 webllm::ChatMessage::system(
-                                    "You are a helpful AI assistant that answers questions based on provided context from a knowledge graph. \
-                                    Be concise, accurate, and cite specific entities and relationships when relevant. \
-                                    If the context doesn't contain enough information, say so clearly."
+                                    "You are a helpful AI assistant that answers questions based \
+                                     on provided context from a knowledge graph. Be concise, \
+                                     accurate, and cite specific entities and relationships when \
+                                     relevant. If the context doesn't contain enough information, \
+                                     say so clearly.",
                                 ),
-                                webllm::ChatMessage::user(
-                                    format!("Question: {}\n\nContext from Knowledge Graph:\n{}\n\nPlease provide a natural language answer to the question based on the context above.",
-                                        query_text, context_for_llm)
-                                ),
+                                webllm::ChatMessage::user(format!(
+                                    "Question: {}\n\nContext from Knowledge Graph:\n{}\n\nPlease \
+                                     provide a natural language answer to the question based on \
+                                     the context above.",
+                                    query_text, context_for_llm
+                                )),
                             ];
 
                             match llm.chat(messages, Some(0.7), Some(512)).await {
@@ -1748,15 +1758,28 @@ fn HierarchyTab(
                     id: 0,
                     level: 0,
                     entity_count: 15,
-                    summary: "Philosophy and Love: This community focuses on philosophical discussions about the nature of love, beauty, and wisdom.".to_string(),
-                    entities: vec!["Socrates".to_string(), "Plato".to_string(), "Beauty".to_string(), "Love".to_string()],
+                    summary: "Philosophy and Love: This community focuses on philosophical \
+                              discussions about the nature of love, beauty, and wisdom."
+                        .to_string(),
+                    entities: vec![
+                        "Socrates".to_string(),
+                        "Plato".to_string(),
+                        "Beauty".to_string(),
+                        "Love".to_string(),
+                    ],
                 },
                 CommunityData {
                     id: 1,
                     level: 0,
                     entity_count: 12,
-                    summary: "Greek Symposium: Entities related to the structure and participants of ancient Greek symposia.".to_string(),
-                    entities: vec!["Agathon".to_string(), "Aristophanes".to_string(), "Pausanias".to_string()],
+                    summary: "Greek Symposium: Entities related to the structure and participants \
+                              of ancient Greek symposia."
+                        .to_string(),
+                    entities: vec![
+                        "Agathon".to_string(),
+                        "Aristophanes".to_string(),
+                        "Pausanias".to_string(),
+                    ],
                 },
             ];
 
@@ -1778,35 +1801,60 @@ fn HierarchyTab(
                         id: 0,
                         level: 0,
                         entity_count: 15,
-                        summary: "Philosophy and Love: This community focuses on philosophical discussions about the nature of love, beauty, and wisdom.".to_string(),
-                        entities: vec!["Socrates".to_string(), "Plato".to_string(), "Beauty".to_string(), "Love".to_string()],
+                        summary: "Philosophy and Love: This community focuses on philosophical \
+                                  discussions about the nature of love, beauty, and wisdom."
+                            .to_string(),
+                        entities: vec![
+                            "Socrates".to_string(),
+                            "Plato".to_string(),
+                            "Beauty".to_string(),
+                            "Love".to_string(),
+                        ],
                     },
                     CommunityData {
                         id: 1,
                         level: 0,
                         entity_count: 12,
-                        summary: "Greek Symposium: Entities related to the structure and participants of ancient Greek symposia.".to_string(),
-                        entities: vec!["Agathon".to_string(), "Aristophanes".to_string(), "Pausanias".to_string()],
+                        summary: "Greek Symposium: Entities related to the structure and \
+                                  participants of ancient Greek symposia."
+                            .to_string(),
+                        entities: vec![
+                            "Agathon".to_string(),
+                            "Aristophanes".to_string(),
+                            "Pausanias".to_string(),
+                        ],
                     },
                 ],
-                1 => vec![
-                    CommunityData {
-                        id: 2,
-                        level: 1,
-                        entity_count: 27,
-                        summary: "Ancient Greek Philosophy: Broader grouping of philosophical concepts and symposium participants.".to_string(),
-                        entities: vec!["Socrates".to_string(), "Plato".to_string(), "Agathon".to_string(), "Beauty".to_string(), "Love".to_string(), "Wisdom".to_string()],
-                    },
-                ],
-                _ => vec![
-                    CommunityData {
-                        id: 3,
-                        level: 2,
-                        entity_count: 45,
-                        summary: "Classical Literature: High-level overview of all entities from ancient Greek texts.".to_string(),
-                        entities: vec!["Socrates".to_string(), "Plato".to_string(), "Symposium".to_string(), "Greece".to_string()],
-                    },
-                ],
+                1 => vec![CommunityData {
+                    id: 2,
+                    level: 1,
+                    entity_count: 27,
+                    summary: "Ancient Greek Philosophy: Broader grouping of philosophical \
+                              concepts and symposium participants."
+                        .to_string(),
+                    entities: vec![
+                        "Socrates".to_string(),
+                        "Plato".to_string(),
+                        "Agathon".to_string(),
+                        "Beauty".to_string(),
+                        "Love".to_string(),
+                        "Wisdom".to_string(),
+                    ],
+                }],
+                _ => vec![CommunityData {
+                    id: 3,
+                    level: 2,
+                    entity_count: 45,
+                    summary: "Classical Literature: High-level overview of all entities from \
+                              ancient Greek texts."
+                        .to_string(),
+                    entities: vec![
+                        "Socrates".to_string(),
+                        "Plato".to_string(),
+                        "Symposium".to_string(),
+                        "Greece".to_string(),
+                    ],
+                }],
             };
 
             set_communities.set(mock_communities);

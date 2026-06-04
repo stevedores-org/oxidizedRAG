@@ -43,7 +43,8 @@ pub struct ChunkMetadata {
     /// Typically 1-3 sentences capturing the main points
     pub summary: Option<String>,
 
-    /// Hierarchical level in document structure (0 = root/chapter, 1 = section, 2 = subsection, etc.)
+    /// Hierarchical level in document structure (0 = root/chapter, 1 = section,
+    /// 2 = subsection, etc.)
     ///
     /// Used to understand the depth of this chunk in the document hierarchy
     pub structural_level: Option<u8>,
@@ -132,7 +133,8 @@ impl ChunkMetadata {
         self
     }
 
-    /// Check if metadata has any structural information (chapter, section, or subsection)
+    /// Check if metadata has any structural information (chapter, section, or
+    /// subsection)
     pub fn has_structure_info(&self) -> bool {
         self.chapter.is_some() || self.section.is_some() || self.subsection.is_some()
     }

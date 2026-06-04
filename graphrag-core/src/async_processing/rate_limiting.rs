@@ -1,12 +1,13 @@
 //! Rate limiting for API call throttling and concurrency control.
 //!
-//! This module provides the [`RateLimiter`] for controlling both the concurrency and
-//! frequency of API calls to prevent throttling and respect service limits.
+//! This module provides the [`RateLimiter`] for controlling both the
+//! concurrency and frequency of API calls to prevent throttling and respect
+//! service limits.
 //!
 //! # Main Types
 //!
-//! - [`RateLimiter`]: Dual-level rate limiter with semaphore-based concurrency control
-//!   and time-based request throttling
+//! - [`RateLimiter`]: Dual-level rate limiter with semaphore-based concurrency
+//!   control and time-based request throttling
 //!
 //! # Features
 //!
@@ -22,11 +23,13 @@
 //!
 //! The rate limiter implements a two-tier approach:
 //!
-//! 1. **Concurrency Control**: Uses semaphores to limit how many API calls can run
-//!    simultaneously. This prevents overwhelming the system with too many parallel requests.
+//! 1. **Concurrency Control**: Uses semaphores to limit how many API calls can
+//!    run simultaneously. This prevents overwhelming the system with too many
+//!    parallel requests.
 //!
-//! 2. **Time-Based Rate Limiting**: Tracks requests per second and automatically waits
-//!    when the limit is reached. The counter resets every second.
+//! 2. **Time-Based Rate Limiting**: Tracks requests per second and
+//!    automatically waits when the limit is reached. The counter resets every
+//!    second.
 //!
 //! # Basic Usage
 //!
@@ -56,10 +59,15 @@
 //! let status = rate_limiter.health_check();
 //! ```
 
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::{Semaphore, SemaphorePermit};
-use tokio::time;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
+use tokio::{
+    sync::{Semaphore, SemaphorePermit},
+    time,
+};
 
 use super::{AsyncConfig, ComponentStatus};
 use crate::core::GraphRAGError;
@@ -144,7 +152,8 @@ impl RateTracker {
 impl RateLimiter {
     /// Creates a new rate limiter from configuration
     ///
-    /// Initializes semaphores and rate trackers for both LLM and embedding API calls.
+    /// Initializes semaphores and rate trackers for both LLM and embedding API
+    /// calls.
     ///
     /// # Parameters
     /// - `config`: Configuration specifying concurrency and rate limits
@@ -227,7 +236,8 @@ impl RateLimiter {
     /// Returns the number of available embedding permits
     ///
     /// # Returns
-    /// Number of embedding API calls that can be made immediately without waiting
+    /// Number of embedding API calls that can be made immediately without
+    /// waiting
     pub fn get_available_embedding_permits(&self) -> usize {
         self.embedding_semaphore.available_permits()
     }

@@ -2,16 +2,17 @@
 //!
 //! Extracted from bin/graphrag_server for testability
 
-use crate::{GraphRAG, GraphRAGError};
+use std::{collections::HashMap, sync::Arc};
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
+
+use crate::{GraphRAG, GraphRAGError};
 
 /// Application state shared across handlers
 #[derive(Clone)]

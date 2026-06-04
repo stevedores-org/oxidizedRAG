@@ -13,23 +13,16 @@ pub mod qdrant_store;
 pub mod auth;
 
 // Re-export common types
-pub use qdrant_store::{QdrantError, QdrantStore};
-
-pub use lancedb_store::{LanceDBError, LanceDBStore};
-
-// Re-export shared types (they're identical between stores)
-pub use qdrant_store::{DocumentMetadata, Entity, Relationship, SearchResult};
-
-pub use embeddings::{EmbeddingConfig, EmbeddingError, EmbeddingService, EmbeddingStats};
-
+#[cfg(feature = "auth")]
+pub use auth::{AuthState, Claims};
 pub use distributed_cache::{CacheConfig, CacheStats, DistributedCache};
-
-pub use observability::{Metrics, Observability, Span, TracingMiddleware};
-
+pub use embeddings::{EmbeddingConfig, EmbeddingError, EmbeddingService, EmbeddingStats};
+pub use lancedb_store::{LanceDBError, LanceDBStore};
 pub use multi_model_embeddings::{
     CohereProvider, EmbeddingProvider, EmbeddingResult, EmbeddingRouter, ModelConfig,
     ModelRegistry, OpenAIProvider,
 };
-
-#[cfg(feature = "auth")]
-pub use auth::{AuthState, Claims};
+pub use observability::{Metrics, Observability, Span, TracingMiddleware};
+// Re-export shared types (they're identical between stores)
+pub use qdrant_store::{DocumentMetadata, Entity, Relationship, SearchResult};
+pub use qdrant_store::{QdrantError, QdrantStore};

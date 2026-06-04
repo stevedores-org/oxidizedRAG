@@ -1,12 +1,13 @@
 //! LLM-based relationship extraction following Microsoft GraphRAG methodology
 //!
-//! This module implements proper entity-relationship extraction using LLM prompts
-//! instead of simple pattern matching. It extracts entities and relationships
-//! together in a single LLM call, following the best practices from Microsoft
-//! GraphRAG and LightRAG.
+//! This module implements proper entity-relationship extraction using LLM
+//! prompts instead of simple pattern matching. It extracts entities and
+//! relationships together in a single LLM call, following the best practices
+//! from Microsoft GraphRAG and LightRAG.
+
+use serde::{Deserialize, Serialize};
 
 use crate::core::{Entity, EntityId, GraphRAGError, Result, TextChunk};
-use serde::{Deserialize, Serialize};
 
 /// Extracted relationship with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,8 +47,9 @@ pub struct ExtractedEntity {
 
 /// LLM-based relationship extractor
 ///
-/// This extractor uses a language model to identify entities and their relationships
-/// in text. It follows Microsoft GraphRAG methodology for high-quality extraction.
+/// This extractor uses a language model to identify entities and their
+/// relationships in text. It follows Microsoft GraphRAG methodology for
+/// high-quality extraction.
 pub struct LLMRelationshipExtractor {
     /// Optional Ollama client for LLM-based extraction
     pub ollama_client: Option<crate::ollama::OllamaClient>,
@@ -58,9 +60,9 @@ impl LLMRelationshipExtractor {
     ///
     /// # Arguments
     ///
-    /// * `ollama_config` - Optional Ollama configuration. If provided and enabled,
-    ///   the extractor will use LLM-based extraction. Otherwise, it will fall back
-    ///   to pattern-based extraction.
+    /// * `ollama_config` - Optional Ollama configuration. If provided and
+    ///   enabled, the extractor will use LLM-based extraction. Otherwise, it
+    ///   will fall back to pattern-based extraction.
     ///
     /// # Returns
     ///
@@ -94,12 +96,14 @@ impl LLMRelationshipExtractor {
 
     /// Build the extraction prompt following Microsoft GraphRAG methodology
     ///
-    /// Creates a detailed prompt that instructs the LLM to extract both entities
-    /// and relationships from text, with specific guidelines for different text types.
+    /// Creates a detailed prompt that instructs the LLM to extract both
+    /// entities and relationships from text, with specific guidelines for
+    /// different text types.
     ///
     /// # Arguments
     ///
-    /// * `chunk_content` - The text content to extract entities and relationships from
+    /// * `chunk_content` - The text content to extract entities and
+    ///   relationships from
     ///
     /// # Returns
     ///
@@ -154,9 +158,9 @@ Return ONLY valid JSON, nothing else."#,
 
     /// Extract entities and relationships using LLM
     ///
-    /// Uses the configured LLM to extract entities and their relationships from a text chunk.
-    /// The LLM analyzes the text and returns structured data with entities, their types,
-    /// and the relationships between them.
+    /// Uses the configured LLM to extract entities and their relationships from
+    /// a text chunk. The LLM analyzes the text and returns structured data
+    /// with entities, their types, and the relationships between them.
     ///
     /// # Arguments
     ///
@@ -164,8 +168,8 @@ Return ONLY valid JSON, nothing else."#,
     ///
     /// # Returns
     ///
-    /// Returns an `ExtractionResult` containing entities and relationships, or an error
-    /// if the LLM is not configured or extraction fails.
+    /// Returns an `ExtractionResult` containing entities and relationships, or
+    /// an error if the LLM is not configured or extraction fails.
     ///
     /// # Errors
     ///
@@ -243,10 +247,12 @@ Return ONLY valid JSON, nothing else."#,
         }
     }
 
-    /// Extract relationships between entities using improved co-occurrence logic
+    /// Extract relationships between entities using improved co-occurrence
+    /// logic
     ///
-    /// This is a fallback method when LLM is not available. It identifies relationships
-    /// by analyzing entity co-occurrence patterns and contextual clues in the text.
+    /// This is a fallback method when LLM is not available. It identifies
+    /// relationships by analyzing entity co-occurrence patterns and
+    /// contextual clues in the text.
     ///
     /// # Arguments
     ///
@@ -298,9 +304,9 @@ Return ONLY valid JSON, nothing else."#,
 
     /// Infer relationship type with improved context analysis
     ///
-    /// Analyzes the context around two entities to determine the type and strength
-    /// of their relationship. Uses entity types and contextual patterns to make
-    /// intelligent inferences.
+    /// Analyzes the context around two entities to determine the type and
+    /// strength of their relationship. Uses entity types and contextual
+    /// patterns to make intelligent inferences.
     ///
     /// # Arguments
     ///
@@ -310,8 +316,9 @@ Return ONLY valid JSON, nothing else."#,
     ///
     /// # Returns
     ///
-    /// Returns `Some((relationship_type, confidence))` if a relationship is detected,
-    /// or `None` if entities are too far apart or no clear relationship exists.
+    /// Returns `Some((relationship_type, confidence))` if a relationship is
+    /// detected, or `None` if entities are too far apart or no clear
+    /// relationship exists.
     fn infer_relationship_with_context(
         &self,
         entity1: &Entity,

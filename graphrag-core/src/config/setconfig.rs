@@ -1,10 +1,11 @@
 //! TOML Configuration System for GraphRAG
 //! Complete configuration management with extensive TOML support
 
-use crate::Result;
+use std::{fs, path::Path};
+
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
+
+use crate::Result;
 
 /// Complete GraphRAG configuration loaded from TOML
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -504,8 +505,9 @@ pub struct ExperimentalConfig {
 }
 
 /// LazyGraphRAG configuration
-/// Concept-based retrieval without prior summarization (Microsoft Research, 2025)
-/// Achieves 0.1% of full GraphRAG indexing cost and 700x cheaper query costs
+/// Concept-based retrieval without prior summarization (Microsoft Research,
+/// 2025) Achieves 0.1% of full GraphRAG indexing cost and 700x cheaper query
+/// costs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LazyGraphRAGConfig {
     /// Enable concept extraction (noun phrases without LLM)
@@ -652,7 +654,8 @@ pub struct SemanticPipelineConfig {
 /// Semantic embeddings configuration (neural models)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticEmbeddingsConfig {
-    /// Backend: "huggingface", "openai", "voyage", "cohere", "jina", "mistral", "together", "ollama"
+    /// Backend: "huggingface", "openai", "voyage", "cohere", "jina", "mistral",
+    /// "together", "ollama"
     #[serde(default = "default_semantic_embedding_backend")]
     pub backend: String,
 
@@ -1581,7 +1584,8 @@ impl Default for SemanticRetrievalConfig {
 impl SemanticRetrievalConfig {
     /// Resolve the effective `(ef_construction, ef_search)` values.
     ///
-    /// If `ann_profile` is set, its preset values override the per-field values.
+    /// If `ann_profile` is set, its preset values override the per-field
+    /// values.
     pub fn effective_ann_params(&self) -> (usize, usize) {
         if let Some(profile) = self.ann_profile {
             profile.params()
@@ -1721,7 +1725,8 @@ impl Default for HybridGraphConfig {
 }
 
 impl SetConfig {
-    /// Load configuration from TOML or JSON5 file (auto-detects format by extension)
+    /// Load configuration from TOML or JSON5 file (auto-detects format by
+    /// extension)
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path_ref = path.as_ref();
         let content = fs::read_to_string(path_ref)?;
@@ -1760,10 +1765,11 @@ impl SetConfig {
 
         // Add header comment
         let commented_toml = format!(
-            "# =============================================================================\n\
-             # GraphRAG Configuration File\n\
-             # Complete configuration with extensive parameters for easy customization\n\
-             # =============================================================================\n\n{toml_string}"
+            "# =============================================================================\n# \
+             GraphRAG Configuration File\n# Complete configuration with extensive parameters for \
+             easy customization\n# \
+             =============================================================================\n\\
+             n{toml_string}"
         );
 
         fs::write(path, commented_toml)?;
@@ -1803,13 +1809,15 @@ impl SetConfig {
                     config.entities.min_confidence =
                         semantic.entity_extraction.confidence_threshold;
                 } else {
-                    // Fallback for semantic approach: ALWAYS enable gleaning when mode.approach = "semantic"
-                    // This ensures JSON5 configs with mode.approach="semantic" use LLM-based extraction
+                    // Fallback for semantic approach: ALWAYS enable gleaning when mode.approach =
+                    // "semantic" This ensures JSON5 configs with
+                    // mode.approach="semantic" use LLM-based extraction
                     config.entities.use_gleaning = true;
                     config.entities.max_gleaning_rounds = if self.entity_extraction.use_gleaning {
                         self.entity_extraction.max_gleaning_rounds
                     } else {
-                        default_max_gleaning_rounds() // Use default if not explicitly set
+                        default_max_gleaning_rounds() // Use default if not
+                                                      // explicitly set
                     };
                     // Use top-level min_confidence if available
                     config.entities.min_confidence = self.entity_extraction.min_confidence;
@@ -1828,7 +1836,8 @@ impl SetConfig {
                 config.entities.use_gleaning = true;
                 if self.hybrid.is_some() {
                     // Use hybrid configuration if available
-                    config.entities.max_gleaning_rounds = 2; // Reduced for hybrid efficiency
+                    config.entities.max_gleaning_rounds = 2; // Reduced for
+                                                             // hybrid efficiency
                 }
             },
             _ => {

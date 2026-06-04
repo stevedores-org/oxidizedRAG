@@ -1,7 +1,8 @@
 //! Ollama HTTP client for WASM
 //!
-//! This module provides HTTP-based integration with Ollama server running on localhost.
-//! It's an alternative to WebLLM for users who want to use their local GPU via Ollama.
+//! This module provides HTTP-based integration with Ollama server running on
+//! localhost. It's an alternative to WebLLM for users who want to use their
+//! local GPU via Ollama.
 //!
 //! Architecture:
 //! Browser (WASM) → HTTP Request → Ollama Server (localhost:11434) → Response

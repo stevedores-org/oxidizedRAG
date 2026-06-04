@@ -8,9 +8,12 @@
 //! - Exact match with normalization
 //! - Phonetic matching (Soundex, Metaphone)
 
-use crate::core::{Entity, EntityId, KnowledgeGraph};
-use crate::Result;
 use std::collections::{HashMap, HashSet};
+
+use crate::{
+    core::{Entity, EntityId, KnowledgeGraph},
+    Result,
+};
 
 /// Configuration for string similarity-based entity linking
 #[derive(Debug, Clone)]

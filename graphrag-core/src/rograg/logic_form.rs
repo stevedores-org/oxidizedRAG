@@ -4,17 +4,19 @@
 //! and perform precise retrieval based on semantic relationships.
 
 #[cfg(feature = "rograg")]
-use crate::core::{Entity, KnowledgeGraph};
-#[cfg(feature = "rograg")]
-use crate::Result;
+use std::collections::HashSet;
+
 #[cfg(feature = "rograg")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "rograg")]
-use std::collections::HashSet;
 #[cfg(feature = "rograg")]
 use strum::{Display as StrumDisplay, EnumString};
 #[cfg(feature = "rograg")]
 use thiserror::Error;
+
+#[cfg(feature = "rograg")]
+use crate::core::{Entity, KnowledgeGraph};
+#[cfg(feature = "rograg")]
+use crate::Result;
 
 /// Errors that can occur during logic form operations.
 #[cfg(feature = "rograg")]
@@ -399,7 +401,8 @@ impl PatternBasedParser {
     ///
     /// # Errors
     ///
-    /// Returns an error if any regex pattern fails to compile during initialization.
+    /// Returns an error if any regex pattern fails to compile during
+    /// initialization.
     pub fn new() -> Result<Self> {
         let patterns = vec![
             // "What is X?" pattern
@@ -574,7 +577,8 @@ impl Default for LogicFormExecutor {
 impl LogicFormExecutor {
     /// Create a new logic form executor.
     ///
-    /// Initializes the executor for processing logic forms against a knowledge graph.
+    /// Initializes the executor for processing logic forms against a knowledge
+    /// graph.
     ///
     /// # Returns
     ///

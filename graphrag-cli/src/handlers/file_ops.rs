@@ -2,8 +2,9 @@
 //!
 //! Provides helpers for loading and validating files.
 
-use color_eyre::eyre::{eyre, Result};
 use std::path::{Path, PathBuf};
+
+use color_eyre::eyre::{eyre, Result};
 use tokio::fs;
 
 /// File operations utility

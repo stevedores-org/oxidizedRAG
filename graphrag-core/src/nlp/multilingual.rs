@@ -1,6 +1,7 @@
 //! Multilingual Support
 //!
-//! This module provides language detection and language-specific text processing:
+//! This module provides language detection and language-specific text
+//! processing:
 //! - Automatic language detection using n-gram analysis
 //! - Language-specific tokenization and normalization
 //! - Multi-language entity extraction
@@ -19,8 +20,9 @@
 //! - Russian (ru)
 //! - Portuguese (pt)
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Supported languages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

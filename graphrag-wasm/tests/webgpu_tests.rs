@@ -120,8 +120,7 @@ async fn test_webgpu_adapter_info() {
 /// Validates that concurrent detection calls work correctly.
 #[wasm_bindgen_test]
 async fn test_concurrent_webgpu_detection() {
-    use std::cell::RefCell;
-    use std::rc::Rc;
+    use std::{cell::RefCell, rc::Rc};
 
     let results = Rc::new(RefCell::new(Vec::new()));
 

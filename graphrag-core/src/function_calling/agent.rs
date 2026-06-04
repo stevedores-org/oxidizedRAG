@@ -1,8 +1,9 @@
 //! Agent module for orchestrating function calls in GraphRAG
 
+use std::collections::HashMap;
+
 use super::{FunctionCall, FunctionCaller, FunctionContext, FunctionResult};
 use crate::{core::KnowledgeGraph, Result};
-use std::collections::HashMap;
 
 /// Query planning strategy
 #[derive(Debug, Clone)]
@@ -264,8 +265,9 @@ impl GraphRAGAgent {
                 },
             });
 
-            // Get context for the entity (will need entity ID from search results)
-            // This would be handled in a multi-step execution
+            // Get context for the entity (will need entity ID from search
+            // results) This would be handled in a multi-step
+            // execution
         }
 
         calls

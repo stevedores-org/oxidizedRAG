@@ -1,18 +1,23 @@
-//! SurrealDB Persistence Layer - bridges RAG runs to AIVCS for persistent storage
+//! SurrealDB Persistence Layer - bridges RAG runs to AIVCS for persistent
+//! storage
 //!
-//! This module integrates GraphRAG execution tracking with AIVCS for full version control:
+//! This module integrates GraphRAG execution tracking with AIVCS for full
+//! version control:
 //! - Records RAG runs to SurrealDB via AIVCS GraphRunRecorder
 //! - Enables comparing RAG executions across experiments
 //! - Supports evaluation and replay of RAG agent behavior
 
-use crate::run_recorder::RagRunRecorder;
-use aivcs_core::domain::run::{Event, EventKind};
-use aivcs_core::GraphRunRecorder;
+use std::{convert::TryFrom, sync::Arc};
+
+use aivcs_core::{
+    domain::run::{Event, EventKind},
+    GraphRunRecorder,
+};
 use oxidized_state::{ContentDigest, RunLedger, RunMetadata, RunSummary, StorageResult};
 use serde_json::json;
-use std::convert::TryFrom;
-use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::run_recorder::RagRunRecorder;
 
 /// Persists a RAG run to SurrealDB via AIVCS GraphRunRecorder
 ///

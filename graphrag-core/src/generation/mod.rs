@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::{
     core::traits::{GenerationParams, LanguageModel, ModelInfo},
     retrieval::{ResultType, SearchResult},
@@ -5,7 +7,6 @@ use crate::{
     text::TextProcessor,
     GraphRAGError, Result,
 };
-use std::collections::{HashMap, HashSet};
 
 // Async implementation module
 pub mod async_mock_llm;
@@ -18,7 +19,8 @@ pub trait LLMInterface: Send + Sync {
     fn generate_response(&self, prompt: &str) -> Result<String>;
     /// Generate a summary of the content with a maximum length
     fn generate_summary(&self, content: &str, max_length: usize) -> Result<String>;
-    /// Extract key points from the content, returning the specified number of points
+    /// Extract key points from the content, returning the specified number of
+    /// points
     fn extract_key_points(&self, content: &str, num_points: usize) -> Result<Vec<String>>;
 }
 
@@ -107,7 +109,8 @@ impl MockLLM {
                             }
                         }
                     } else {
-                        // Short words (4 chars or less) with no exact match are skipped
+                        // Short words (4 chars or less) with no exact match are
+                        // skipped
                     }
                 }
 
@@ -178,7 +181,11 @@ impl MockLLM {
             // Look for character names and relationships
             let names = self.extract_character_names(&context_lower);
             if !names.is_empty() {
-                return Ok(format!("Based on the context, the main characters mentioned include: {}. These appear to be friends and companions in the story.", names.join(", ")));
+                return Ok(format!(
+                    "Based on the context, the main characters mentioned include: {}. These \
+                     appear to be friends and companions in the story.",
+                    names.join(", ")
+                ));
             }
         }
 
@@ -214,15 +221,27 @@ impl MockLLM {
         let question_lower = question.to_lowercase();
 
         if question_lower.contains("entity") && question_lower.contains("friend") {
-            return Ok("Entity Name's main friends include Second Entity, Friend Entity, and Companion Entity. These characters share many relationships throughout the story.".to_string());
+            return Ok(
+                "Entity Name's main friends include Second Entity, Friend Entity, and Companion \
+                 Entity. These characters share many relationships throughout the story."
+                    .to_string(),
+            );
         }
 
         if question_lower.contains("guardian") {
-            return Ok("Guardian Entity is Entity Name's guardian who raised them. They are known for their caring but strict nature.".to_string());
+            return Ok(
+                "Guardian Entity is Entity Name's guardian who raised them. They are known for \
+                 their caring but strict nature."
+                    .to_string(),
+            );
         }
 
         if question_lower.contains("activity") && question_lower.contains("main") {
-            return Ok("The main activity episode is one of the most famous events, where they cleverly convince other characters to participate in the main activity.".to_string());
+            return Ok(
+                "The main activity episode is one of the most famous events, where they cleverly \
+                 convince other characters to participate in the main activity."
+                    .to_string(),
+            );
         }
 
         Ok(
@@ -313,8 +332,9 @@ impl Default for MockLLM {
 
 impl LLMInterface for MockLLM {
     fn generate_response(&self, prompt: &str) -> Result<String> {
-        // Debug: Log the prompt to understand what's being sent (uncomment for debugging)
-        // println!("DEBUG MockLLM received prompt: {}", &prompt[..prompt.len().min(200)]);
+        // Debug: Log the prompt to understand what's being sent (uncomment for
+        // debugging) println!("DEBUG MockLLM received prompt: {}",
+        // &prompt[..prompt.len().min(200)]);
 
         // Enhanced pattern matching for more intelligent mock responses
         let prompt_lower = prompt.to_lowercase();
@@ -742,9 +762,15 @@ impl AnswerGenerator {
         let mut prompt_templates = HashMap::new();
 
         // Default prompt templates
-        prompt_templates.insert("qa".to_string(), PromptTemplate::new(
-            "Context:\n{context}\n\nQuestion: {question}\n\nBased on the provided context, please answer the question. If the context doesn't contain enough information, please say so.".to_string()
-        ));
+        prompt_templates.insert(
+            "qa".to_string(),
+            PromptTemplate::new(
+                "Context:\n{context}\n\nQuestion: {question}\n\nBased on the provided context, \
+                 please answer the question. If the context doesn't contain enough information, \
+                 please say so."
+                    .to_string(),
+            ),
+        );
 
         prompt_templates.insert(
             "summary".to_string(),
@@ -754,9 +780,14 @@ impl AnswerGenerator {
             ),
         );
 
-        prompt_templates.insert("extractive".to_string(), PromptTemplate::new(
-            "Extract the most relevant information from the following context to answer the question.\n\nContext: {context}\n\nQuestion: {question}\n\nRelevant information:".to_string()
-        ));
+        prompt_templates.insert(
+            "extractive".to_string(),
+            PromptTemplate::new(
+                "Extract the most relevant information from the following context to answer the \
+                 question.\n\nContext: {context}\n\nQuestion: {question}\n\nRelevant information:"
+                    .to_string(),
+            ),
+        );
 
         Ok(Self {
             llm,

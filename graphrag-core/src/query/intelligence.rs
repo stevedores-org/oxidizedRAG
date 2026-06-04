@@ -8,8 +8,9 @@
 //! - Natural language to structured query conversion
 //! - Query performance analysis
 
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+
+use serde::{Deserialize, Serialize};
 
 /// Query intelligence engine
 pub struct QueryIntelligence {
@@ -170,7 +171,8 @@ impl QueryIntelligence {
     fn detect_query_type(&self, query: &str) -> QueryType {
         let query_lower = query.to_lowercase();
 
-        // Relationship patterns (check before entity lookup to handle "what is the relationship...")
+        // Relationship patterns (check before entity lookup to handle "what is the
+        // relationship...")
         if query_lower.contains("relationship between")
             || query_lower.contains("how does")
             || query_lower.contains("related to")

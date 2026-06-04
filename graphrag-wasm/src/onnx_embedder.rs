@@ -26,11 +26,11 @@
 //! | MiniLM-L6 | 80ms | 3ms | 27x |
 //! | BERT-base | 200ms | 8ms | 25x |
 
-use js_sys::{Array, Object, Promise, Reflect};
 use std::str::FromStr;
+
+use js_sys::{Array, Object, Promise, Reflect};
 use tokenizers::Tokenizer;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{prelude::*, JsCast};
 use wasm_bindgen_futures::JsFuture;
 
 /// ONNX Runtime Web bindings
@@ -117,7 +117,8 @@ impl From<JsValue> for OnnxEmbedderError {
 
 /// ONNX Runtime Web embedder
 ///
-/// Provides GPU-accelerated embeddings using ONNX Runtime Web with HuggingFace tokenizers.
+/// Provides GPU-accelerated embeddings using ONNX Runtime Web with HuggingFace
+/// tokenizers.
 pub struct OnnxEmbedder {
     /// Embedding dimension
     dimension: usize,
@@ -141,7 +142,8 @@ impl OnnxEmbedder {
     ///
     /// # Arguments
     /// * `dimension` - Embedding dimension (384 for MiniLM, 768 for BERT)
-    /// * `tokenizer_json` - Tokenizer configuration as JSON string (fetched via HTTP)
+    /// * `tokenizer_json` - Tokenizer configuration as JSON string (fetched via
+    ///   HTTP)
     ///
     /// # Example
     /// ```ignore
@@ -346,7 +348,8 @@ impl OnnxEmbedder {
         web_sys::console::log_1(&"✅ ONNX inference completed".into());
 
         // Extract embeddings from output
-        // Output is usually { "last_hidden_state": Tensor } or { "pooler_output": Tensor }
+        // Output is usually { "last_hidden_state": Tensor } or { "pooler_output":
+        // Tensor }
         let embedding = self.extract_embedding(output)?;
 
         Ok(embedding)
@@ -559,8 +562,9 @@ pub fn check_onnx_runtime() -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 

@@ -1,5 +1,6 @@
-use crate::Result;
 use std::fs;
+
+use crate::Result;
 
 /// Enhanced configuration options for GraphRAG
 pub mod enhancements;
@@ -64,7 +65,8 @@ pub struct Config {
     pub similarity_threshold: Option<f32>,
 
     /// Pipeline approach: "semantic", "algorithmic", or "hybrid"
-    /// Determines which implementation strategy to use for entity extraction and retrieval
+    /// Determines which implementation strategy to use for entity extraction
+    /// and retrieval
     #[serde(default = "default_approach")]
     pub approach: String,
 
@@ -146,8 +148,9 @@ pub struct ZeroCostApproachConfig {
     pub hybrid_strategy: HybridStrategyConfig,
 }
 
-/// Configuration for LazyGraphRAG, an efficient approach for large-scale knowledge graphs.
-/// This configuration enables lazy loading and processing of graph components.
+/// Configuration for LazyGraphRAG, an efficient approach for large-scale
+/// knowledge graphs. This configuration enables lazy loading and processing of
+/// graph components.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct LazyGraphRAGConfig {
     /// Whether LazyGraphRAG is enabled
@@ -165,7 +168,8 @@ pub struct LazyGraphRAGConfig {
 }
 
 /// Configuration for extracting concepts from text documents.
-/// This configuration controls how key concepts are identified and extracted from text.
+/// This configuration controls how key concepts are identified and extracted
+/// from text.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ConceptExtractionConfig {
     /// Minimum length of a concept in characters
@@ -193,12 +197,14 @@ pub struct ConceptExtractionConfig {
 }
 
 /// Configuration for co-occurrence analysis of concepts in documents.
-/// This determines how relationships between concepts are identified based on their co-occurrence.
+/// This determines how relationships between concepts are identified based on
+/// their co-occurrence.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CoOccurrenceConfig {
     /// Size of the sliding window (in words) to consider for co-occurrence
     pub window_size: usize,
-    /// Minimum number of co-occurrences required to create an edge between concepts
+    /// Minimum number of co-occurrences required to create an edge between
+    /// concepts
     pub min_co_occurrence: usize,
     /// Jaccard similarity threshold for merging similar concepts
     pub jaccard_threshold: f32,
@@ -212,7 +218,8 @@ pub struct CoOccurrenceConfig {
 pub struct LazyIndexingConfig {
     /// Whether to use bidirectional indexing for faster lookups
     pub use_bidirectional_index: bool,
-    /// Whether to enable HNSW (Hierarchical Navigable Small World) index for approximate nearest neighbor search
+    /// Whether to enable HNSW (Hierarchical Navigable Small World) index for
+    /// approximate nearest neighbor search
     pub enable_hnsw_index: bool,
     /// Maximum number of items to keep in the index cache
     pub cache_size: usize,
@@ -250,8 +257,9 @@ pub struct LazyRelevanceScoringConfig {
     pub max_tokens_per_score: usize,
 }
 
-/// End-to-End GraphRAG configuration for comprehensive knowledge graph construction.
-/// This configuration enables fine-grained control over the entire pipeline from text to knowledge graph.
+/// End-to-End GraphRAG configuration for comprehensive knowledge graph
+/// construction. This configuration enables fine-grained control over the
+/// entire pipeline from text to knowledge graph.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct E2GraphRAGConfig {
     /// Whether the E2E GraphRAG pipeline is enabled
@@ -298,10 +306,12 @@ pub struct NERExtractionConfig {
     /// Minimum confidence score (0.0-1.0) required for an entity to be included
     pub min_confidence: f32,
 
-    /// Whether to apply positional boost to entities based on their position in the text
+    /// Whether to apply positional boost to entities based on their position in
+    /// the text
     pub use_positional_boost: bool,
 
-    /// Whether to apply frequency boost to entities based on their frequency in the text
+    /// Whether to apply frequency boost to entities based on their frequency in
+    /// the text
     pub use_frequency_boost: bool,
 }
 
@@ -330,7 +340,8 @@ impl Default for NERExtractionConfig {
 /// Controls how keywords are identified and extracted from text content.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct KeywordExtractionConfig {
-    /// List of algorithms to use for keyword extraction (e.g., ["tfidf", "yake", "textrank"])
+    /// List of algorithms to use for keyword extraction (e.g., ["tfidf",
+    /// "yake", "textrank"])
     pub algorithms: Vec<String>,
 
     /// Maximum number of keywords to extract per document chunk
@@ -355,13 +366,16 @@ impl Default for KeywordExtractionConfig {
 }
 
 /// Configuration for graph construction in the E2E GraphRAG pipeline.
-/// Controls how entities and their relationships are organized into a knowledge graph.
+/// Controls how entities and their relationships are organized into a knowledge
+/// graph.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct E2GraphConstructionConfig {
-    /// Types of relationships to extract between entities (e.g., ["CO_OCCURS_WITH", "RELATED_TO"])
+    /// Types of relationships to extract between entities (e.g.,
+    /// ["CO_OCCURS_WITH", "RELATED_TO"])
     pub relationship_types: Vec<String>,
 
-    /// Minimum score required to establish a relationship between entities (0.0-1.0)
+    /// Minimum score required to establish a relationship between entities
+    /// (0.0-1.0)
     pub min_relationship_score: f32,
 
     /// Maximum number of relationships to maintain per entity
@@ -383,7 +397,8 @@ impl Default for E2GraphConstructionConfig {
 }
 
 /// Configuration for indexing in the E2E GraphRAG pipeline.
-/// Controls how entities, relationships, and their embeddings are indexed for efficient retrieval.
+/// Controls how entities, relationships, and their embeddings are indexed for
+/// efficient retrieval.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct E2IndexingConfig {
     /// Number of items to process in a single batch during indexing
@@ -410,7 +425,8 @@ impl Default for E2IndexingConfig {
     }
 }
 
-/// Configuration for pure algorithmic GraphRAG approach without LLM dependencies.
+/// Configuration for pure algorithmic GraphRAG approach without LLM
+/// dependencies.
 ///
 /// This configuration enables cost-effective graph construction and analysis
 /// using only algorithmic methods for pattern extraction, keyword analysis,
@@ -429,13 +445,16 @@ pub struct PureAlgorithmicConfig {
     pub search_ranking: SearchRankingConfig,
 }
 
-/// Configuration for pattern extraction from text using regex and linguistic rules.
+/// Configuration for pattern extraction from text using regex and linguistic
+/// rules.
 ///
-/// Pattern extraction identifies consistent linguistic structures that can indicate
-/// entities, relationships, and semantic patterns without requiring LLM processing.
+/// Pattern extraction identifies consistent linguistic structures that can
+/// indicate entities, relationships, and semantic patterns without requiring
+/// LLM processing.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PatternExtractionConfig {
-    /// Regex patterns for identifying capitalized entities (proper nouns, acronyms)
+    /// Regex patterns for identifying capitalized entities (proper nouns,
+    /// acronyms)
     pub capitalized_patterns: Vec<String>,
     /// Regex patterns for technical terms, jargon, and specialized language
     pub technical_patterns: Vec<String>,
@@ -465,19 +484,22 @@ pub struct PureKeywordExtractionConfig {
     pub max_term_frequency_ratio: f32,
 }
 
-/// Configuration for discovering relationships between entities using co-occurrence analysis.
+/// Configuration for discovering relationships between entities using
+/// co-occurrence analysis.
 ///
 /// This configuration enables algorithmic relationship discovery by analyzing
 /// word co-occurrence patterns and statistical measures without LLM inference.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RelationshipDiscoveryConfig {
-    /// Window size for co-occurrence analysis (number of words to check around entities)
+    /// Window size for co-occurrence analysis (number of words to check around
+    /// entities)
     pub window_size: usize,
     /// Minimum co-occurrence count to establish a relationship
     pub min_co_occurrence: usize,
     /// Whether to use mutual information scoring for relationship strength
     pub use_mutual_information: bool,
-    /// Types of relationships to identify (e.g., "causal", "hierarchical", "temporal")
+    /// Types of relationships to identify (e.g., "causal", "hierarchical",
+    /// "temporal")
     pub relationship_types: Vec<String>,
     /// Scoring method for relationship ranking (e.g., "frequency", "mi", "pmi")
     pub scoring_method: String,
@@ -485,10 +507,12 @@ pub struct RelationshipDiscoveryConfig {
     pub min_similarity_score: f32,
 }
 
-/// Configuration for search result ranking across multiple retrieval strategies.
+/// Configuration for search result ranking across multiple retrieval
+/// strategies.
 ///
-/// This configuration enables combining different search approaches (vector, keyword,
-/// graph traversal) and fusing their results for optimal relevance ranking.
+/// This configuration enables combining different search approaches (vector,
+/// keyword, graph traversal) and fusing their results for optimal relevance
+/// ranking.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SearchRankingConfig {
     /// Configuration for vector-based similarity search
@@ -521,9 +545,11 @@ pub struct KeywordSearchConfig {
     pub enabled: bool,
     /// Search algorithm to use (e.g., "bm25", "tfidf", "dirichlet")
     pub algorithm: String,
-    /// BM25 parameter k1: controls term frequency saturation (typically 1.2-2.0)
+    /// BM25 parameter k1: controls term frequency saturation (typically
+    /// 1.2-2.0)
     pub k1: f32,
-    /// BM25 parameter b: controls document length normalization (typically 0.0-1.0)
+    /// BM25 parameter b: controls document length normalization (typically
+    /// 0.0-1.0)
     pub b: f32,
 }
 
@@ -535,7 +561,8 @@ pub struct KeywordSearchConfig {
 pub struct GraphTraversalConfig {
     /// Whether graph traversal algorithms are enabled
     pub enabled: bool,
-    /// Algorithm to use for graph traversal (e.g., "pagerank", "hits", "random_walk")
+    /// Algorithm to use for graph traversal (e.g., "pagerank", "hits",
+    /// "random_walk")
     pub algorithm: String,
     /// Damping factor for PageRank algorithm (typically 0.85)
     pub damping_factor: f32,
@@ -580,13 +607,15 @@ pub struct FusionWeights {
     pub bm25: f32,
 }
 
-/// Configuration for hybrid GraphRAG strategies combining algorithmic and LLM approaches.
+/// Configuration for hybrid GraphRAG strategies combining algorithmic and LLM
+/// approaches.
 ///
 /// This configuration enables different hybrid strategies for balancing cost,
 /// performance, and quality through intelligent LLM usage.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct HybridStrategyConfig {
-    /// Configuration for lazy algorithmic approach with selective LLM enhancement
+    /// Configuration for lazy algorithmic approach with selective LLM
+    /// enhancement
     pub lazy_algorithmic: LazyAlgorithmicConfig,
     /// Configuration for progressive multi-level LLM usage
     pub progressive: ProgressiveConfig,
@@ -602,9 +631,11 @@ pub struct HybridStrategyConfig {
 pub struct LazyAlgorithmicConfig {
     /// Indexing strategy (e.g., "algorithmic_first", "llm_assisted", "hybrid")
     pub indexing_approach: String,
-    /// Query processing strategy (e.g., "algorithmic_only", "selective_llm", "adaptive")
+    /// Query processing strategy (e.g., "algorithmic_only", "selective_llm",
+    /// "adaptive")
     pub query_approach: String,
-    /// Cost optimization strategy (e.g., "aggressive", "balanced", "quality_first")
+    /// Cost optimization strategy (e.g., "aggressive", "balanced",
+    /// "quality_first")
     pub cost_optimization: String,
 }
 
@@ -640,7 +671,8 @@ pub struct BudgetAwareConfig {
     pub max_llm_cost_per_query: f64,
     /// Budget management strategy (e.g., "throttle", "degrade", "stop")
     pub strategy: String,
-    /// Whether to fall back to pure algorithmic processing when budget is exceeded
+    /// Whether to fall back to pure algorithmic processing when budget is
+    /// exceeded
     pub fallback_to_algorithmic: bool,
 }
 
@@ -904,7 +936,8 @@ pub struct EmbeddingConfig {
     /// Dimension of the embedding vectors
     pub dimension: usize,
 
-    /// Embedding backend: "hash", "ollama", "huggingface", "openai", "voyage", "cohere", "jina", "mistral", "together", "onnx", "candle"
+    /// Embedding backend: "hash", "ollama", "huggingface", "openai", "voyage",
+    /// "cohere", "jina", "mistral", "together", "onnx", "candle"
     pub backend: String,
 
     /// Model identifier (provider-specific)
@@ -926,7 +959,8 @@ pub struct EmbeddingConfig {
     pub api_endpoint: Option<String>,
 
     /// API key for external embedding service
-    /// Can also be set via environment variables (OPENAI_API_KEY, VOYAGE_API_KEY, etc.)
+    /// Can also be set via environment variables (OPENAI_API_KEY,
+    /// VOYAGE_API_KEY, etc.)
     pub api_key: Option<String>,
 
     /// Cache directory for downloaded models (HuggingFace)
@@ -1644,7 +1678,7 @@ impl Config {
                                 "progressive" => crate::summarization::LLMStrategy::Progressive,
                                 _ => crate::summarization::LLMStrategy::Progressive,
                             },
-                            level_configs: std::collections::HashMap::new(), // Would need more complex parsing
+                            level_configs: std::collections::HashMap::new(), /* Would need more complex parsing */
                         }
                     } else {
                         crate::summarization::LLMConfig::default()

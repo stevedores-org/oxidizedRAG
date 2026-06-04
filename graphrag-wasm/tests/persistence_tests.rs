@@ -282,8 +282,8 @@ async fn test_dimension_persistence() {
         assert!(result.is_ok());
     }
 
-    // Note: Loading with different dimension may fail or succeed depending on implementation
-    // This behavior should be documented
+    // Note: Loading with different dimension may fail or succeed depending on
+    // implementation This behavior should be documented
 }
 
 /// Test: Concurrent save/load

@@ -1,12 +1,13 @@
 //! Progress indicator component
 
-use crate::theme::Theme;
 use ratatui::{
     layout::Rect,
     text::Span,
     widgets::{Block, Borders, Gauge},
     Frame,
 };
+
+use crate::theme::Theme;
 
 /// Progress indicator widget
 #[allow(dead_code)]

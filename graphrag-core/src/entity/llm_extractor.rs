@@ -1,8 +1,11 @@
 //! LLM-based entity and relationship extraction
 //!
-//! This module provides TRUE LLM-based extraction using Ollama or any other LLM service.
-//! Unlike pattern-based extraction, this uses actual language model inference to extract
-//! entities and relationships from text with deep semantic understanding.
+//! This module provides TRUE LLM-based extraction using Ollama or any other LLM
+//! service. Unlike pattern-based extraction, this uses actual language model
+//! inference to extract entities and relationships from text with deep semantic
+//! understanding.
+
+use serde_json;
 
 use crate::{
     core::{ChunkId, Entity, EntityId, EntityMention, Relationship, TextChunk},
@@ -10,7 +13,6 @@ use crate::{
     ollama::OllamaClient,
     GraphRAGError, Result,
 };
-use serde_json;
 
 /// LLM-based entity extractor that uses actual language model calls
 pub struct LLMEntityExtractor {
@@ -25,7 +27,8 @@ impl LLMEntityExtractor {
     ///
     /// # Arguments
     /// * `ollama_client` - Ollama client for LLM inference
-    /// * `entity_types` - List of entity types to extract (e.g., ["PERSON", "LOCATION", "ORGANIZATION"])
+    /// * `entity_types` - List of entity types to extract (e.g., ["PERSON",
+    ///   "LOCATION", "ORGANIZATION"])
     pub fn new(ollama_client: OllamaClient, entity_types: Vec<String>) -> Self {
         Self {
             ollama_client,
@@ -50,7 +53,8 @@ impl LLMEntityExtractor {
     /// Extract entities and relationships from a text chunk using LLM
     ///
     /// This is the REAL extraction that makes actual LLM API calls.
-    /// Expected time: 15-30 seconds per chunk depending on chunk size and model.
+    /// Expected time: 15-30 seconds per chunk depending on chunk size and
+    /// model.
     #[cfg(feature = "async")]
     pub async fn extract_from_chunk(
         &self,
@@ -129,7 +133,8 @@ impl LLMEntityExtractor {
 
     /// Check if extraction is complete using LLM judgment
     ///
-    /// Uses the LLM to determine if all significant entities have been extracted.
+    /// Uses the LLM to determine if all significant entities have been
+    /// extracted.
     #[cfg(feature = "async")]
     pub async fn check_completion(
         &self,
@@ -309,8 +314,9 @@ impl LLMEntityExtractor {
             let mentions = self.find_mentions(&entry.name, chunk_id, chunk_text);
 
             // Create entity with mentions
-            // Note: Description is stored in the entity but not used in current Entity struct
-            // We store it in the entity name or as a separate field if needed
+            // Note: Description is stored in the entity but not used in current Entity
+            // struct We store it in the entity name or as a separate field if
+            // needed
             let entity = Entity::new(
                 entity_id,
                 entry.name.clone(),
@@ -427,8 +433,8 @@ mod tests {
         TextChunk::new(
             ChunkId::new("chunk_001".to_string()),
             DocumentId::new("doc_001".to_string()),
-            "Tom Sawyer is a young boy who lives in St. Petersburg with his Aunt Polly. \
-             Tom is best friends with Huckleberry Finn. They often go on adventures together."
+            "Tom Sawyer is a young boy who lives in St. Petersburg with his Aunt Polly. Tom is \
+             best friends with Huckleberry Finn. They often go on adventures together."
                 .to_string(),
             0,
             150,
@@ -537,7 +543,8 @@ Here's the extraction:
 
     #[test]
     fn test_normalize_name_multi_word_regression() {
-        // Regression test for multi-word normalization ensuring underscores are preserved
+        // Regression test for multi-word normalization ensuring underscores are
+        // preserved
         let ollama_config = OllamaConfig::default();
         let ollama_client = OllamaClient::new(ollama_config);
         let extractor = LLMEntityExtractor::new(ollama_client, vec!["PERSON".to_string()]);

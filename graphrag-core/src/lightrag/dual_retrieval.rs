@@ -6,12 +6,13 @@
 //!
 //! Then merges and deduplicates results for optimal context.
 
-use std::collections::HashSet;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
-use crate::core::error::GraphRAGError;
-use crate::lightrag::keyword_extraction::{DualLevelKeywords, KeywordExtractor};
-use crate::retrieval::SearchResult;
+use crate::{
+    core::error::GraphRAGError,
+    lightrag::keyword_extraction::{DualLevelKeywords, KeywordExtractor},
+    retrieval::SearchResult,
+};
 
 /// Dual-level retrieval results
 #[derive(Debug, Clone)]

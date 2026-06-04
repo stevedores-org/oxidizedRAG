@@ -13,8 +13,9 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use graphrag_server::qdrant_store::{QdrantStore, DocumentMetadata};
 //! use std::collections::HashMap;
+//!
+//! use graphrag_server::qdrant_store::{DocumentMetadata, QdrantStore};
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -33,11 +34,15 @@
 //!     custom: HashMap::new(),
 //! };
 //!
-//! store.add_document("doc1", embedding.clone(), metadata).await?;
+//! store
+//!     .add_document("doc1", embedding.clone(), metadata)
+//!     .await?;
 //! let results = store.search(embedding, 10, None).await?;
 //! # Ok(())
 //! # }
 //! ```
+
+use std::collections::HashMap;
 
 use qdrant_client::{
     qdrant::{
@@ -47,7 +52,6 @@ use qdrant_client::{
     Qdrant,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Qdrant store errors
 #[derive(Debug, thiserror::Error)]

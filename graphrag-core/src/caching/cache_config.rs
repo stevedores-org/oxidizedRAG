@@ -1,7 +1,8 @@
 //! Cache configuration and policy management
 
-use super::{CacheError, CacheResult};
 use std::time::Duration;
+
+use super::{CacheError, CacheResult};
 
 /// Cache eviction policies
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

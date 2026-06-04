@@ -16,12 +16,10 @@ pub mod optimizer;
 pub mod ranking_policies;
 
 // Re-export only the types that actually exist
-pub use intelligence::{QueryIntelligence, QueryTemplate, QueryType, RewrittenQuery};
-
 // Re-export adaptive routing types
 pub use adaptive_routing::{
     AdaptiveRoutingConfig, QueryAnalysis, QueryComplexity, QueryComplexityAnalyzer,
 };
-
+pub use intelligence::{QueryIntelligence, QueryTemplate, QueryType, RewrittenQuery};
 // Re-export optimizer types
 pub use optimizer::{GraphStatistics, JoinType, OperationCost, QueryOp, QueryOptimizer};

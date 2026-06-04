@@ -8,11 +8,11 @@
 //! Reference: "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks"
 //! Reimers & Gurevych (2019)
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 
-use crate::retrieval::SearchResult;
-use crate::Result;
+use async_trait::async_trait;
+
+use crate::{retrieval::SearchResult, Result};
 
 /// Configuration for cross-encoder reranking
 #[derive(Debug, Clone)]
