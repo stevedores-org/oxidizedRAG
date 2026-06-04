@@ -206,10 +206,12 @@ impl EmbeddingProvider for HuggingFaceEmbeddings {
         // similarity), so we fail loud instead. Tracked in
         // stevedores-org/oxidizedRAG#167.
         Err(GraphRAGError::Embedding {
-            message: "HuggingFace local embedding generation via Candle is not implemented yet \
-                      (issue #167). Use HttpEmbeddingProvider::{openai, voyage_ai, cohere, \
-                      jina_ai, mistral, together_ai} for a working provider."
-                .to_string(),
+            message: concat!(
+                "HuggingFace local embedding generation via Candle is not implemented yet ",
+                "(issue #167). Use HttpEmbeddingProvider::{openai, voyage_ai, cohere, ",
+                "jina_ai, mistral, together_ai} for a working provider."
+            )
+            .to_string(),
         })
     }
 
@@ -240,7 +242,8 @@ mod tests {
 
     #[test]
     fn test_new_embeddings() {
-        let embeddings = HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
+        let embeddings =
+            HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
 
         assert_eq!(
             embeddings.model_id,
@@ -279,7 +282,8 @@ mod tests {
     /// happily consume.
     #[tokio::test]
     async fn embed_returns_err_when_not_initialized() {
-        let embeddings = HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
+        let embeddings =
+            HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
         let result = embeddings.embed("hello world").await;
         assert!(matches!(result, Err(GraphRAGError::Embedding { .. })));
     }
