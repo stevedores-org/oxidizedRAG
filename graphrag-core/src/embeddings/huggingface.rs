@@ -1,10 +1,19 @@
-///! Hugging Face Hub integration for downloading and using embedding models
-///!
-///! This module provides functionality to:
-///! - Download embedding models from Hugging Face Hub
-///! - Cache models locally to avoid re-downloading
-///! - Load models with Candle framework
-///! - Generate embeddings using downloaded models
+//! Hugging Face Hub integration for downloading and using embedding models
+//!
+//! This module provides functionality to:
+//! - Download embedding models from Hugging Face Hub
+//! - Cache models locally to avoid re-downloading
+//! - Load models with Candle framework
+//! - Generate embeddings using downloaded models
+//!
+//! ## Status: local inference unimplemented (#167)
+//!
+//! [`HuggingFaceEmbeddings::embed`] currently returns
+//! [`crate::core::error::GraphRAGError::Embedding`] rather than producing real
+//! vectors — Candle-backed inference has not been wired up yet. Until it is,
+//! callers should use one of the HTTP providers in
+//! [`crate::embeddings::api_providers`].
+
 use crate::core::error::{GraphRAGError, Result};
 use crate::embeddings::{EmbeddingConfig, EmbeddingProvider};
 
@@ -191,24 +200,19 @@ impl EmbeddingProvider for HuggingFaceEmbeddings {
             });
         }
 
-        // TODO: Implement actual embedding generation using Candle
-        // This requires loading the model with candle-transformers
-        // For now, return a placeholder
-
-        #[cfg(feature = "neural-embeddings")]
-        {
-            // Load model with Candle and generate embedding
-            // This is a placeholder - actual implementation would use candle-transformers
-            log::warn!("HuggingFace embedding generation not yet implemented");
-            Ok(vec![0.0; self.dimensions])
-        }
-
-        #[cfg(not(feature = "neural-embeddings"))]
-        {
-            Err(GraphRAGError::Embedding {
-                message: "neural-embeddings feature required for embedding generation".to_string(),
-            })
-        }
+        // Candle-backed local inference is not implemented yet. Returning a
+        // zero vector here would silently feed semantically-meaningless
+        // embeddings through the rest of the pipeline (chunking, vector store,
+        // similarity), so we fail loud instead. Tracked in
+        // stevedores-org/oxidizedRAG#167.
+        Err(GraphRAGError::Embedding {
+            message: concat!(
+                "HuggingFace local embedding generation via Candle is not implemented yet ",
+                "(issue #167). Use HttpEmbeddingProvider::{openai, voyage_ai, cohere, ",
+                "jina_ai, mistral, together_ai} for a working provider.",
+            )
+            .to_string(),
+        })
     }
 
     async fn embed_batch(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>> {
@@ -270,5 +274,36 @@ mod tests {
         let result = embeddings.initialize().await;
         assert!(result.is_ok(), "Failed to download model: {:?}", result);
         assert!(embeddings.is_available());
+    }
+
+    /// Regression test for #167: pre-initialize path must fail loud, not
+    /// silently return zero vectors that downstream pipeline stages would
+    /// happily consume.
+    #[tokio::test]
+    async fn embed_returns_err_when_not_initialized() {
+        let embeddings = HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
+        let result = embeddings.embed("hello world").await;
+        assert!(matches!(result, Err(GraphRAGError::Embedding { .. })));
+    }
+
+    /// Regression test for #167: even when `initialized = true`, embed must
+    /// return Err until Candle inference actually lands. The previous
+    /// behaviour was `Ok(vec![0.0; dims])` behind the `neural-embeddings`
+    /// feature, which silently corrupted the pipeline.
+    #[tokio::test]
+    async fn embed_returns_err_even_when_marked_initialized() {
+        let mut embeddings =
+            HuggingFaceEmbeddings::new("sentence-transformers/all-MiniLM-L6-v2", None);
+        embeddings.initialized = true;
+        let result = embeddings.embed("hello world").await;
+        match result {
+            Err(GraphRAGError::Embedding { message }) => {
+                assert!(
+                    message.contains("not implemented"),
+                    "expected unimplemented message, got: {message}"
+                );
+            },
+            other => panic!("expected Embedding error, got: {other:?}"),
+        }
     }
 }
