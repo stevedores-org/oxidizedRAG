@@ -14,9 +14,7 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sha2::{Digest, Sha256};
 
-use super::embedding::{
-    Embedding, EmbeddingEngine, EmbeddingError, EmbeddingMetadata, ModelInfo,
-};
+use super::embedding::{Embedding, EmbeddingEngine, EmbeddingError, EmbeddingMetadata, ModelInfo};
 use super::store::{SearchFilters, SearchResult, VectorStore, VectorStoreError};
 use super::types::{ContentType, MultimodalContent};
 
@@ -351,7 +349,11 @@ impl VectorStore for MemoryVectorStore {
             .filter(|r| filters.min_score.map_or(true, |min| r.score >= min))
             .collect();
         // Descending by score.
-        scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         scored.truncate(k);
         Ok(scored)
     }
@@ -459,7 +461,8 @@ mod tests {
         let b = engine.embed(text("beta")).await.expect("embed");
         let c = engine.embed(text("gamma")).await.expect("embed");
 
-        store.store_batch(vec![a.clone(), b.clone(), c.clone()])
+        store
+            .store_batch(vec![a.clone(), b.clone(), c.clone()])
             .await
             .expect("store_batch");
 
@@ -497,7 +500,10 @@ mod tests {
             content_types: Some(vec![ContentType::Image]),
             ..Default::default()
         };
-        let results = store.search(&img.vector, 10, filters).await.expect("search");
+        let results = store
+            .search(&img.vector, 10, filters)
+            .await
+            .expect("search");
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].embedding.id, img.id);
     }
@@ -550,8 +556,14 @@ mod tests {
     async fn store_stats_breaks_down_by_content_type() {
         let store = MemoryVectorStore::new();
         let engine = FakeEmbeddingEngine::with_hash_seeded_vector(4);
-        store.store(engine.embed(text("a")).await.expect("e")).await.expect("s");
-        store.store(engine.embed(text("b")).await.expect("e")).await.expect("s");
+        store
+            .store(engine.embed(text("a")).await.expect("e"))
+            .await
+            .expect("s");
+        store
+            .store(engine.embed(text("b")).await.expect("e"))
+            .await
+            .expect("s");
         store
             .store(
                 engine
