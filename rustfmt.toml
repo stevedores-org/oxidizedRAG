@@ -6,65 +6,65 @@ hard_tabs = false
 tab_spaces = 4
 newline_style = "Unix"
 use_small_heuristics = "Default"
-indent_style = "Block"
+# indent_style = "Block" # unstable
 
 # Line width settings
 max_width = 100
-error_on_line_overflow = false
-wrap_comments = true
-format_code_in_doc_comments = true
-comment_width = 80
+# error_on_line_overflow = false # unstable
+# wrap_comments = true # unstable
+# format_code_in_doc_comments = true # unstable
+# comment_width = 80 # unstable
 
 # Imports and organization
-imports_granularity = "Crate"
-imports_layout = "Mixed"
-group_imports = "StdExternalCrate"
+# imports_granularity = "Crate" # unstable
+# imports_layout = "Mixed" # unstable
+# group_imports = "StdExternalCrate" # unstable
 reorder_imports = true
 reorder_modules = true
 
 # Function and method formatting
-fn_params_layout = "Tall"
-fn_single_line = false
-where_single_line = false
+# fn_params_layout = "Tall" # unstable
+# fn_single_line = false # unstable
+# where_single_line = false # unstable
 force_explicit_abi = true
-format_macro_matchers = true
-format_macro_bodies = true
+# format_macro_matchers = true # unstable
+# format_macro_bodies = true # unstable
 
 # Structure and enum formatting
-struct_field_align_threshold = 0
-enum_discrim_align_threshold = 0
+# struct_field_align_threshold = 0 # unstable
+# enum_discrim_align_threshold = 0 # unstable
 use_field_init_shorthand = true
 
 # String formatting
-format_strings = true
-format_raw_strings = false
+# format_strings = true # unstable
+# format_raw_strings = false # unstable
 
 # Pattern matching
 match_block_trailing_comma = true
-match_arm_blocks = true
-force_multiline_blocks = false
+# match_arm_blocks = true # unstable
+# force_multiline_blocks = false # unstable
 
 # Spacing
-blank_lines_upper_bound = 2
-blank_lines_lower_bound = 0
+# blank_lines_upper_bound = 2 # unstable
+# blank_lines_lower_bound = 0 # unstable
 
 # Other style choices
-trailing_semicolon = true
-trailing_comma = "Vertical"
-space_before_colon = false
-space_after_colon = true
-spaces_around_ranges = false
-binop_separator = "Front"
+# trailing_semicolon = true # unstable
+# trailing_comma = "Vertical" # unstable
+# space_before_colon = false # unstable
+# space_after_colon = true # unstable
+# spaces_around_ranges = false # unstable
+# binop_separator = "Front" # unstable
 
 # Code organization
-normalize_comments = true
-normalize_doc_attributes = true
-report_todo = "Always"
-report_fixme = "Always"
+# normalize_comments = true # unstable
+# normalize_doc_attributes = true # unstable
+# report_todo = "Always" # unstable
+# report_fixme = "Always" # unstable
 
 # Experimental features (stable)
-inline_attribute_width = 0
+# inline_attribute_width = 0 # unstable
 merge_derives = true
 use_try_shorthand = true
-condense_wildcard_suffixes = false
-overflow_delimited_expr = false
+# condense_wildcard_suffixes = false # unstable
+# overflow_delimited_expr = false # unstable

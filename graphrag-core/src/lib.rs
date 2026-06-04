@@ -76,6 +76,12 @@ pub mod vector;
 pub mod builder;
 /// Embedding generation and providers
 pub mod embeddings;
+/// Multimodal RAG primitives — types + async trait seams for cross-modal
+/// embedding, ingestion, storage, and search. See
+/// `docs/tdd-multimodal-and-service.md` and meta-epic
+/// stevedores-org/oxidizedRAG#182.
+#[cfg(feature = "multimodal")]
+pub mod multimodal;
 /// Natural language processing utilities
 pub mod nlp;
 /// Ollama LLM integration
