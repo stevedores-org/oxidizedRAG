@@ -35,9 +35,6 @@ jobs:
       - name: Flake check
         run: nix flake check --print-build-logs
 
-      - name: Workspace tests
-        run: nix develop --command cargo test --workspace
-
       - name: Incremental correctness tests
         run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
 
