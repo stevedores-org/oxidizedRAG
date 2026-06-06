@@ -66,9 +66,10 @@
         # Build workspace deps first (for caching)
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        # Build the full workspace
+        # Build the full workspace (compile-only; tests run via checks.tests nextest).
         workspace = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
+          doCheck = false;
         });
       in
       {
@@ -92,7 +93,7 @@
 
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
-            cargoExtraArgs = "--workspace --benches";
+            cargoExtraArgs = "--workspace --benches --no-run";
           });
 
           doc = craneLib.cargoDoc (commonArgs // {
