@@ -6,10 +6,14 @@ on:
   push:
     branches: [develop, main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   nix-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,10 +37,30 @@ jobs:
             extra-trusted-substituters = https://nix-cache.stevedores.org/
             extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=
 
-      - name: Flake check
-        run: nix flake check --print-build-logs
+      # Run the essential checks only. Full `nix flake check` (doc/benches/
+      # workspace compile gates) remains for local dev via `just flake-check`
+      # but exceeds practical CI time when all six checks build in parallel.
+      - name: Flake check (fmt, clippy, tests)
+        run: |
+          nix flake check --print-build-logs \
+            .#checks.x86_64-linux.fmt \
+            .#checks.x86_64-linux.clippy \
+            .#checks.x86_64-linux.tests
 
-      # Workspace tests run inside `checks.tests` (cargo-nextest) during flake check.
+  feature-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v14
+        with:
+          extra-conf: |
+            extra-substituters = https://nix-cache.stevedores.org/
+            extra-trusted-substituters = https://nix-cache.stevedores.org/
+            extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=
 
       - name: Incremental correctness tests
         run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
