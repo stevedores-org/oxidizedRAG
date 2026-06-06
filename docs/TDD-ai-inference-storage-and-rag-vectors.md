@@ -137,7 +137,7 @@ oxidizedgraph already provides **in-graph state** (`AgentState`) and **checkpoin
 
 | Backend | Crate | When to use |
 |---------|-------|-------------|
-| **Remote** | `reqwest` + provider API | Production-ready today; OpenAI, Voyage, Cohere, Jina, Mistral, Together |
+| **Remote** | `ureq` + provider API | Production-ready today; OpenAI, Voyage, Cohere, Jina, Mistral, Together |
 | **fastembed-rs** | `fastembed` | Proposed local default for server/CLI; ONNX models; fast onboarding |
 | **candle** | `candle-core`, `candle-transformers` | Pure Rust; Metal/CUDA; currently scaffolded, local inference follow-up required |
 | **ort** | `ort` | ONNX Runtime; maximum model zoo |
