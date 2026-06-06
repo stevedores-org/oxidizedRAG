@@ -66,9 +66,10 @@
         # Build workspace deps first (for caching)
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        # Build the full workspace
+        # Compile gate only — `checks.tests` runs the workspace via nextest.
         workspace = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
+          doCheck = false;
         });
       in
       {
@@ -86,13 +87,16 @@
 
           tests = craneLib.cargoNextest (commonArgs // {
             inherit cargoArtifacts;
-            partitions = 1;
+            # Partitioned nextest: Nix builds/runs each partition in parallel on the runner.
+            partitions = 4;
             partitionType = "count";
           });
 
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
+            # `cargo build --benches` compiles bench targets; doCheck=false skips tests.
             cargoExtraArgs = "--workspace --benches";
+            doCheck = false;
           });
 
           doc = craneLib.cargoDoc (commonArgs // {

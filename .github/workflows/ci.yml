@@ -7,42 +7,88 @@ on:
     branches: [develop, main]
 
 jobs:
+  # One flake check per job so fmt/clippy/build/doc/benches run in parallel.
+  # `tests` is still the long pole; nextest partitions (flake.nix) parallelize
+  # partition derivations on the runner via Nix.
   nix-check:
+    name: nix ${{ matrix.check }}
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: fmt
+            timeout: 15
+          - check: clippy
+            timeout: 45
+          - check: workspace
+            timeout: 45
+          - check: benches
+            timeout: 45
+          - check: doc
+            timeout: 30
+          - check: tests
+            timeout: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install Nix with the org's substituter pre-configured as trusted.
-      # The flake.nix's nixConfig.extra-substituters is otherwise ignored
-      # as "untrusted flake configuration" — only nix.conf entries from a
-      # trusted source (here: the installer's extra-conf, which writes
-      # /etc/nix/nix.conf as root) are honored.
-      #
-      # We deliberately do NOT use DeterminateSystems/magic-nix-cache-action.
-      # It depends on FlakeHub authentication, which the org doesn't run, so
-      # every PR was failing with "Unable to authenticate to FlakeHub" and
-      # cascading "substituter disabled" errors. The org's own cache replaces
-      # that role.
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v14
-        with:
-          extra-conf: |
-            extra-substituters = https://nix-cache.stevedores.org/
-            extra-trusted-substituters = https://nix-cache.stevedores.org/
-            extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
-      - name: Flake check
-        run: nix flake check --print-build-logs
+      - name: Build flake check (${{ matrix.check }})
+        run: |
+          set -euo pipefail
+          system=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+          nix build ".#checks.${system}.${{ matrix.check }}" --print-build-logs
 
-      - name: Workspace tests
-        run: nix develop --command cargo test --workspace
+  incremental-correctness:
+    name: incremental correctness
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
       - name: Incremental correctness tests
-        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
+        run: |
+          nix develop --command cargo test -p graphrag-core \
+            --features "incremental,async" \
+            --test incremental_correctness_test --verbose
+
+  incremental-perf:
+    name: incremental perf gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
       - name: Incremental performance gate (<5% overhead)
-        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_perf_test --verbose -- --nocapture
+        run: |
+          nix develop --command cargo test -p graphrag-core \
+            --features "incremental,async" \
+            --test incremental_perf_test --verbose -- --nocapture
+
+  surrealdb:
+    name: surrealdb storage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
       - name: SurrealDB storage tests
-        run: nix develop --command cargo test -p graphrag-core --features "surrealdb-storage" surrealdb
+        run: |
+          nix develop --command cargo test -p graphrag-core \
+            --features "surrealdb-storage" surrealdb
