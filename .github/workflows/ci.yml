@@ -6,12 +6,51 @@ on:
   push:
     branches: [develop, main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # One flake check per job so fmt/clippy/build/doc/benches run in parallel.
-  # `tests` is still the long pole; nextest partitions (flake.nix) parallelize
-  # partition derivations on the runner via Nix.
+  changes:
+    name: detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changes
+        id: filter
+        run: |
+          set -euo pipefail
+          # Always run the full matrix on long-lived branch pushes.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base="${{ github.event.pull_request.base.sha }}"
+          if git diff --name-only "${base}...HEAD" | grep -qE \
+            '\.(rs|toml|lock)$|^(flake\.nix|flake\.lock|justfile|rustfmt\.toml)(/|$)|^\.github/|^benches/|^graphrag-'; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  docs-only:
+    name: docs only (rust checks skipped)
+    needs: changes
+    if: needs.changes.outputs.rust != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No Rust/workspace paths changed — skipping nix compile and test jobs."
+
   nix-check:
     name: nix ${{ matrix.check }}
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.timeout }}
     strategy:
@@ -28,8 +67,29 @@ jobs:
             timeout: 45
           - check: doc
             timeout: 30
-          - check: tests
-            timeout: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
+
+      - name: Build flake check (${{ matrix.check }})
+        run: |
+          set -euo pipefail
+          system=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+          nix build ".#checks.${system}.${{ matrix.check }}" --print-build-logs
+
+  nix-tests:
+    name: nix ${{ matrix.check }}
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [tests-p1, tests-p2, tests-p3, tests-p4]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,6 +105,8 @@ jobs:
 
   incremental-correctness:
     name: incremental correctness
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -62,6 +124,8 @@ jobs:
 
   incremental-perf:
     name: incremental perf gate
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -79,6 +143,8 @@ jobs:
 
   surrealdb:
     name: surrealdb storage
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
