@@ -66,7 +66,7 @@
         # Build workspace deps first (for caching)
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        # Build the full workspace (compile-only; tests run via checks.tests nextest).
+        # Compile gate only — `checks.tests` runs the workspace via nextest.
         workspace = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
           doCheck = false;
@@ -93,8 +93,9 @@
 
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
-            cargoExtraArgs = "--workspace --benches --no-run";
-            # Bench compile gate only; `buildPackage` would otherwise run tests too.
+            # `cargo build --benches` compiles bench targets; doCheck=false skips
+            # re-running the default test phase (nextest already covers tests).
+            cargoExtraArgs = "--workspace --benches";
             doCheck = false;
           });
 
