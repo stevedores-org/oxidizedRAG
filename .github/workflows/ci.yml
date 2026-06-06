@@ -42,9 +42,10 @@ jobs:
       # but exceeds practical CI time when all six checks build in parallel.
       - name: Flake check (fmt, clippy, tests)
         run: |
+          SYSTEM='x86_64-linux'
           for check in fmt clippy tests; do
-            echo "::group::checks.x86_64-linux.${check}"
-            nix flake check --print-build-logs ".#checks.x86_64-linux.${check}"
+            echo "::group::checks.${SYSTEM}.${check}"
+            nix build --print-build-logs --no-link ".#checks.\"${SYSTEM}\".${check}"
             echo "::endgroup::"
           done
 
