@@ -94,6 +94,8 @@
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
             cargoExtraArgs = "--workspace --benches --no-run";
+            # Bench compile gate only; `buildPackage` would otherwise run tests too.
+            doCheck = false;
           });
 
           doc = craneLib.cargoDoc (commonArgs // {
