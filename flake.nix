@@ -93,10 +93,8 @@
 
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
-            cargoExtraArgs = "--workspace --benches";
-            # This check is a bench compile gate. `buildPackage` otherwise runs
-            # the default test phase too, which duplicates `checks.tests` and
-            # can fail here for unrelated lib test regressions.
+            cargoExtraArgs = "--workspace --benches --no-run";
+            # Bench compile gate only; `buildPackage` would otherwise run tests too.
             doCheck = false;
           });
 
