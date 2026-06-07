@@ -2029,6 +2029,11 @@ impl ProductionGraphStore {
     ) -> Result<UpdateId> {
         let operation_id = self.monitor.start_operation("apply_change");
 
+        // The change is recorded in `change_log` keyed by its `change_id`, so that
+        // is the id callers use to look the change back up. Keep it separate from the
+        // monitor's `operation_id`, which only tracks performance/observability.
+        let change_id = change.change_id.clone();
+
         // Check for conflicts
         if let Some(conflict) = self.detect_conflict(&change)? {
             let resolution = self.conflict_resolver.resolve_conflict(&conflict).await?;
@@ -2057,7 +2062,7 @@ impl ProductionGraphStore {
 
         self.monitor
             .complete_operation(&operation_id, true, None, 1, 0);
-        Ok(operation_id)
+        Ok(change_id)
     }
 
     fn detect_conflict(&self, change: &ChangeRecord) -> Result<Option<Conflict>> {
