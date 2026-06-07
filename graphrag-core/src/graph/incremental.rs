@@ -891,13 +891,18 @@ impl UpdateMonitor {
         affected_entities: usize,
         affected_relationships: usize,
     ) {
-        let mut log = self.operations_log.lock();
-        if let Some(entry) = log.iter_mut().find(|e| &e.operation_id == operation_id) {
-            entry.end_time = Some(Instant::now());
-            entry.success = Some(success);
-            entry.error_message = error;
-            entry.affected_entities = affected_entities;
-            entry.affected_relationships = affected_relationships;
+        {
+            // Scope the lock guard so it is released before `update_performance_stats`,
+            // which re-acquires `operations_log`. `parking_lot::Mutex` is not reentrant,
+            // so holding the guard across that call would deadlock.
+            let mut log = self.operations_log.lock();
+            if let Some(entry) = log.iter_mut().find(|e| &e.operation_id == operation_id) {
+                entry.end_time = Some(Instant::now());
+                entry.success = Some(success);
+                entry.error_message = error;
+                entry.affected_entities = affected_entities;
+                entry.affected_relationships = affected_relationships;
+            }
         }
 
         // Update performance stats
@@ -2024,6 +2029,11 @@ impl ProductionGraphStore {
     ) -> Result<UpdateId> {
         let operation_id = self.monitor.start_operation("apply_change");
 
+        // The change is recorded in `change_log` keyed by its `change_id`, so that
+        // is the id callers use to look the change back up. Keep it separate from the
+        // monitor's `operation_id`, which only tracks performance/observability.
+        let change_id = change.change_id.clone();
+
         // Check for conflicts
         if let Some(conflict) = self.detect_conflict(&change)? {
             let resolution = self.conflict_resolver.resolve_conflict(&conflict).await?;
@@ -2052,7 +2062,7 @@ impl ProductionGraphStore {
 
         self.monitor
             .complete_operation(&operation_id, true, None, 1, 0);
-        Ok(operation_id)
+        Ok(change_id)
     }
 
     fn detect_conflict(&self, change: &ChangeRecord) -> Result<Option<Conflict>> {
