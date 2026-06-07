@@ -6,7 +6,7 @@
 | **Authors** | Stevedores engineering (synthesized from architecture review, June 2026) |
 | **Audience** | Research group, platform, oxidizedRAG / oxidizedgraph maintainers |
 | **Repositories** | [oxidizedRAG](https://github.com/stevedores-org/oxidizedRAG), [oxidizedgraph](https://github.com/stevedores-org/oxidizedgraph) |
-| **Related** | oxidizedgraph [#18](https://github.com/stevedores-org/oxidizedgraph/issues/18) (agent orchestration roadmap), oxidizedRAG multimodal foundation (PR #185) |
+| **Related** | oxidizedgraph [#18](https://github.com/stevedores-org/oxidizedgraph/issues/18) (agent orchestration roadmap), oxidizedRAG multimodal foundation (PR #185, merged to `develop`) |
 
 ---
 
@@ -22,11 +22,11 @@ This document records findings from a storage-layer review for **AI inference** 
 | Layer | Primary recommendation | Alternative |
 |-------|------------------------|-------------|
 | Inference hot cache (KV) | **Valkey** (Redis-compatible, BSD-3) | **Dragonfly** at extreme QPS/RAM pressure |
-| RAG embeddings (Rust) | **fastembed-rs** or remote APIs; **candle** when GPU/pure-Rust is required | **ort** (ONNX) for broad model coverage |
-| RAG vector index (prod) | **Qdrant** via `qdrant-client` | **LanceDB** for lake-scale static corpora |
+| RAG embeddings (Rust) | **Remote APIs today**; add **fastembed-rs** for local ONNX onboarding | **candle** when GPU/pure-Rust inference is implemented |
+| RAG vector index (prod) | **Qdrant** via `qdrant-client` | **LanceDB** after placeholder server integration is completed |
 | RAG vector index (dev/edge) | **instant-distance** / **usearch** (in-process HNSW) | **voy** for WASM paths |
 
-These choices align with **existing oxidizedRAG features** (`vector-hnsw`, `neural-embeddings`, server `qdrant` / `lancedb` options) and **oxidizedgraph Phase 1** (traced runs, tool policy, quality gates) without mandating immediate rewrites.
+These choices align with **existing oxidizedRAG features** (`vector-hnsw`, `neural-embeddings`, server `qdrant` / `lancedb` options) and **oxidizedgraph Phase 1** (traced runs, tool policy, quality gates) without mandating immediate rewrites. The alignment is not uniform: `qdrant` and text HTTP embedding providers are usable now; local Candle inference, LanceDB storage, and hybrid sparse+dense retrieval still need implementation work.
 
 ---
 
@@ -59,8 +59,8 @@ GraphRAG and multimodal pipelines need:
 |------------|-------------|
 | Rust-first | Prefer crates with mature Rust clients or in-process libraries |
 | Commercial OSS | BSD/Apache/MIT + managed cloud options (ElastiCache Valkey, Qdrant Cloud, etc.) |
-| oxidizedRAG today | `instant-distance`, optional `candle`, `qdrant-client`, LanceDB wired but version-gated in core |
-| oxidizedgraph today | Orchestration + guardrails; no dedicated vector tier yet |
+| oxidizedRAG today | `instant-distance`, HTTP embedding providers, optional `candle` scaffolding, `qdrant-client`, LanceDB server placeholder |
+| oxidizedgraph today | Orchestration + guardrails on `develop`; no dedicated vector tier yet |
 | License hygiene | Avoid SSPL-only dependencies for greenfield defaults (favor Valkey over Redis 7.4+ for new caches) |
 
 ---
@@ -137,23 +137,25 @@ oxidizedgraph already provides **in-graph state** (`AgentState`) and **checkpoin
 
 | Backend | Crate | When to use |
 |---------|-------|-------------|
-| **fastembed-rs** | `fastembed` | Default for server/CLI; ONNX models; fast onboarding |
-| **candle** | `candle-core`, `candle-transformers` | Pure Rust; Metal/CUDA; already in oxidizedRAG `neural-embeddings` |
+| **Remote** | `ureq` + provider API | Production-ready today; OpenAI, Voyage, Cohere, Jina, Mistral, Together |
+| **fastembed-rs** | `fastembed` | Proposed local default for server/CLI; ONNX models; fast onboarding |
+| **candle** | `candle-core`, `candle-transformers` | Pure Rust; Metal/CUDA; currently scaffolded, local inference follow-up required |
 | **ort** | `ort` | ONNX Runtime; maximum model zoo |
-| **Remote** | `reqwest` + provider API | Best quality; offload GPU |
 
-**Trait boundary (recommended):**
+**Trait boundary (current and recommended):**
+
+Text-only paths already use `Embedder` / `AsyncEmbedder` in `graphrag-core`. PR #185 added multimodal seams under `graphrag-core/src/multimodal/`, including `EmbeddingEngine`, `Embedding`, `ModelInfo`, and `MultimodalContent`. New work should bridge or implement these existing traits instead of introducing a third parallel `EmbeddingModel` API.
 
 ```rust
 #[async_trait]
-pub trait EmbeddingModel: Send + Sync {
-    fn id(&self) -> &str;
-    fn dimensions(&self) -> usize;
-    async fn embed(&self, inputs: &[EmbedInput]) -> Result<Vec<Vec<f32>>, EmbedError>;
+pub trait EmbeddingEngine: Send + Sync {
+    async fn embed(&self, content: MultimodalContent) -> Result<Embedding, EmbeddingError>;
+    async fn embed_batch(&self, batch: Vec<MultimodalContent>) -> Result<Vec<Embedding>, EmbeddingError>;
+    fn model_info(&self) -> ModelInfo;
 }
 ```
 
-Multimodal extension (oxidizedRAG PR #185 direction): `EmbedInput` enum over `Text | Image | Audio` with per-modality adapters.
+`MultimodalContent` currently covers `Text`, `Image`, `Audio`, `Video`, and `Pdf`. Per-backend adapters should declare modality support through `ModelInfo::supported_types`.
 
 ### 4.2 Vector index layer
 
@@ -161,16 +163,19 @@ Multimodal extension (oxidizedRAG PR #185 direction): `EmbedInput` enum over `Te
 |------|------------|---------------------|-------|
 | **L0 — in-process** | `instant-distance` HNSW | `vector-hnsw` | &lt; ~1M vectors / process |
 | **L0 — WASM** | `voy` | `graphrag-wasm` | Browser/edge bundles |
-| **L1 — embedded columnar** | LanceDB | `lancedb` (server; core gated) | Large static corpora on S3/disk |
-| **L2 — vector database** | Qdrant | `graphrag-server` default | Production RAG + filters + hybrid |
+| **L1 — embedded columnar** | LanceDB | `lancedb` server feature exists; methods are placeholder | Large static corpora on S3/disk after implementation |
+| **L2 — vector database** | Qdrant | `graphrag-server` default | Production dense RAG + filters; hybrid templates are follow-up work |
 
-**Trait boundary (recommended):**
+**Trait boundary (current and recommended):**
+
+Text vector search already has `VectorStore` / `AsyncVectorStore` in `graphrag-core/src/core/traits.rs`. PR #185 added a multimodal `VectorStore` under `graphrag-core/src/multimodal/store.rs` with `store`, `store_batch`, `search`, `get`, `delete`, and `count`. New Qdrant/Lance/HNSW backends should implement those existing surfaces or provide explicit adapters between them.
 
 ```rust
 #[async_trait]
 pub trait VectorStore: Send + Sync {
-    async fn upsert(&self, points: &[VectorPoint]) -> Result<(), StoreError>;
-    async fn search(&self, query: &[f32], limit: usize, filter: Option<&Filter>) -> Result<Vec<ScoredPoint>, StoreError>;
+    async fn store(&self, embedding: Embedding) -> Result<(), VectorStoreError>;
+    async fn store_batch(&self, embeddings: Vec<Embedding>) -> Result<(), VectorStoreError>;
+    async fn search(&self, query: &[f32], k: usize, filters: SearchFilters) -> Result<Vec<SearchResult>, VectorStoreError>;
 }
 ```
 
@@ -186,7 +191,7 @@ Query ─┬─► Tantivy BM25 (Rust) ────┐
        └─► Qdrant dense ANN ────────┘
 ```
 
-Qdrant supports sparse + dense in one system; Tantivy remains valuable for full-text inside Rust-only deployments.
+Qdrant supports sparse + dense in one system, but the current server store only creates dense cosine collections. Tantivy remains valuable for full-text inside Rust-only deployments. The first implementation should make the fusion contract explicit before choosing whether BM25 lives in Tantivy or Qdrant sparse vectors.
 
 ### 4.4 Alignment with oxidizedRAG codebase
 
@@ -195,10 +200,10 @@ Current `graphrag-core` / server layout:
 | Component | Today | TDD target |
 |-----------|-------|------------|
 | ANN | `instant-distance` | Keep for tests, CLI, WASM |
-| Neural embed | `candle` optional | Add `fastembed` feature flag as default server embedder |
-| Server vectors | `qdrant` default feature | Remain production default |
-| LanceDB | dependency conflict in core | Resolve workspace versions; enable `lancedb` for ingest pipelines |
-| Multimodal | PR #185 trait seams | Implement stores per modality in `EmbeddingModel` |
+| Neural embed | HTTP providers ready; `candle` scaffolding fails loud until implemented | Add `fastembed` feature flag as default local server embedder |
+| Server vectors | `qdrant` default feature | Remain production dense-vector default; add payload indexes and hybrid templates |
+| LanceDB | server feature placeholder; core Lance path disabled | Implement table/create/add/search/delete and decide whether core needs a Lance feature |
+| Multimodal | PR #185 trait seams merged | Implement per-backend `EmbeddingEngine` and multimodal `VectorStore` adapters |
 
 ---
 
@@ -208,7 +213,7 @@ Current `graphrag-core` / server layout:
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                         oxidizedRAG / Agent graph                         │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  Ingest: chunk → enrich → embed (fastembed|candle|API)                   │
+│  Ingest: chunk → enrich → embed (API today; fastembed|candle follow-up)  │
 │          → upsert vectors (Qdrant|Lance|HNSW) + graph edges (core)      │
 │  Query:  embed query → ANN + filter → (optional BM25) → rerank → LLM   │
 ├──────────────────────────────────────────────────────────────────────────┤
@@ -221,7 +226,7 @@ Current `graphrag-core` / server layout:
 | Plane | Technology | Durability |
 |-------|------------|------------|
 | Graph / entities | oxidizedRAG core (SQLite / workspace) | Durable |
-| Vectors | Qdrant or LanceDB | Durable |
+| Vectors | Qdrant today; LanceDB after implementation | Durable |
 | Hot cache | Valkey | Ephemeral (TTL) |
 | Run audit | oxidizedgraph `TransitionLog` / AIVCS | Durable |
 
@@ -235,9 +240,9 @@ Current `graphrag-core` / server layout:
 | ADR-KV-02 | Reject Redis as default for *new* greenfield caches | License uncertainty on SSPL/RSAL lines | Proposed |
 | ADR-RAG-01 | Production vectors: **Qdrant** | Payload filters, hybrid, mature `qdrant-client` | Proposed |
 | ADR-RAG-02 | Dev/edge vectors: **instant-distance** | Already shipped; zero ops | Accepted (in tree) |
-| ADR-RAG-03 | Default embedder for new deployments: **fastembed** + remote fallback | Faster time-to-prod than candle-only | Proposed |
-| ADR-RAG-04 | Retain **candle** for pure-Rust / Metal / CUDA paths | Strategic for WASM/serverless GPU stories | Accepted (in tree) |
-| ADR-RAG-05 | LanceDB for re-embed / data-lake batches | Columnar + object storage; resolve dep conflict | Proposed |
+| ADR-RAG-03 | Default embedder for new deployments: **remote API today**, **fastembed** local follow-up | Avoids relying on unfinished Candle local inference | Proposed |
+| ADR-RAG-04 | Retain **candle** for pure-Rust / Metal / CUDA paths | Strategic, but implementation remains pending | Proposed |
+| ADR-RAG-05 | LanceDB for re-embed / data-lake batches | Columnar + object storage; current server code is placeholder | Proposed |
 
 ---
 
@@ -257,29 +262,32 @@ Current `graphrag-core` / server layout:
 | Embed model drift changes retrieval quality | Version `model_id` in vector payload; re-embed job |
 | In-process HNSW OOM at scale | Hard cap + spill to Qdrant |
 | Valkey cache stampede | Jittered TTL; single-flight lock key |
-| LanceDB / workspace crate conflict | Dedicated workspace resolution PR |
+| LanceDB placeholder mistaken for production backend | Dedicated implementation PR with integration tests, not only dependency resolution |
 | Multimodal embed cost | Route heavy modalities to API; cache by content hash in Valkey |
 
 ---
 
 ## 9. Implementation roadmap
 
-### Phase A — Documentation & traits (2–3 weeks)
+### Phase A — Documentation & trait alignment (2–3 weeks)
 
-- [ ] Land `EmbeddingModel` + `VectorStore` traits in `graphrag-core` (multimodal PR follow-up)
+- [x] Land multimodal `EmbeddingEngine` + `VectorStore` seams in `graphrag-core` (PR #185)
+- [ ] Add adapters or guidance connecting text-only `AsyncEmbedder` / `AsyncVectorStore` to multimodal `EmbeddingEngine` / `VectorStore`
 - [ ] Document Valkey key schema for agent/inference caches
-- [ ] Resolve LanceDB workspace dependency for optional `lancedb` in core
+- [ ] Decide whether LanceDB belongs in core, server, or a dedicated storage crate
 
 ### Phase B — Production wiring (4–6 weeks)
 
 - [ ] `fastembed` feature on `graphrag-server` with config switch
 - [ ] Qdrant collection templates (payload indexes: `tenant_id`, `doc_id`, `node_id`, `modality`)
 - [ ] Hybrid retrieval spike (Tantivy + Qdrant fusion)
+- [ ] LanceDB implementation for create/add/search/delete with integration tests
 
 ### Phase C — Platform integration (6–10 weeks)
 
-- [ ] oxidizedgraph optional `ValkeyCacheSink` for prompt/session cache
+- [ ] oxidizedgraph optional `ValkeyCacheSink` for prompt/session cache, based from oxidizedgraph `develop`
 - [ ] OTel spans: cache hit/miss, embed latency, ANN recall@k
+- [ ] Keep durable run audit in AIVCS / `TransitionLog`; use Valkey only for ephemeral cache/session metadata
 - [ ] Managed service runbooks (ElastiCache Valkey, Qdrant Cloud)
 
 ---
