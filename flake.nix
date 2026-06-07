@@ -66,10 +66,29 @@
         # Build workspace deps first (for caching)
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        # Build the full workspace
+        # Compile gate only — `checks.tests-p*` runs the workspace via nextest.
         workspace = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
+          doCheck = false;
         });
+
+        # One flake check per nextest partition so CI can fan out across runners.
+        nextestPartitionCount = 4;
+        testPartitionChecks = builtins.listToAttrs (
+          map (n:
+            let name = "tests-p${toString n}";
+            in {
+              inherit name;
+              value = craneLib.cargoNextest (commonArgs // {
+                inherit cargoArtifacts;
+                partitions = 1;
+                partitionType = "count";
+                cargoNextestPartitionsExtraArgs =
+                  "--partition count:${toString n}/${toString nextestPartitionCount}";
+              });
+            }
+          ) (builtins.genList (n: n + 1) nextestPartitionCount)
+        );
       in
       {
         checks = {
@@ -83,16 +102,13 @@
           fmt = craneLib.cargoFmt {
             src = craneLib.cleanCargoSource ./.;
           };
-
-          tests = craneLib.cargoNextest (commonArgs // {
-            inherit cargoArtifacts;
-            partitions = 1;
-            partitionType = "count";
-          });
+        } // testPartitionChecks // {
 
           benches = craneLib.buildPackage (commonArgs // {
             inherit cargoArtifacts;
+            # `cargo build --benches` compiles bench targets; doCheck=false skips tests.
             cargoExtraArgs = "--workspace --benches";
+            doCheck = false;
           });
 
           doc = craneLib.cargoDoc (commonArgs // {

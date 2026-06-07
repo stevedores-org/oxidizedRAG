@@ -6,43 +6,155 @@ on:
   push:
     branches: [develop, main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  nix-check:
+  changes:
+    name: detect changed paths
     runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changes
+        id: filter
+        run: |
+          set -euo pipefail
+          # Always run the full matrix on long-lived branch pushes.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base="${{ github.event.pull_request.base.sha }}"
+          if git diff --name-only "${base}...HEAD" | grep -qE \
+            '\.(rs|toml|lock)$|^(flake\.nix|flake\.lock|justfile|rustfmt\.toml)(/|$)|^\.github/|^benches/|^graphrag-'; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  docs-only:
+    name: docs only (rust checks skipped)
+    needs: changes
+    if: needs.changes.outputs.rust != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No Rust/workspace paths changed — skipping nix compile and test jobs."
+
+  nix-check:
+    name: nix ${{ matrix.check }}
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: fmt
+            timeout: 15
+          - check: clippy
+            timeout: 45
+          - check: workspace
+            timeout: 45
+          - check: benches
+            timeout: 45
+          - check: doc
+            timeout: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install Nix with the org's substituter pre-configured as trusted.
-      # The flake.nix's nixConfig.extra-substituters is otherwise ignored
-      # as "untrusted flake configuration" — only nix.conf entries from a
-      # trusted source (here: the installer's extra-conf, which writes
-      # /etc/nix/nix.conf as root) are honored.
-      #
-      # We deliberately do NOT use DeterminateSystems/magic-nix-cache-action.
-      # It depends on FlakeHub authentication, which the org doesn't run, so
-      # every PR was failing with "Unable to authenticate to FlakeHub" and
-      # cascading "substituter disabled" errors. The org's own cache replaces
-      # that role.
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v14
-        with:
-          extra-conf: |
-            extra-substituters = https://nix-cache.stevedores.org/
-            extra-trusted-substituters = https://nix-cache.stevedores.org/
-            extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
-      - name: Flake check
-        run: nix flake check --print-build-logs
+      - name: Build flake check (${{ matrix.check }})
+        run: |
+          set -euo pipefail
+          system=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+          nix build ".#checks.${system}.${{ matrix.check }}" --print-build-logs
 
-      - name: Workspace tests
-        run: nix develop --command cargo test --workspace
+  nix-tests:
+    name: nix ${{ matrix.check }}
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [tests-p1, tests-p2, tests-p3, tests-p4]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
+
+      - name: Build flake check (${{ matrix.check }})
+        run: |
+          set -euo pipefail
+          system=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+          nix build ".#checks.${system}.${{ matrix.check }}" --print-build-logs
+
+  incremental-correctness:
+    name: incremental correctness
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
       - name: Incremental correctness tests
-        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
+        run: |
+          nix develop --command cargo test -p graphrag-core \
+            --features "incremental,async" \
+            --test incremental_correctness_test --verbose
+
+  incremental-perf:
+    name: incremental perf gate
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
       - name: Incremental performance gate (<5% overhead)
-        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_perf_test --verbose -- --nocapture
+        run: |
+          nix develop --command cargo test -p graphrag-core \
+            --features "incremental,async" \
+            --test incremental_perf_test --verbose -- --nocapture
+
+  surrealdb:
+    name: surrealdb storage
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Nix setup
+        uses: ./.github/actions/nix-setup
 
       - name: SurrealDB storage tests
-        run: nix develop --command cargo test -p graphrag-core --features "surrealdb-storage" surrealdb
+        run: |
+          nix develop --command cargo test -p graphrag-core \
+            --features "surrealdb-storage" surrealdb
