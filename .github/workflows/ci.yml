@@ -13,7 +13,7 @@ concurrency:
 jobs:
   nix-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,21 +37,21 @@ jobs:
             extra-trusted-substituters = https://nix-cache.stevedores.org/
             extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=
 
-      # Run the essential checks only. Full `nix flake check` (doc/benches/
-      # workspace compile gates) remains for local dev via `just flake-check`
-      # but exceeds practical CI time when all six checks build in parallel.
-      - name: Flake check (fmt, clippy, tests)
+      # One dev shell, one cargo build graph. Separate `nix build .#checks.*`
+      # derivations each rebuild release artifacts and exceed CI time limits.
+      # Full flake gates (doc/benches/workspace) stay on `just flake-check`.
+      - name: Format, clippy, and tests
         run: |
-          SYSTEM='x86_64-linux'
-          for check in fmt clippy tests; do
-            echo "::group::checks.${SYSTEM}.${check}"
-            nix build --print-build-logs --no-link ".#checks.\"${SYSTEM}\".${check}"
-            echo "::endgroup::"
-          done
+          nix develop --command bash -ec '
+            set -o pipefail
+            cargo fmt --all -- --check
+            cargo clippy --workspace --all-targets -- -D warnings
+            cargo nextest run --workspace --cargo-profile release
+          '
 
   feature-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,11 +64,11 @@ jobs:
             extra-trusted-substituters = https://nix-cache.stevedores.org/
             extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=
 
-      - name: Incremental correctness tests
-        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
-
-      - name: Incremental performance gate (<5% overhead)
-        run: nix develop --command cargo test -p graphrag-core --features "incremental,async" --test incremental_perf_test --verbose -- --nocapture
-
-      - name: SurrealDB storage tests
-        run: nix develop --command cargo test -p graphrag-core --features "surrealdb-storage" surrealdb
+      - name: Feature-gated integration tests
+        run: |
+          nix develop --command bash -ec '
+            set -o pipefail
+            cargo test -p graphrag-core --features "incremental,async" --test incremental_correctness_test --verbose
+            cargo test -p graphrag-core --features "incremental,async" --test incremental_perf_test --verbose -- --nocapture
+            cargo test -p graphrag-core --features "surrealdb-storage" surrealdb
+          '
