@@ -1662,7 +1662,12 @@ impl BatchProcessor {
     pub async fn add_change(&self, change: ChangeRecord) -> Result<String> {
         let batch_key = self.get_batch_key(&change);
 
-        let batch_id = {
+        // `entry()` returns a `RefMut` holding the shard's write lock.
+        // Calling `remove()` on the same key while that guard is alive would
+        // re-enter the shard lock and deadlock. Instead, atomically swap the
+        // entry value with a fresh empty batch when full, drop the guard, and
+        // process the captured batch outside the lock.
+        let (batch_id, batch_to_process) = {
             let mut entry = self
                 .pending_batches
                 .entry(batch_key.clone())
@@ -1679,21 +1684,28 @@ impl BatchProcessor {
             let batch_id = entry.batch_id.clone();
 
             if should_process {
-                // Move batch out for processing
-                let batch = entry.clone();
-                self.pending_batches.remove(&batch_key);
-
-                // Process batch asynchronously
-                let processor = Arc::new(self.clone());
-                tokio::spawn(async move {
-                    if let Err(e) = processor.process_batch(batch).await {
-                        eprintln!("Batch processing error: {e}");
-                    }
-                });
+                let full_batch = std::mem::replace(
+                    entry.value_mut(),
+                    PendingBatch {
+                        changes: Vec::new(),
+                        created_at: Instant::now(),
+                        batch_id: format!("batch_{}", Uuid::new_v4()),
+                    },
+                );
+                (batch_id, Some(full_batch))
+            } else {
+                (batch_id, None)
             }
-
-            batch_id
         };
+
+        if let Some(batch) = batch_to_process {
+            let processor = Arc::new(self.clone());
+            tokio::spawn(async move {
+                if let Err(e) = processor.process_batch(batch).await {
+                    eprintln!("Batch processing error: {e}");
+                }
+            });
+        }
 
         Ok(batch_id)
     }
