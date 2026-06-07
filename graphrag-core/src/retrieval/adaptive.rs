@@ -244,7 +244,7 @@ impl AdaptiveRetriever {
         }
 
         // Sort by final weighted score
-        deduplicated_results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        deduplicated_results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
 
         // Apply diversity-aware selection
         let final_results = self.diversity_aware_selection(deduplicated_results, max_results);
