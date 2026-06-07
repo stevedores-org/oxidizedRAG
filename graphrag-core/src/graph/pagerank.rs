@@ -90,7 +90,7 @@ impl PersonalizedPageRank {
 
         // Decide whether to use dense matrix for small graphs
         let dense_matrix = if n < config.sparse_threshold {
-            Some(Self::convert_to_dense(&adjacency_matrix))
+            Some(Self::convert_to_dense(&adjacency_matrix, &out_degrees))
         } else {
             None
         };
@@ -131,16 +131,20 @@ impl PersonalizedPageRank {
         degrees
     }
 
-    /// Convert sparse matrix to dense for small graphs
-    fn convert_to_dense(sparse_matrix: &CsMat<f64>) -> DMatrix<f64> {
+    /// Convert sparse matrix to dense transition matrix for small graphs
+    fn convert_to_dense(sparse_matrix: &CsMat<f64>, out_degrees: &[f64]) -> DMatrix<f64> {
         let n = sparse_matrix.rows();
         let m = sparse_matrix.cols();
         let mut dense = DMatrix::zeros(n, m);
 
         for i in 0..n {
-            if let Some(row) = sparse_matrix.outer_view(i) {
-                for (j, &value) in row.iter() {
-                    dense[(i, j)] = value;
+            let degree = out_degrees[i];
+            if degree > 0.0 {
+                if let Some(row) = sparse_matrix.outer_view(i) {
+                    for (j, &value) in row.iter() {
+                        // PageRank transition matrix P[to, from] = weight / out_degree
+                        dense[(j, i)] = value / degree;
+                    }
                 }
             }
         }
@@ -234,14 +238,31 @@ impl PersonalizedPageRank {
             let reset_vec = DVector::from_vec(reset_vector);
 
             for _iteration in 0..self.config.max_iterations {
-                let new_scores = &reset_vec * (1.0 - self.config.damping_factor)
+                let mut next_scores = &reset_vec * (1.0 - self.config.damping_factor)
                     + dense_matrix * &scores * self.config.damping_factor;
 
-                let diff = (&new_scores - &scores).abs().max();
+                // Handle dangling nodes: distribute their score uniformly
+                let mut dangling_score = 0.0;
+                for (i, &score) in scores.iter().enumerate() {
+                    if self.out_degrees[i] == 0.0 {
+                        dangling_score += score;
+                    }
+                }
+
+                if dangling_score > 0.0 {
+                    let uniform_contribution =
+                        self.config.damping_factor * dangling_score / n as f64;
+                    for s in next_scores.iter_mut() {
+                        *s += uniform_contribution;
+                    }
+                }
+
+                let diff = (&next_scores - &scores).abs().max();
                 if diff < self.config.tolerance {
+                    scores = next_scores;
                     break;
                 }
-                scores = new_scores;
+                scores = next_scores;
             }
 
             self.scores_to_entity_map(scores.as_slice())
