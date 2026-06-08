@@ -1127,7 +1127,11 @@ impl RetrievalSystem {
         }
 
         // Sort by adjusted scores
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Diversity-aware deduplication
         let mut deduplicated = Vec::new();
@@ -1430,7 +1434,11 @@ impl RetrievalSystem {
     /// Rank and deduplicate search results (legacy)
     fn rank_and_deduplicate(&self, mut results: Vec<SearchResult>) -> Result<Vec<SearchResult>> {
         // Sort by score descending
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Deduplicate by ID
         let mut seen_ids = HashSet::new();
