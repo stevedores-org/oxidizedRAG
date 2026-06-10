@@ -221,12 +221,21 @@ impl SemanticChunker {
             BreakpointStrategy::Absolute => self.config.threshold_amount,
         };
 
-        // Find indices where difference exceeds threshold
+        // Find indices where difference exceeds threshold.
+        //
+        // `diffs[i]` is the distance between `embeddings[i]` and
+        // `embeddings[i + buffer_size]` (see
+        // `calculate_similarity_differences`). When the distance spikes the
+        // semantic boundary sits across that whole span, so place the
+        // breakpoint at `i + buffer_size` — i.e. right before the dissimilar
+        // sentence. For the default `buffer_size = 1` this reduces to
+        // `i + 1` as before; for larger buffer sizes it stops producing
+        // breakpoints that are off by `buffer_size - 1`.
+        let buffer_size = self.config.buffer_size.max(1);
         let mut breakpoints = Vec::new();
         for (i, &diff) in diffs.iter().enumerate() {
             if diff > threshold {
-                // +1 because diff[i] is between sentence[i] and sentence[i+1]
-                breakpoints.push(i + 1);
+                breakpoints.push(i + buffer_size);
             }
         }
 
@@ -390,6 +399,48 @@ mod tests {
         let threshold = chunker.calculate_std_threshold(&diffs);
 
         assert!((threshold - 0.5).abs() < 0.001); // Should be mean when std=0
+    }
+
+    #[test]
+    fn test_breakpoint_offset_respects_buffer_size() {
+        // Regression: `determine_breakpoints` previously pushed `i + 1`
+        // regardless of `buffer_size`. For `buffer_size > 1`, `diffs[i]`
+        // compares `embeddings[i]` with `embeddings[i + buffer_size]`, so
+        // the breakpoint should land at `i + buffer_size`, not `i + 1`.
+        // Use a synthetic diffs vector where index 2 is the only spike;
+        // with `buffer_size = 3` the breakpoint must be at 2 + 3 = 5.
+        let embedding_gen = EmbeddingGenerator::new(8);
+        let chunker = SemanticChunker::new(
+            SemanticChunkerConfig {
+                breakpoint_strategy: BreakpointStrategy::Absolute,
+                threshold_amount: 0.5,
+                min_chunk_size: 1,
+                max_chunk_size: 0,
+                buffer_size: 3,
+            },
+            embedding_gen,
+        );
+
+        let diffs = vec![0.1, 0.1, 0.9, 0.1, 0.1];
+        let breakpoints = chunker.determine_breakpoints(&diffs).unwrap();
+        assert_eq!(breakpoints, vec![5]);
+
+        // Default buffer_size = 1 path stays at `i + 1` exactly.
+        let chunker_b1 = SemanticChunker::new(
+            SemanticChunkerConfig {
+                breakpoint_strategy: BreakpointStrategy::Absolute,
+                threshold_amount: 0.5,
+                min_chunk_size: 1,
+                max_chunk_size: 0,
+                buffer_size: 1,
+            },
+            EmbeddingGenerator::new(8),
+        );
+        assert_eq!(
+            chunker_b1.determine_breakpoints(&diffs).unwrap(),
+            vec![3],
+            "buffer_size=1 must still push i + 1"
+        );
     }
 
     #[test]
