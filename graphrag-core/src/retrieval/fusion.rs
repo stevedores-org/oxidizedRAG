@@ -190,8 +190,8 @@ pub fn policy_from_config(config: &HybridFusionConfig) -> Box<dyn FusionPolicy> 
             early_stop_score: config.cascade_early_stop_score,
         }),
         _ => Box::new(WeightedSum {
-            vector_weight: config.weights.keywords,
-            keyword_weight: config.weights.bm25,
+            vector_weight: config.weights.vector,
+            keyword_weight: config.weights.keywords,
             graph_weight: config.weights.graph,
         }),
     }

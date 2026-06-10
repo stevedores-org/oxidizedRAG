@@ -1662,7 +1662,12 @@ impl BatchProcessor {
     pub async fn add_change(&self, change: ChangeRecord) -> Result<String> {
         let batch_key = self.get_batch_key(&change);
 
-        let batch_id = {
+        // `entry()` returns a `RefMut` holding the shard's write lock.
+        // Calling `remove()` on the same key while that guard is alive would
+        // re-enter the shard lock and deadlock. Instead, atomically swap the
+        // entry value with a fresh empty batch when full, drop the guard, and
+        // process the captured batch outside the lock.
+        let (batch_id, batch_to_process) = {
             let mut entry = self
                 .pending_batches
                 .entry(batch_key.clone())
@@ -1679,21 +1684,28 @@ impl BatchProcessor {
             let batch_id = entry.batch_id.clone();
 
             if should_process {
-                // Move batch out for processing
-                let batch = entry.clone();
-                self.pending_batches.remove(&batch_key);
-
-                // Process batch asynchronously
-                let processor = Arc::new(self.clone());
-                tokio::spawn(async move {
-                    if let Err(e) = processor.process_batch(batch).await {
-                        eprintln!("Batch processing error: {e}");
-                    }
-                });
+                let full_batch = std::mem::replace(
+                    entry.value_mut(),
+                    PendingBatch {
+                        changes: Vec::new(),
+                        created_at: Instant::now(),
+                        batch_id: format!("batch_{}", Uuid::new_v4()),
+                    },
+                );
+                (batch_id, Some(full_batch))
+            } else {
+                (batch_id, None)
             }
-
-            batch_id
         };
+
+        if let Some(batch) = batch_to_process {
+            let processor = Arc::new(self.clone());
+            tokio::spawn(async move {
+                if let Err(e) = processor.process_batch(batch).await {
+                    eprintln!("Batch processing error: {e}");
+                }
+            });
+        }
 
         Ok(batch_id)
     }
@@ -1849,6 +1861,7 @@ pub struct ProductionGraphStore {
     graph: Arc<RwLock<KnowledgeGraph>>,
     transactions: DashMap<TransactionId, Transaction>,
     change_log: DashMap<UpdateId, ChangeRecord>,
+    delta_changes: DashMap<UpdateId, Vec<UpdateId>>,
     rollback_data: DashMap<UpdateId, RollbackData>,
     conflict_resolver: Arc<ConflictResolver>,
     cache_invalidation: Arc<SelectiveInvalidation>,
@@ -1947,6 +1960,7 @@ impl ProductionGraphStore {
             graph: Arc::new(RwLock::new(graph)),
             transactions: DashMap::new(),
             change_log: DashMap::new(),
+            delta_changes: DashMap::new(),
             rollback_data: DashMap::new(),
             conflict_resolver: Arc::new(conflict_resolver),
             cache_invalidation: Arc::new(SelectiveInvalidation::new()),
@@ -2397,10 +2411,13 @@ impl IncrementalGraphStore for ProductionGraphStore {
     async fn apply_delta(&mut self, delta: GraphDelta) -> Result<UpdateId> {
         let delta_id = delta.delta_id.clone();
         let tx_id = self.begin_transaction().await?;
+        let mut change_ids = Vec::with_capacity(delta.changes.len());
 
         for change in &delta.changes {
-            self.apply_change_with_conflict_resolution(change.clone())
+            let change_id = self
+                .apply_change_with_conflict_resolution(change.clone())
                 .await?;
+            change_ids.push(change_id);
         }
 
         // Persist delta to SurrealDB if storage is configured
@@ -2412,20 +2429,18 @@ impl IncrementalGraphStore for ProductionGraphStore {
         }
 
         self.commit_transaction(tx_id).await?;
+        self.delta_changes.insert(delta_id.clone(), change_ids);
         Ok(delta_id)
     }
 
     async fn rollback_delta(&mut self, delta_id: &UpdateId) -> Result<()> {
-        // Collect all change IDs belonging to this delta from the change log
-        let delta_changes: Vec<ChangeRecord> = self
-            .change_log
+        let Some((_, change_ids)) = self.delta_changes.remove(delta_id) else {
+            return Ok(());
+        };
+
+        let delta_changes: Vec<ChangeRecord> = change_ids
             .iter()
-            .filter(|entry| {
-                // Changes are associated with the delta if they match the delta_id
-                // or were created within a transaction context
-                entry.key() == delta_id
-            })
-            .map(|entry| entry.value().clone())
+            .filter_map(|change_id| self.change_log.get(change_id).map(|entry| entry.clone()))
             .collect();
 
         // Reverse each change in LIFO order using stored rollback data
