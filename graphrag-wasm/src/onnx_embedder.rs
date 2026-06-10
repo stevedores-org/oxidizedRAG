@@ -347,7 +347,7 @@ impl OnnxEmbedder {
 
         // Extract embeddings from output
         // Output is usually { "last_hidden_state": Tensor } or { "pooler_output": Tensor }
-        let embedding = self.extract_embedding(output)?;
+        let embedding = self.extract_embedding(output, &padded_attention_mask)?;
 
         Ok(embedding)
     }
@@ -369,19 +369,33 @@ impl OnnxEmbedder {
         Ok(results)
     }
 
-    /// Extract embedding from ONNX output
-    fn extract_embedding(&self, output: JsValue) -> Result<Vec<f32>, OnnxEmbedderError> {
-        // Try to get "last_hidden_state" or "pooler_output"
-        let tensor =
-            if let Ok(last_hidden) = js_sys::Reflect::get(&output, &"last_hidden_state".into()) {
-                last_hidden
-            } else if let Ok(pooler) = js_sys::Reflect::get(&output, &"pooler_output".into()) {
-                pooler
-            } else {
-                return Err(OnnxEmbedderError::InferenceFailed(
-                    "Could not find output tensor".to_string(),
-                ));
-            };
+    /// Extract embedding from ONNX output.
+    ///
+    /// `attention_mask` matches the padded input fed to the model (`1` for
+    /// real tokens, `0` for padding). It is consulted only when the output
+    /// is a `last_hidden_state` tensor that still needs mean-pooling.
+    fn extract_embedding(
+        &self,
+        output: JsValue,
+        attention_mask: &[i64],
+    ) -> Result<Vec<f32>, OnnxEmbedderError> {
+        // Try `last_hidden_state` first, then `pooler_output`.
+        //
+        // `Reflect::get` returns `Ok(JsValue::undefined())` for a missing
+        // property — it only returns `Err` when the access *throws*. So
+        // the natural-looking `if let Ok(...) = ... { ... } else if let
+        // Ok(...) = ... { ... }` chain never reached the second arm: the
+        // first arm always matched, even when the key was absent.
+        let pick = |key: &str| -> Option<JsValue> {
+            js_sys::Reflect::get(&output, &JsValue::from_str(key))
+                .ok()
+                .filter(|v| !v.is_undefined() && !v.is_null())
+        };
+        let tensor = pick("last_hidden_state")
+            .or_else(|| pick("pooler_output"))
+            .ok_or_else(|| {
+                OnnxEmbedderError::InferenceFailed("Could not find output tensor".to_string())
+            })?;
 
         // Get data array
         let tensor_data = js_sys::Reflect::get(&tensor, &"data".into())
@@ -392,19 +406,42 @@ impl OnnxEmbedder {
         let mut embedding = vec![0.0_f32; float_array.length() as usize];
         float_array.copy_to(&mut embedding);
 
-        // If we got last_hidden_state, we need to pool it (mean pooling over sequence)
-        // Assuming shape is [batch, seq_len, hidden_size]
+        // If we got last_hidden_state, we need to pool it (mean pooling over sequence).
+        // Assuming shape is [batch, seq_len, hidden_size].
         if embedding.len() > self.dimension {
-            // Mean pooling
             let seq_len = embedding.len() / self.dimension;
             let mut pooled = vec![0.0_f32; self.dimension];
 
-            for i in 0..self.dimension {
-                let mut sum = 0.0;
-                for j in 0..seq_len {
-                    sum += embedding[j * self.dimension + i];
+            // Mean-pool only over real (unpadded) tokens. Including the
+            // padding positions diluted short-input embeddings by a factor
+            // of `seq_len / real_token_count` — for a 5-token query in a
+            // 512-token max length that meant attenuating the signal by
+            // ~100x before L2 normalisation.
+            let mut real_count: usize = 0;
+            for j in 0..seq_len {
+                let is_real = attention_mask
+                    .get(j)
+                    .copied()
+                    .map(|m| m != 0)
+                    .unwrap_or(true); // no mask provided → treat all as real (back-compat)
+                if !is_real {
+                    continue;
                 }
-                pooled[i] = sum / seq_len as f32;
+                real_count += 1;
+                for i in 0..self.dimension {
+                    pooled[i] += embedding[j * self.dimension + i];
+                }
+            }
+
+            // If the attention mask was all zero (or missing for this length),
+            // fall back to the old behaviour so we never divide by zero.
+            let divisor = if real_count > 0 {
+                real_count as f32
+            } else {
+                seq_len as f32
+            };
+            for x in &mut pooled {
+                *x /= divisor;
             }
 
             embedding = pooled;
