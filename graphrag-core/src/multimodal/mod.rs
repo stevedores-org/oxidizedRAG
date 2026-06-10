@@ -30,12 +30,16 @@
 
 pub mod embedding;
 pub mod fakes;
+#[cfg(feature = "multimodal-file-ingest")]
+pub mod file_ingestor;
 pub mod ingest;
 pub mod search;
 pub mod store;
 pub mod types;
 
 pub use embedding::{Embedding, EmbeddingEngine, EmbeddingError, EmbeddingMetadata, ModelInfo};
+#[cfg(feature = "multimodal-file-ingest")]
+pub use file_ingestor::FileIngestor;
 pub use ingest::{IngestError, MultimodalIngestor};
 pub use search::{CrossModalSearcher, SearchError};
 pub use store::{SearchFilters, SearchResult, VectorStore, VectorStoreError};
