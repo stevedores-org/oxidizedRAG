@@ -210,8 +210,10 @@ impl AuthState {
 
         let (count, window_start) = rate_limits.entry(user_id.to_string()).or_insert((0, now));
 
-        // Reset if window expired
-        if now - *window_start >= limit.window_seconds {
+        // Reset if window expired. `saturating_sub` keeps a clock that ran
+        // backward (e.g. an NTP step) from panicking in debug or wrapping in
+        // release — both would silently reset the limiter on the next request.
+        if now.saturating_sub(*window_start) >= limit.window_seconds {
             *count = 0;
             *window_start = now;
         }
