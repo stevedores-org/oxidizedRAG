@@ -8,7 +8,7 @@
 //! 2. Passage weights from dense retrieval (scaled down)
 //!
 //! Reference: "HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models"
-//! https://arxiv.org/abs/2405.14831
+//! <https://arxiv.org/abs/2405.14831>
 
 use std::collections::HashMap;
 

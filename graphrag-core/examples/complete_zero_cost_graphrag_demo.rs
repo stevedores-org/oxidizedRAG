@@ -310,9 +310,10 @@ fn create_pure_algorithmic_config() -> Config {
                         enabled: true,
                         policy: "weighted_sum".to_string(),
                         weights: graphrag_core::config::FusionWeights {
-                            keywords: 0.4,
+                            vector: 0.4,
+                            keywords: 0.2,
                             graph: 0.4,
-                            bm25: 0.2,
+                            bm25: 0.0,
                         },
                         rrf_k: 60.0,
                         cascade_early_stop_score: 0.9,

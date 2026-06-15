@@ -1,6 +1,6 @@
 //! WebLLM Bindings for GPU-Accelerated LLM
 //!
-//! Provides Rust bindings to WebLLM (https://github.com/mlc-ai/web-llm),
+//! Provides Rust bindings to WebLLM (<https://github.com/mlc-ai/web-llm>),
 //! a production-ready WebGPU-accelerated LLM runtime for browsers.
 //!
 //! ## Performance

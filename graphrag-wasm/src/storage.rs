@@ -27,26 +27,31 @@ use web_sys::{
     Cache, IdbDatabase, IdbOpenDbRequest, IdbRequest, IdbTransactionMode, Request, Response,
 };
 
-/// Helper function to convert IdbRequest to Promise
+/// Helper function to convert IdbRequest to Promise.
+///
+/// IDB will invoke exactly one of `onsuccess` / `onerror` per request, but
+/// the old code created both callbacks with `Closure::once(...)` and then
+/// called `.forget()` on both. That permanently leaked the un-fired side
+/// (and the fired side, since `forget()` opts out of `Closure::once`'s
+/// self-drop). Using `Closure::once_into_js` hands ownership to JS so the
+/// callbacks are reclaimed by JS GC once the request releases them.
 fn idb_request_to_promise(request: &IdbRequest) -> js_sys::Promise {
     let request_clone = Rc::new(request.clone());
     js_sys::Promise::new(&mut |resolve, reject| {
         let request_for_success = request_clone.clone();
-        let onsuccess = Closure::once(move || {
+        let onsuccess = Closure::once_into_js(move || {
             let result = request_for_success.result().unwrap();
             resolve.call1(&JsValue::NULL, &result).unwrap();
         });
-        let onerror = Closure::once(move |event: web_sys::Event| {
+        let onerror = Closure::once_into_js(move |event: web_sys::Event| {
             let error_msg = format!("IdbRequest error: {:?}", event);
             reject
                 .call1(&JsValue::NULL, &JsValue::from_str(&error_msg))
                 .unwrap();
         });
 
-        request.set_onsuccess(Some(onsuccess.as_ref().unchecked_ref()));
-        request.set_onerror(Some(onerror.as_ref().unchecked_ref()));
-        onsuccess.forget();
-        onerror.forget();
+        request.set_onsuccess(Some(onsuccess.unchecked_ref()));
+        request.set_onerror(Some(onerror.unchecked_ref()));
     })
 }
 
@@ -135,37 +140,39 @@ impl IndexedDBStore {
             StorageError::DatabaseError(format!("Failed to open database: {:?}", e))
         })?;
 
-        // Set up onupgradeneeded callback
-        let onupgradeneeded = Closure::once(move |event: web_sys::IdbVersionChangeEvent| {
-            let target = event.target().unwrap();
-            let request = target.dyn_into::<IdbOpenDbRequest>().unwrap();
-            let db = request.result().unwrap().dyn_into::<IdbDatabase>().unwrap();
+        // Set up onupgradeneeded callback. Hand ownership to JS so the
+        // closure is GC-reclaimed when the request slot releases it,
+        // instead of leaking via `.forget()`.
+        let onupgradeneeded =
+            Closure::once_into_js(move |event: web_sys::IdbVersionChangeEvent| {
+                let target = event.target().unwrap();
+                let request = target.dyn_into::<IdbOpenDbRequest>().unwrap();
+                let db = request.result().unwrap().dyn_into::<IdbDatabase>().unwrap();
 
-            // Create object stores (will only create if they don't exist)
-            // onupgradeneeded is only called when version changes, so we can safely try to create
-            let _ = db.create_object_store("entities").map_err(|e| {
-                web_sys::console::warn_1(
-                    &format!("entities store may already exist: {:?}", e).into(),
-                );
+                // Create object stores (will only create if they don't exist)
+                // onupgradeneeded is only called when version changes, so we can safely try to create
+                let _ = db.create_object_store("entities").map_err(|e| {
+                    web_sys::console::warn_1(
+                        &format!("entities store may already exist: {:?}", e).into(),
+                    );
+                });
+                let _ = db.create_object_store("relationships").map_err(|e| {
+                    web_sys::console::warn_1(
+                        &format!("relationships store may already exist: {:?}", e).into(),
+                    );
+                });
+                let _ = db.create_object_store("documents").map_err(|e| {
+                    web_sys::console::warn_1(
+                        &format!("documents store may already exist: {:?}", e).into(),
+                    );
+                });
+                let _ = db.create_object_store("metadata").map_err(|e| {
+                    web_sys::console::warn_1(
+                        &format!("metadata store may already exist: {:?}", e).into(),
+                    );
+                });
             });
-            let _ = db.create_object_store("relationships").map_err(|e| {
-                web_sys::console::warn_1(
-                    &format!("relationships store may already exist: {:?}", e).into(),
-                );
-            });
-            let _ = db.create_object_store("documents").map_err(|e| {
-                web_sys::console::warn_1(
-                    &format!("documents store may already exist: {:?}", e).into(),
-                );
-            });
-            let _ = db.create_object_store("metadata").map_err(|e| {
-                web_sys::console::warn_1(
-                    &format!("metadata store may already exist: {:?}", e).into(),
-                );
-            });
-        });
-        open_request.set_onupgradeneeded(Some(onupgradeneeded.as_ref().unchecked_ref()));
-        onupgradeneeded.forget();
+        open_request.set_onupgradeneeded(Some(onupgradeneeded.unchecked_ref()));
 
         // Wait for database to open
         let promise = idb_request_to_promise(&open_request);

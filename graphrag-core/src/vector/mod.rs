@@ -16,7 +16,7 @@ use instant_distance::{Builder, Point, Search};
 // #[cfg(feature = "wasm")]
 // pub use voy_store::{VoyStore, VoyStoreStatistics};
 
-/// Wrapper for Vec<f32> to implement Point trait for vector operations
+/// Wrapper for `Vec<f32>` to implement Point trait for vector operations
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector(Vec<f32>);
 

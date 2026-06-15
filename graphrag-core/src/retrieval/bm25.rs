@@ -83,13 +83,16 @@ impl BM25Retriever {
             *self.document_frequencies.entry(term.clone()).or_insert(0) += 1;
         }
 
-        // Store normalized term frequencies
+        // Store raw term frequencies. Length normalization is applied
+        // exactly once, inside the BM25 formula
+        // (`calculate_bm25_term_score`) via the `b * |doc| / avg_doc_length`
+        // factor. Pre-dividing by `doc_length` here would apply the length
+        // penalty twice and aggressively bias scoring against longer docs.
         for (term, freq) in term_freq {
-            let normalized_freq = freq as f32 / doc_length as f32;
             self.term_frequencies
                 .entry(term)
                 .or_default()
-                .insert(doc_id.clone(), normalized_freq);
+                .insert(doc_id.clone(), freq as f32);
         }
 
         // Store document and metadata
@@ -146,7 +149,11 @@ impl BM25Retriever {
             })
             .collect();
 
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results.truncate(limit);
         results
     }
@@ -367,5 +374,44 @@ mod tests {
         let retriever = BM25Retriever::new();
         let results = retriever.search("test", 10);
         assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_tf_not_double_normalized_by_length() {
+        // Regression: storing freq/doc_length AND applying BM25's length
+        // norm again over-penalised long docs. Validate that two docs which
+        // each contain the same query term once are scored within a
+        // reasonable ratio (BM25's `b * L/avgL` factor still penalises the
+        // longer doc — but only once, so the ratio stays moderate).
+        let make_doc = |id: &str, content: String| Document {
+            id: id.to_string(),
+            content,
+            metadata: HashMap::new(),
+        };
+        // Pad with unique filler tokens so doc lengths differ but only one
+        // doc contains "rocket".
+        let short = make_doc("short", "rocket alpha bravo charlie".to_string());
+        let long_padding: String = (0..40).map(|i| format!("padd{i:03} ")).collect::<String>();
+        let long = make_doc("long", format!("rocket {long_padding}"));
+
+        let mut retriever = BM25Retriever::new();
+        retriever
+            .index_documents(&[short.clone(), long.clone()])
+            .unwrap();
+
+        let results = retriever.search("rocket", 10);
+        assert_eq!(results.len(), 2);
+        let short_score = results.iter().find(|r| r.doc_id == "short").unwrap().score;
+        let long_score = results.iter().find(|r| r.doc_id == "long").unwrap().score;
+
+        // Short doc should rank above long doc (length norm still applies),
+        // but only by a single BM25 length-norm factor — not the squared
+        // factor the double-normalisation bug produced.
+        assert!(short_score > long_score, "short should outrank long");
+        let ratio = short_score / long_score;
+        assert!(
+            ratio < 10.0,
+            "score ratio {ratio:.2} too aggressive — length penalty is being applied twice"
+        );
     }
 }

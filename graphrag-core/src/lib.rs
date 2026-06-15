@@ -76,6 +76,12 @@ pub mod vector;
 pub mod builder;
 /// Embedding generation and providers
 pub mod embeddings;
+/// Multimodal RAG primitives — types + async trait seams for cross-modal
+/// embedding, ingestion, storage, and search. See
+/// `docs/tdd-multimodal-and-service.md` and meta-epic
+/// stevedores-org/oxidizedRAG#182.
+#[cfg(feature = "multimodal")]
+pub mod multimodal;
 /// Natural language processing utilities
 pub mod nlp;
 /// Ollama LLM integration
@@ -343,7 +349,7 @@ impl GraphRAG {
     ///   (regex + capitalization) for fast, resource-efficient processing.
     /// - **Hybrid** (config.approach = "hybrid"): Combines both approaches with weighted fusion.
     ///
-    /// The selection is controlled by `config.approach` and mapped from TomlConfig's [mode] section.
+    /// The selection is controlled by `config.approach` and mapped from TomlConfig's `[mode]` section.
     #[cfg(feature = "async")]
     pub async fn build_graph(&mut self) -> Result<()> {
         use indicatif::{ProgressBar, ProgressStyle};

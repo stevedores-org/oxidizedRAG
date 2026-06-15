@@ -1,0 +1,13 @@
+name: Nix setup
+description: Install Nix with the stevedores org substituter trusted
+
+runs:
+  using: composite
+  steps:
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v14
+      with:
+        extra-conf: |
+          extra-substituters = https://nix-cache.stevedores.org/
+          extra-trusted-substituters = https://nix-cache.stevedores.org/
+          extra-trusted-public-keys = stevedores-1:ZEtb+wHYNR/LDmMDhF3/EpRZDNma8exY2b1TGZ6uS2A=

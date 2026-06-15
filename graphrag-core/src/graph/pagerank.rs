@@ -90,7 +90,7 @@ impl PersonalizedPageRank {
 
         // Decide whether to use dense matrix for small graphs
         let dense_matrix = if n < config.sparse_threshold {
-            Some(Self::convert_to_dense(&adjacency_matrix))
+            Some(Self::convert_to_dense(&adjacency_matrix, &out_degrees))
         } else {
             None
         };
@@ -131,16 +131,20 @@ impl PersonalizedPageRank {
         degrees
     }
 
-    /// Convert sparse matrix to dense for small graphs
-    fn convert_to_dense(sparse_matrix: &CsMat<f64>) -> DMatrix<f64> {
+    /// Convert sparse matrix to dense transition matrix for small graphs
+    fn convert_to_dense(sparse_matrix: &CsMat<f64>, out_degrees: &[f64]) -> DMatrix<f64> {
         let n = sparse_matrix.rows();
         let m = sparse_matrix.cols();
         let mut dense = DMatrix::zeros(n, m);
 
         for i in 0..n {
-            if let Some(row) = sparse_matrix.outer_view(i) {
-                for (j, &value) in row.iter() {
-                    dense[(i, j)] = value;
+            let degree = out_degrees[i];
+            if degree > 0.0 {
+                if let Some(row) = sparse_matrix.outer_view(i) {
+                    for (j, &value) in row.iter() {
+                        // PageRank transition matrix P[to, from] = weight / out_degree
+                        dense[(j, i)] = value / degree;
+                    }
                 }
             }
         }
@@ -234,14 +238,31 @@ impl PersonalizedPageRank {
             let reset_vec = DVector::from_vec(reset_vector);
 
             for _iteration in 0..self.config.max_iterations {
-                let new_scores = &reset_vec * (1.0 - self.config.damping_factor)
+                let mut next_scores = &reset_vec * (1.0 - self.config.damping_factor)
                     + dense_matrix * &scores * self.config.damping_factor;
 
-                let diff = (&new_scores - &scores).abs().max();
+                // Handle dangling nodes: distribute their score uniformly
+                let mut dangling_score = 0.0;
+                for (i, &score) in scores.iter().enumerate() {
+                    if self.out_degrees[i] == 0.0 {
+                        dangling_score += score;
+                    }
+                }
+
+                if dangling_score > 0.0 {
+                    let uniform_contribution =
+                        self.config.damping_factor * dangling_score / n as f64;
+                    for s in next_scores.iter_mut() {
+                        *s += uniform_contribution;
+                    }
+                }
+
+                let diff = (&next_scores - &scores).abs().max();
                 if diff < self.config.tolerance {
+                    scores = next_scores;
                     break;
                 }
-                scores = new_scores;
+                scores = next_scores;
             }
 
             self.scores_to_entity_map(scores.as_slice())
@@ -441,12 +462,19 @@ impl PersonalizedPageRank {
             new_scores[i] = (1.0 - d) * reset_vector[i];
         }
 
-        // Add the damped transition probability component
-        // For each node j, distribute its score to its outgoing neighbors
+        // Add the damped transition probability component.
+        // For each node j, distribute its score to its outgoing neighbors,
+        // weight-normalised: contribution to neighbour i is
+        //     d * score(j) * weight(j,i) / sum(weight(j,*))
+        // i.e. the standard weighted-PageRank transition probability. This
+        // matches `pagerank_iteration_parallel`, `convert_to_dense`, and
+        // `build_transition_matrix`. Previously this kernel divided by the
+        // edge **count** (`row.nnz()`), so for any graph with non-uniform
+        // edge weights it disagreed with the other kernels.
         for (j, &current_score) in current_scores.iter().enumerate() {
-            let out_degree = self.get_out_degree(j);
-            if out_degree > 0 {
-                let score_contribution = d * current_score / out_degree as f64;
+            let out_degree = self.out_degrees[j];
+            if out_degree > 0.0 {
+                let score_contribution = d * current_score / out_degree;
 
                 // Find all neighbors of node j and add contribution
                 if let Some(row) = self.adjacency_matrix.outer_view(j) {
@@ -463,14 +491,6 @@ impl PersonalizedPageRank {
                     *score += score_contribution;
                 }
             }
-        }
-    }
-
-    fn get_out_degree(&self, node_index: usize) -> usize {
-        if let Some(row) = self.adjacency_matrix.outer_view(node_index) {
-            row.nnz()
-        } else {
-            0
         }
     }
 
@@ -666,6 +686,77 @@ mod tests {
         // Entity A should have the highest score due to high reset probability
         let score_a = scores.get(&entity_a).unwrap();
         assert!(*score_a > 0.3); // Should be significantly above uniform (0.33)
+    }
+
+    #[test]
+    fn test_kernels_agree_on_weighted_graph() {
+        // Regression: the sequential `pagerank_iteration` was dividing by
+        // edge **count** while the parallel and dense kernels divide by
+        // edge **weight sum**. The two kernels agreed on uniform-weight
+        // graphs but diverged on weighted ones. Build a graph with very
+        // non-uniform edge weights and assert all three converged kernels
+        // produce the same scores.
+        let entity_a = EntityId::new("A".to_string());
+        let entity_b = EntityId::new("B".to_string());
+        let entity_c = EntityId::new("C".to_string());
+
+        let mut node_mapping = HashMap::new();
+        let mut reverse_mapping = HashMap::new();
+        node_mapping.insert(entity_a.clone(), 0);
+        node_mapping.insert(entity_b.clone(), 1);
+        node_mapping.insert(entity_c.clone(), 2);
+        reverse_mapping.insert(0, entity_a.clone());
+        reverse_mapping.insert(1, entity_b.clone());
+        reverse_mapping.insert(2, entity_c.clone());
+
+        // A -> B with weight 9.0, A -> C with weight 1.0. Out-edge count is
+        // 2, weight sum is 10. Sequential kernel formerly used 2; parallel
+        // and dense use 10. Different transition probabilities → different
+        // converged scores.
+        let mut triplet_mat = sprs::TriMat::new((3, 3));
+        triplet_mat.add_triplet(0, 1, 9.0);
+        triplet_mat.add_triplet(0, 2, 1.0);
+        triplet_mat.add_triplet(1, 2, 2.0);
+        let matrix = triplet_mat.to_csr();
+
+        let config = PageRankConfig {
+            tolerance: 1e-10,
+            max_iterations: 200,
+            ..PageRankConfig::default()
+        };
+        let pagerank =
+            PersonalizedPageRank::new(config.clone(), matrix, node_mapping, reverse_mapping);
+
+        // Run all three iteration kernels manually so the test isolates
+        // them from the dense/sparse path-selection heuristic.
+        let n = pagerank.adjacency_matrix.rows();
+        let reset_vector = vec![1.0 / n as f64; n];
+
+        let run = |step: &dyn Fn(&[f64], &mut [f64])| -> Vec<f64> {
+            let mut scores = vec![1.0 / n as f64; n];
+            let mut next = vec![0.0; n];
+            for _ in 0..config.max_iterations {
+                step(&scores, &mut next);
+                if pagerank.calculate_difference(&scores, &next) < config.tolerance {
+                    std::mem::swap(&mut scores, &mut next);
+                    break;
+                }
+                std::mem::swap(&mut scores, &mut next);
+            }
+            scores
+        };
+
+        let seq = run(&|s, n| pagerank.pagerank_iteration(s, n, &reset_vector));
+        let par = run(&|s, n| pagerank.pagerank_iteration_parallel(s, n, &reset_vector));
+
+        for i in 0..n {
+            assert!(
+                (seq[i] - par[i]).abs() < 1e-6,
+                "kernel disagreement at index {i}: seq={} par={}",
+                seq[i],
+                par[i]
+            );
+        }
     }
 
     #[test]

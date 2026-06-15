@@ -568,15 +568,22 @@ pub struct HybridFusionConfig {
 
 /// Weight configuration for combining different search strategies.
 ///
-/// Defines the relative importance of each search approach in the
+/// Defines the relative importance of each retrieval source in the
 /// hybrid fusion algorithm. Weights should typically sum to 1.0.
+///
+/// The three retrieval sources match `RetrievalSource::{Vector, Keyword, Graph}`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FusionWeights {
-    /// Weight for keyword-based search results
+    /// Weight for vector / embedding-similarity search results.
+    #[serde(default = "default_vector_weight")]
+    pub vector: f32,
+    /// Weight for keyword (BM25/TF-IDF) search results.
     pub keywords: f32,
-    /// Weight for graph traversal-based search results
+    /// Weight for graph traversal-based search results.
     pub graph: f32,
-    /// Weight for BM25/TF-IDF statistical search results
+    /// Deprecated: retained for config backward compatibility. The keyword-source
+    /// weight is now driven by `keywords`. Will be removed in a future release.
+    #[serde(default)]
     pub bm25: f32,
 }
 
@@ -786,9 +793,10 @@ impl Default for SearchRankingConfig {
                 enabled: true,
                 policy: default_fusion_policy(),
                 weights: FusionWeights {
-                    keywords: 0.4,
+                    vector: 0.4,
+                    keywords: 0.2,
                     graph: 0.4,
-                    bm25: 0.2,
+                    bm25: 0.0,
                 },
                 rrf_k: default_rrf_k(),
                 cascade_early_stop_score: default_cascade_early_stop_score(),
@@ -848,9 +856,10 @@ impl Default for HybridFusionConfig {
             enabled: true,
             policy: default_fusion_policy(),
             weights: FusionWeights {
-                keywords: 0.4,
+                vector: 0.4,
+                keywords: 0.2,
                 graph: 0.4,
-                bm25: 0.2,
+                bm25: 0.0,
             },
             rrf_k: default_rrf_k(),
             cascade_early_stop_score: default_cascade_early_stop_score(),
@@ -860,9 +869,10 @@ impl Default for HybridFusionConfig {
 impl Default for FusionWeights {
     fn default() -> Self {
         Self {
-            keywords: 0.4,
+            vector: 0.4,
+            keywords: 0.2,
             graph: 0.4,
-            bm25: 0.2,
+            bm25: 0.0,
         }
     }
 }
@@ -1104,6 +1114,9 @@ fn default_rrf_k() -> f32 {
 }
 fn default_cascade_early_stop_score() -> f32 {
     0.9
+}
+fn default_vector_weight() -> f32 {
+    0.4
 }
 fn default_search_algorithm() -> String {
     "cosine".to_string()

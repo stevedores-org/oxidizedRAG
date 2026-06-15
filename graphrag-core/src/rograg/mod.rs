@@ -13,14 +13,14 @@
 //!
 //! # Key Components
 //!
-//! - [`decomposer`] - Query decomposition using semantic/syntactic/hybrid strategies
-//! - [`fuzzy_matcher`] - Semantic similarity matching for entities and content chunks
-//! - [`intent_classifier`] - Query intent detection with refusal capabilities
-//! - [`logic_form`] - Structured query representation and execution
-//! - [`processor`] - Main ROGRAG processing pipeline orchestration
-//! - [`validator`] - Query validation and quality assessment
-//! - [`quality_metrics`] - Performance and quality tracking
-//! - [`streaming`] - Streaming response generation
+//! - `decomposer` - Query decomposition using semantic/syntactic/hybrid strategies
+//! - `fuzzy_matcher` - Semantic similarity matching for entities and content chunks
+//! - `intent_classifier` - Query intent detection with refusal capabilities
+//! - `logic_form` - Structured query representation and execution
+//! - `processor` - Main ROGRAG processing pipeline orchestration
+//! - `validator` - Query validation and quality assessment
+//! - `quality_metrics` - Performance and quality tracking
+//! - `streaming` - Streaming response generation
 //!
 //! # Usage Example
 //!
