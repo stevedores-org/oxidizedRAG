@@ -97,6 +97,10 @@ code-chunking = ["tree-sitter", "tree-sitter-rust"]
 # behind their own feature flags (gemini, sqlite-vector, ...) in later PRs.
 multimodal = []
 
+# File-system ingestor for multimodal content. Uses MIME sniffing plus
+# directory glob expansion.
+multimodal-file-ingest = ["multimodal", "infer", "glob"]
+
 # Neural embeddings feature
 neural-embeddings = ["dirs", "candle-core", "candle-nn", "candle-transformers"]
 
@@ -190,6 +194,8 @@ bincode = { workspace = true, optional = true }
 sha2 = { workspace = true }
 flate2 = { workspace = true }
 indicatif = "0.17"  # Progress bars for long-running operations
+glob = { workspace = true, optional = true }
+infer = { workspace = true, optional = true }
 
 # Incremental updates dependencies
 uuid = { workspace = true, features = ["js"] }
